@@ -10,7 +10,7 @@
 body{padding:18px;position:relative}
 body::before{content:"";position:fixed;inset:0;background:
 linear-gradient(180deg,rgba(251,247,239,.9) 0%,rgba(241,231,214,.92) 100%),
-url("themeowseum_logo.png") center 54%/460px auto no-repeat;opacity:.14;pointer-events:none;z-index:0}
+url("logo_meow.png") center 54%/460px auto no-repeat;opacity:.14;pointer-events:none;z-index:0}
 body>*{position:relative;z-index:1}
 button,input{font:inherit}
 button{border:0;cursor:pointer}
@@ -36,15 +36,16 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .tab.active{background:linear-gradient(180deg,#a87640 0%,#85572b 100%);color:#fffaf3;box-shadow:0 12px 24px rgba(141,98,54,.20);border-color:rgba(110,75,39,.18)}
 .tab small{display:block;margin-top:3px;font-size:12px;font-weight:600;opacity:.85}
 .best-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff1d7;color:#8c6226;font-size:12px;font-weight:800}
-.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.product-card{display:grid;gap:8px;padding:12px;border:1px solid rgba(141,98,54,.12);border-radius:16px;background:linear-gradient(180deg,#fffefd 0%,#fff8f0 100%);min-height:98px;cursor:pointer;align-content:space-between;box-shadow:0 10px 20px rgba(77,53,29,.05);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
+.product-card{display:grid;gap:8px;padding:10px;border:1px solid rgba(141,98,54,.12);border-radius:16px;background:linear-gradient(180deg,#fffefd 0%,#fff8f0 100%);height:118px;cursor:pointer;box-shadow:0 10px 20px rgba(77,53,29,.05);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
 .product-card:hover{transform:translateY(-1px);box-shadow:0 16px 28px rgba(77,53,29,.10);border-color:rgba(141,98,54,.26)}
-.product-top{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:10px;align-items:start}
-.product-thumb{width:34px;height:34px;opacity:.26;justify-self:end;align-self:start}
-.product-thumb img{width:100%;height:100%;object-fit:contain;display:block;filter:grayscale(1)}
-.product-name{font-size:15px;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.product-top{display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:8px;align-items:start;height:100%}
+.product-copy{display:grid;grid-template-rows:auto auto 1fr auto;align-content:start;gap:2px;min-width:0;height:100%}
+.product-thumb{width:56px;height:44px;opacity:.24;justify-self:end;align-self:start;border-radius:12px;overflow:hidden;background:rgba(141,98,54,.05)}
+.product-thumb img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;filter:grayscale(1)}
+.product-name{font-size:13px;font-weight:800;line-height:1.02;letter-spacing:-.02em}
 .product-sku{font-size:11px;color:var(--muted);font-weight:700}
-.product-price{font-size:14px;font-weight:800;color:var(--accent-strong);white-space:nowrap;align-self:end;justify-self:end;text-align:right;opacity:.88}
+.product-price{font-size:14px;font-weight:800;color:var(--accent-strong);white-space:nowrap;align-self:end;justify-self:start;text-align:left;opacity:.88;margin-top:0}
 .product-card:active,.qty-btn:active,.payment-btn:active,.action-btn:active,.operator-btn:active,.tag-btn:active{transform:scale(.98)}
 .muted{color:var(--muted)}
 .sticky-cart{position:fixed;top:16px;right:16px;bottom:16px;left:auto;width:460px;z-index:30;border:1px solid rgba(141,98,54,.10);border-radius:30px;background:rgba(255,251,246,.98);backdrop-filter:blur(14px);box-shadow:0 28px 64px rgba(77,53,29,.14);overflow:auto}
@@ -187,14 +188,15 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .dashboard-progress-bar{height:16px;border-radius:999px;background:#eadfce;overflow:hidden}
 .dashboard-progress-fill{height:100%;width:0;border-radius:999px;background:var(--gauge-color,#8d6236);transition:width .25s ease}
 .dashboard-progress-note{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:13px;color:#6d5e4e}
-.dashboard-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.dashboard-stat{padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:#fffdf9}
-.dashboard-stat-label{font-size:13px;color:#6d5e4e}
-.dashboard-stat-value{margin-top:6px;font-size:24px;font-weight:900;color:var(--accent-strong)}
+.dashboard-stats{display:grid;grid-template-columns:minmax(140px,.72fr) minmax(140px,.72fr) minmax(210px,1fr) minmax(240px,1.08fr);gap:10px}
+.dashboard-stat{padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:#fffdf9;min-height:104px;display:grid;align-content:space-between}
+.dashboard-stat-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#6d5e4e;white-space:nowrap}
+.dashboard-stat-value{margin-top:6px;font-size:24px;font-weight:900;color:var(--accent-strong);line-height:1.05;white-space:nowrap}
+.dashboard-stat.is-money .dashboard-stat-value{font-size:22px;letter-spacing:-.02em}
 .dashboard-stat-emoji{font-size:18px}
 .hidden{display:none!important}
 @media (max-width:1100px){.app{margin:0;padding-bottom:470px}.success-body{grid-template-columns:1fr}.cart-shell{grid-template-columns:1fr}.cart-main{border-right:0;border-bottom:1px solid var(--line)}.sticky-cart{left:16px;right:16px;top:auto;bottom:16px;width:auto}.cart-list{max-height:230px}}
-@media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center}.brand-mark{width:44px;height:44px;border-radius:14px;padding:6px}.topbar h1{font-size:24px}.topbar p{font-size:12px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-card{min-height:94px;padding:11px}.product-top{grid-template-columns:minmax(0,1fr) 28px}.product-thumb{width:28px;height:28px}.product-name{font-size:14px}.product-price{font-size:15px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center}.brand-mark{width:44px;height:44px;border-radius:14px;padding:6px}.topbar h1{font-size:24px}.topbar p{font-size:12px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{height:112px;padding:10px}.product-top{grid-template-columns:minmax(0,1fr) 42px}.product-thumb{width:42px;height:34px}.product-name{font-size:13px}.product-sku{font-size:10px}.product-price{font-size:13px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{min-height:96px}.dashboard-stat-label{font-size:12px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:20px}}
 </style>
 </head>
 <body>
@@ -202,7 +204,7 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
   <header class="topbar">
     <div class="brand-head">
       <div class="brand-mark">
-        <img src="themeowseum_logo.png" alt="The Meowseum logo">
+        <img src="logo_meow.png" alt="Meow logo">
       </div>
       <div class="brand-copy">
         <div class="eyebrow">Sell first, record automatically</div>
@@ -438,11 +440,11 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
             <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">📦</span> Items Sold</div>
             <div class="dashboard-stat-value" id="dashboardItemsSold">0</div>
           </div>
-          <div class="dashboard-stat">
+          <div class="dashboard-stat is-money">
             <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">💳</span> Average Bill</div>
             <div class="dashboard-stat-value" id="dashboardAvgBill">THB 0.00</div>
           </div>
-          <div class="dashboard-stat">
+          <div class="dashboard-stat is-money">
             <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">💰</span> Total Sale</div>
             <div class="dashboard-stat-value" id="dashboardTotalSales">THB 0.00</div>
           </div>
@@ -516,7 +518,7 @@ function cacheElements(){["tabBar","productGrid","dashboardAccessBtn","dashboard
 function loadSales(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");}catch(_){return[];}}
 function saveSales(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.sales));return true;}catch(error){alert("Could not save this sale on this device. Please copy the receipt and check storage settings before continuing.");console.error(error);return false;}}
 function formatCurrency(value){return new Intl.NumberFormat("en-US",{style:"currency",currency:"THB",minimumFractionDigits:0,maximumFractionDigits:0}).format(value||0);}
-function formatCompactProductPrice(value){return `\uD83D\uDCB0 ${new Intl.NumberFormat("en-US",{maximumFractionDigits:0}).format(value||0)}`;}
+function formatCompactProductPrice(value){return `฿ ${new Intl.NumberFormat("en-US",{maximumFractionDigits:0}).format(value||0)}`;}
 function productFamilyKey(product){const name=String(product.name||"");if(name.startsWith("Cat the Curator"))return "Cat the Curator";if(name.startsWith("The Sphinx"))return "The Sphinx";return name;}
 function productVariantOrder(product){const name=String(product.name||"");if(name==="Cat the Curator (Blue)")return 0;if(name==="Cat the Curator (Yellow)")return 1;if(name==="The Sphinx of Greece")return 0;if(name==="The Sphinx of Giza")return 1;return 99;}
 function roundMoney(value){return Math.round((Number(value)||0)*100)/100;}
@@ -550,7 +552,7 @@ function handleDashboardPinAction(action){if(action==="clear"){state.dashboardPi
 function openDashboard(){resetDashboardLock();els.dashboardOverlay.classList.add("open");}
 function closeDashboard(){els.dashboardOverlay.classList.remove("open");resetDashboardLock();}
 function renderTabs(){els.tabBar.innerHTML=TABS.map(tab=>`<button class="tab ${state.activeTab===tab.id?"active":""}" type="button" data-tab="${tab.id}">${escapeHtml(tab.label)}<small>${escapeHtml(tab.note)}</small></button>`).join("");els.tabBar.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{state.activeTab=button.dataset.tab;renderTabs();renderProducts();}));}
-function renderProducts(){const visible=PRODUCTS.filter(product=>getProductTab(product)===state.activeTab).sort((a,b)=>{const familyCompare=productFamilyKey(a).localeCompare(productFamilyKey(b));if(familyCompare===0){const variantCompare=productVariantOrder(a)-productVariantOrder(b);return variantCompare||b.price-a.price||a.name.localeCompare(b.name);}return b.price-a.price||familyCompare;});els.productGrid.innerHTML=visible.map(product=>`<article class="product-card" role="button" tabindex="0" data-sku="${escapeHtml(product.sku)}"><div class="product-top"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div><div class="product-thumb" aria-hidden="true"><img src="themeowseum_logo.png" alt=""></div></div><div class="product-price">${escapeHtml(formatCompactProductPrice(product.price))}</div></article>`).join("");els.productGrid.querySelectorAll("[data-sku]").forEach(card=>{card.addEventListener("click",()=>addToCart(card.dataset.sku));card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();addToCart(card.dataset.sku);}});});}
+function renderProducts(){const visible=PRODUCTS.filter(product=>getProductTab(product)===state.activeTab).sort((a,b)=>{const familyCompare=productFamilyKey(a).localeCompare(productFamilyKey(b));if(familyCompare===0){const variantCompare=productVariantOrder(a)-productVariantOrder(b);return variantCompare||b.price-a.price||a.name.localeCompare(b.name);}return b.price-a.price||familyCompare;});els.productGrid.innerHTML=visible.map(product=>`<article class="product-card" role="button" tabindex="0" data-sku="${escapeHtml(product.sku)}"><div class="product-top"><div class="product-copy"><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">SKU: ${escapeHtml(product.sku)}</div><div class="product-price">${escapeHtml(formatCompactProductPrice(product.price))}</div></div><div class="product-thumb" aria-hidden="true"><img src="logo_meow.png" alt=""></div></div></article>`).join("");els.productGrid.querySelectorAll("[data-sku]").forEach(card=>{card.addEventListener("click",()=>addToCart(card.dataset.sku));card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();addToCart(card.dataset.sku);}});});}
 function addToCart(sku){const product=PRODUCTS.find(item=>item.sku===sku);if(!product)return;const existing=state.cart.find(line=>line.sku===sku&&getLineDiscountAmount(line)===0);if(existing)existing.qty+=1;else state.cart.push({sku:product.sku,name:product.name,category:product.category,qty:1,basePrice:product.price,discountAmount:0});renderCart();}
 function updateQty(index,delta){const line=state.cart[index];if(!line)return;line.qty=Math.max(0,line.qty+delta);if(line.qty===0)state.cart.splice(index,1);renderCart();}
 function setLineDiscount(index,value){const line=state.cart[index];if(!line)return;line.discountAmount=normalizeLineDiscount(line,value);renderCart();}
