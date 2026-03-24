@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Worksheet ss:Name="Sales_Log_Export"><Table><Row><Cell><Data ss:Type="String">Date</Data></Cell><Cell><Data ss:Type="String">Bill No.</Data></Cell><Cell><Data ss:Type="String">Customer ID</Data></Cell><Cell><Data ss:Type="String">Customer Name</Data></Cell><Cell><Data ss:Type="String">Location</Data></Cell><Cell><Data ss:Type="String">SKU</Data></Cell><Cell><Data ss:Type="String">Item Name</Data></Cell><Cell><Data ss:Type="String">Qty</Data></Cell><Cell><Data ss:Type="String">Unit</Data></Cell><Cell><Data ss:Type="String">Notes</Data></Cell></Row></Table></Worksheet>
+</Workbook>

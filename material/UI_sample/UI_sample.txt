@@ -1,0 +1,3 @@
+the sample UI shows the Flowaccount, accounting platform service that this company use as a sale record, accounting process, analyzing, real-time dashboard.
+
+the objective is to simplify the app to use less effort to learn using the app.

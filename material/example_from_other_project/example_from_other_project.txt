@@ -1,0 +1,1 @@
+example from other project shows that we can use one single HTML file to use as a pos for recording sale and export csv file for after process such as import to accounting platform service, analyzing, sale forecast.
