@@ -1,47 +1,98 @@
-This project is very small and self-contained: the folder only has [`meowmeow_pos_event.html`](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) and [`logo_meow.png`](c:\Users\USER\Desktop\meowmeow_sandbox\logo_meow.png). The whole app lives in that one HTML file: layout, CSS, product data, business logic, receipt flow, dashboard, local storage, CSV export, and QR generation are all embedded directly in it.
+# MeowMeow Event POS
 
-What the project does:
-- It’s a browser-based POS for an event booth called “MeowMeow App POS”.
-- Staff tap products, build a cart, choose payment (`cash`, `bank transfer`, or `card`), confirm the order, assign an operator, optionally add customer tags and a payment reference, then save the sale.
-- Saved sales are stored in `localStorage` under `meowseum_event_sales_v1`, so this is a client-side/offline-first app tied to the current browser/device.
-- Every saved sale is exported as a CSV download automatically.
-- There is an internal dashboard behind a 3-digit PIN `456` that shows total sales, today’s sales, receipts, items sold, average bill, and progress toward a THB 500,000 event goal.
+This project is a single-file browser POS for the Meowseum event booth. The main app lives in [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html). The goal is to keep the system fast for booth staff, visually clean on iPad, and simple to continue editing in future sessions.
 
-How the app is structured in code:
-- [`meowmeow_pos_event.html#L1`](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html#L1) to about line 458 is UI markup and styling.
-- The script starts at [`meowmeow_pos_event.html#L459`](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html#L459).
-- Product catalog is hardcoded in [`meowmeow_pos_event.html#L460`](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html#L460): 14 items across categories like `Signature`, `Classic`, `Entry`, `Premium`, `Lifestyle`, and `Plush`.
-- There are 2 tabs/brands in the catalog: `Meowseum :)` and `ModernFriend >.<`.
-- Operators are fixed as `OP-01` through `OP-06`.
-- Tags are also hardcoded, like cat owner / premium buyer / price sensitive / bulk interest / returning interest.
+## Current Objective
 
-What happens during a sale:
-- Product cards render from the `PRODUCTS` array and clicking one adds it to the cart.
-- The cart supports quantity changes and per-line discounts; the final cart version uses preset discount amounts plus a custom number field.
-- Pressing “Confirm Order” creates a `pendingSale` object with bill ID, timestamp, subtotal, discount, total, payment method, and serialized line items.
-- The success/confirmation overlay then shows a receipt preview, payment confirmation controls, operator selection, tags, and the final “Save & New Sale” action.
-- Transfer/card payments require manual confirmation before save; cash can be saved immediately.
-- Saving a sale writes it to local storage, updates the dashboard, exports a CSV, plays a short success sound, clears the cart, and resets the UI.
+When continuing this project, align work to these priorities:
 
-Payment and QR behavior:
-- Bank transfer is set up around PromptPay / Thai bank details in [`meowmeow_pos_event.html#L489`](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html#L489).
-- The file includes code to build PromptPay payloads and even a full in-file QR code generator, so it can create offline QR codes without external libraries.
-- After order confirmation, transfer payments show a QR section in the success overlay.
-- The code prefers a hosted QR from `promptpay.io` when online, and falls back to a built-in QR when needed.
+- Make selling fast for staff at an event booth.
+- Keep the layout compact enough to work comfortably on iPad in landscape.
+- Prefer clean, aligned, low-friction UI over decorative details.
+- Keep the app self-contained in one HTML file unless there is a strong reason to split it.
+- Protect sensitive inventory controls behind Developer Tools, while keeping the public selling flow simple.
 
-Dashboard behavior:
-- The internal dashboard is in the same file and opens from the chart button.
-- It is PIN-protected with `456`.
-- Metrics are computed from the locally saved sales only, so the dashboard is device-specific rather than synced across machines.
+## Current Product Direction
 
-Notable code observations:
-- The project looks like it evolved quickly in one file. There are duplicate function definitions for some cart logic such as `renderCart`, and the later ones override the earlier ones.
-- There are also leftover references to transfer-preview elements like `transferBox` and an empty `refreshTransferQr()` function, which suggests an earlier cart-side transfer QR feature was partially removed or refactored.
-- So the app is functional in concept, but the codebase has some legacy/dead paths mixed in.
+- The header uses a text-only wordmark: `THE / Meow Meow App POS / SEUM`.
+- The logo/image-based approach was intentionally removed.
+- Product cards are compact blocks designed to fit `5` cards per row on main/iPad layouts.
+- Product cards should remain easy to scan by product name and SKU.
+- SKU is shown without the word `SKU`.
+- Stock-left and price sit on the right side of the card.
+- Product names can wrap, but vertical alignment should stay consistent across cards.
+- `Cat the Curator` variants use emoji to save space:
+  - `Cat the Curator 🔵`
+  - `Cat the Curator 🟡`
 
-One thing I could not confirm: I wasn’t able to read the git history because the repo is marked as an unsafe directory for the sandbox user, so this summary is based on the actual files currently in the folder rather than past commits.
+## Inventory Rules
 
-If you want, I can do a second pass and give you:
-1. a “feature list” summary for non-technical people,
-2. a “developer walkthrough” of each major function,
-3. or a “problems / cleanup opportunities” review of this file.
+- Staff should not manually enter starting stock from the normal selling flow.
+- Inventory editing belongs in the passcode-protected Developer Tools area.
+- Day 1 starting stock and low-stock alerts are merged into one compact developer editor.
+- Developer inventory controls are immediate after unlock; there is no extra sub-panel toggle.
+- Public inventory view is read-only.
+- Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
+- Low-stock alerts remain editable in developer mode.
+- Keep the current inventory data model unless there is a strong reason to change it:
+  - `state.inventory.days.day1.startingStock[sku]`
+  - `state.inventory.thresholds[sku]`
+
+## Layout Rules
+
+- Optimize for iPad landscape first, then desktop, then mobile.
+- Avoid large empty spaces.
+- Avoid decorative photos and product images.
+- Keep tabs and cards compact.
+- Favor strong alignment:
+  - names align
+  - SKU row aligns
+  - stock and price area aligns
+- Prefer simple, readable typography with consistent sizing and color relationships.
+- When updating the header wordmark, preserve the intended cross-word structure:
+  - line 1: `THE`
+  - line 2: `Meow Meow App POS`
+  - line 3: `SEUM`
+
+## Functional Summary
+
+- Staff tap products to add them to cart.
+- Staff choose payment method and confirm the order.
+- Sales can be saved with operator and payment confirmation flow.
+- Sales are stored in `localStorage`.
+- CSV export is generated automatically.
+- Dashboard and Developer Tools are both protected behind their existing access flow.
+- Inventory tracking is built into the same app.
+
+## File Structure
+
+- [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html): full app, including HTML, CSS, JS, product data, sales logic, inventory logic, dashboard, and developer tools.
+- [readme.md](c:\Users\USER\Desktop\meowmeow_sandbox\readme.md): project continuation guide and design alignment notes.
+
+## How To Continue Next Time
+
+If continuing work in a future session:
+
+- Read this `README.md` first.
+- Then inspect [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) before making assumptions.
+- Preserve the compact iPad-first layout unless the user asks for a redesign.
+- Keep changes consistent with the current visual direction: text-led, compact, aligned, and practical for booth staff.
+- Prefer improving clarity and space usage over adding more visual complexity.
+- If changing inventory or developer controls, keep the staff-facing flow as simple as possible.
+
+## Notes For Future Edits
+
+- This file has evolved iteratively, so check for older logic before adding new features.
+- Avoid reintroducing logo or product images unless the user explicitly asks for them.
+- Before changing product card layout, confirm it still supports future catalog growth.
+- Before changing header styling, preserve the wordmark concept the user has been refining.
+
+## Suggested Workflow For Codex
+
+When helping on this project in future sessions:
+
+- first confirm the current request,
+- inspect the existing HTML/CSS/JS structure,
+- align the solution with the compact event POS objective,
+- keep edits minimal and intentional,
+- and avoid undoing prior design simplifications unless asked.
