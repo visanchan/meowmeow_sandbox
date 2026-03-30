@@ -63,12 +63,15 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .cart-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
 .cart-head-line{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .cart-title{margin:0;font-size:24px}
+.cart-gift-toggle{width:38px;height:38px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:999px;background:#f6edde;color:#6b5234;font-size:20px;line-height:1}
+.cart-gift-toggle.active{background:linear-gradient(180deg,#a9763f 0%,#7e552a 100%);color:#fffdf8;border-color:rgba(110,75,39,.18)}
 .cart-sub{margin:0;color:var(--muted);font-size:13px}
 .cart-clear{padding:10px 14px;border-radius:14px;background:#f2e6d7;color:#6a4a26;font-weight:800}
 .cart-list{display:grid;gap:10px;max-height:calc(100vh - 360px);overflow:auto;padding-right:4px}
 .cart-empty{padding:18px;border:1px dashed var(--line);border-radius:18px;text-align:center;color:var(--muted);background:#fff}
 .cart-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
 .cart-item h3{margin:0 0 2px;font-size:15px;line-height:1.05}
+.cart-item.is-gift{background:linear-gradient(180deg,#fffdfa 0%,#f7f0e2 100%)}
 .cart-item .sku{font-size:11px;color:var(--muted);font-weight:700}
 .cart-actions{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
 .qty-controls{display:flex;gap:6px}
@@ -113,6 +116,7 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .overlay{position:fixed;inset:0;background:rgba(36,26,17,.44);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
 .overlay.open{display:flex}
 #confirmResetSalesOverlay{z-index:80}
+#confirmInventoryAddOverlay{z-index:85}
 .confirm-card{width:min(460px,100%);padding:24px;border:1px solid var(--line);border-radius:28px;background:#fffaf4;box-shadow:0 28px 80px rgba(26,18,11,.25);display:grid;gap:16px}
 .confirm-card h2{margin:0;font-size:28px}
 .confirm-card p{margin:0;color:var(--muted);line-height:1.5}
@@ -180,43 +184,43 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .dashboard-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
 .dashboard-close{padding:12px 16px;border-radius:16px;background:#f1e7d9;color:#5f462a;font-weight:800}
 .dashboard-grid{display:grid;gap:12px}
-.dashboard-hero{padding:18px 20px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(180deg,#fffdf8,#f6ecde)}
+.dashboard-hero{padding:14px 18px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,#fffdf8,#f6ecde)}
 .dashboard-hero.is-slow{background:linear-gradient(180deg,#fff7f0,#f8e1d4)}
 .dashboard-hero.is-building{background:linear-gradient(180deg,#fffdf6,#f5e8cd)}
 .dashboard-hero.is-strong{background:linear-gradient(180deg,#fffaf2,#efddc0)}
 .dashboard-hero.is-goal{background:linear-gradient(180deg,#fff7ea,#ead3aa)}
 .dashboard-status{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.dashboard-status-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.78);font-weight:800}
-.dashboard-status-emoji{font-size:24px;line-height:1}
-.dashboard-status-copy{font-size:14px;color:#6d5e4e;max-width:100%}
-.dashboard-hero-total{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-top:12px;flex-wrap:wrap}
-.dashboard-hero-amount{font-size:42px;font-weight:900;line-height:1;color:var(--accent-strong);max-width:100%;word-break:break-word}
-.dashboard-hero-goal{font-size:18px;color:#6d5e4e;font-weight:700}
-.dashboard-progress{display:grid;grid-template-columns:136px minmax(0,1fr);gap:16px;align-items:center;margin-top:14px}
-.goal-gauge{--progress:0deg;position:relative;width:136px;height:136px;margin:auto;border-radius:50%;background:conic-gradient(var(--gauge-color,#8d6236) 0deg,var(--progress),#eadfce var(--progress),360deg);display:grid;place-items:center}
-.goal-gauge::before{content:"";width:98px;height:98px;border-radius:50%;background:#fffaf4;box-shadow:inset 0 0 0 1px #e0d4c4}
+.dashboard-status-badge{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.78);font-weight:800}
+.dashboard-status-emoji{font-size:22px;line-height:1}
+.dashboard-status-copy{font-size:13px;color:#6d5e4e;max-width:100%}
+.dashboard-hero-total{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-top:8px;flex-wrap:wrap}
+.dashboard-hero-amount{font-size:34px;font-weight:900;line-height:1;color:var(--accent-strong);max-width:100%;word-break:break-word}
+.dashboard-hero-goal{font-size:16px;color:#6d5e4e;font-weight:700}
+.dashboard-progress{display:grid;grid-template-columns:112px minmax(0,1fr);gap:14px;align-items:center;margin-top:10px}
+.goal-gauge{--progress:0deg;position:relative;width:112px;height:112px;margin:auto;border-radius:50%;background:conic-gradient(var(--gauge-color,#8d6236) 0deg,var(--progress),#eadfce var(--progress),360deg);display:grid;place-items:center}
+.goal-gauge::before{content:"";width:80px;height:80px;border-radius:50%;background:#fffaf4;box-shadow:inset 0 0 0 1px #e0d4c4}
 .goal-gauge-center{position:absolute;display:grid;gap:2px;text-align:center}
-.goal-gauge-percent{font-size:28px;font-weight:900;color:#2b231d}
+.goal-gauge-percent{font-size:24px;font-weight:900;color:#2b231d}
 .goal-gauge-sub{font-size:11px;color:var(--muted);font-weight:700}
-.dashboard-progress-bar{height:16px;border-radius:999px;background:#eadfce;overflow:hidden}
+.dashboard-progress-bar{height:14px;border-radius:999px;background:#eadfce;overflow:hidden}
 .dashboard-progress-fill{height:100%;width:0;border-radius:999px;background:var(--gauge-color,#8d6236);transition:width .25s ease}
-.dashboard-progress-note{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:13px;color:#6d5e4e;flex-wrap:wrap}
-.dashboard-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.dashboard-stat{padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:#fffdf9;min-height:104px;display:grid;align-content:space-between}
-.dashboard-stat-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#6d5e4e;flex-wrap:wrap}
-.dashboard-stat-value{margin-top:6px;font-size:24px;font-weight:900;color:var(--accent-strong);line-height:1.05;word-break:break-word}
-.dashboard-stat.is-money .dashboard-stat-value{font-size:22px;letter-spacing:-.02em}
-.dashboard-stat-emoji{font-size:18px}
-.dashboard-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.dashboard-day-card{padding:16px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#fffdfa 0%,#f8f0e5 100%);display:grid;gap:10px}
+.dashboard-progress-note{display:flex;justify-content:space-between;gap:12px;margin-top:6px;font-size:12px;color:#6d5e4e;flex-wrap:wrap}
+.dashboard-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.dashboard-stat{padding:9px 12px;border:1px solid var(--line);border-radius:16px;background:#fffdf9;min-height:70px;display:grid;align-content:space-between}
+.dashboard-stat-label{display:flex;align-items:center;gap:6px;font-size:11px;color:#6d5e4e;flex-wrap:wrap}
+.dashboard-stat-value{margin-top:2px;font-size:17px;font-weight:900;color:var(--accent-strong);line-height:1.02;word-break:break-word}
+.dashboard-stat.is-money .dashboard-stat-value{font-size:16px;letter-spacing:-.02em}
+.dashboard-stat-emoji{font-size:14px}
+.dashboard-days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dashboard-day-card{padding:12px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fffdfa 0%,#f8f0e5 100%);display:grid;gap:8px}
 .dashboard-day-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.dashboard-day-title{font-size:18px;font-weight:900;color:#4f3820}
-.dashboard-day-badge{padding:6px 10px;border-radius:999px;background:#efe3d2;color:#6d5e4e;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.dashboard-day-title{font-size:15px;font-weight:900;color:#4f3820}
+.dashboard-day-badge{padding:5px 8px;border-radius:999px;background:#efe3d2;color:#6d5e4e;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
 .dashboard-day-badge.closed{background:#ead4cb;color:#8b3d34}
-.dashboard-day-total{font-size:30px;font-weight:900;color:var(--accent-strong);letter-spacing:-.03em}
-.dashboard-day-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.dashboard-day-meta span{display:block;padding:10px 12px;border-radius:16px;background:#fffdf9;color:#6d5e4e;font-size:12px}
-.dashboard-day-meta strong{display:block;margin-top:4px;font-size:18px;color:#4f3820}
+.dashboard-day-total{font-size:22px;font-weight:900;color:var(--accent-strong);letter-spacing:-.03em}
+.dashboard-day-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.dashboard-day-meta span{display:block;padding:8px 10px;border-radius:14px;background:#fffdf9;color:#6d5e4e;font-size:11px}
+.dashboard-day-meta strong{display:block;margin-top:3px;font-size:15px;color:#4f3820}
 .dashboard-tools{display:grid;gap:12px}
 .dashboard-tool-card{padding:16px 18px;border:1px solid var(--line);border-radius:22px;background:#fff}
 .dashboard-tool-card h3{margin:0 0 6px;font-size:20px}
@@ -244,16 +248,26 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 .inventory-editor-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .inventory-editor-field{display:grid;gap:6px}
 .inventory-editor-field label{font-size:11px;font-weight:800;color:#6d5e4e;letter-spacing:.04em;text-transform:uppercase}
-.inventory-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 12px}
+.inventory-editor-actions{display:flex;gap:8px;align-items:end}
+.inventory-editor-actions .action-btn{padding:10px 12px;font-size:13px;border-radius:12px}
+.inventory-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 12px}
 .inventory-kpi{padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fffdfa 0%,#f9f1e7 100%)}
 .inventory-kpi-label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#7b6b5a}
 .inventory-kpi-value{margin-top:6px;font-size:28px;font-weight:900;color:#4f3820}
 .inventory-friendly-note{margin:0;color:#6d5e4e;font-size:14px;line-height:1.5}
+.inventory-log{display:grid;gap:10px;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:#fffdf9}
+.inventory-log-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.inventory-log-head strong{font-size:14px;color:#4f3820}
+.inventory-log-head span{font-size:12px;color:var(--muted)}
+.inventory-log-list{display:grid;gap:8px}
+.inventory-log-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:#f7efe3;font-size:13px;color:#5c4528}
+.inventory-log-item strong{font-size:13px;color:#4f3820}
+.inventory-log-empty{padding:10px 12px;border-radius:14px;background:#f7efe3;font-size:13px;color:#6d5e4e}
 .action-btn.danger{background:linear-gradient(180deg,#c45c4e 0%,#9c3f33 100%);color:#fffaf7;box-shadow:0 14px 26px rgba(180,75,63,.18)}
 .hidden{display:none!important}
 @media (max-width:1100px){.app{margin:0;padding-bottom:470px}.success-body{grid-template-columns:1fr}.cart-shell{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.cart-main{border-right:0;border-bottom:1px solid var(--line)}.sticky-cart{left:16px;right:16px;top:auto;bottom:16px;width:auto}.cart-list{max-height:230px}}
-@media (max-width:1024px){body{padding:14px}.app{padding-bottom:390px}.topbar{padding:16px 18px;align-items:flex-start}.brand-line-the{font-size:17px}.brand-line-meow{gap:5px;font-size:38px}.brand-line-seum{font-size:29px;letter-spacing:.032em;padding-left:.04em}.tabbar{gap:8px}.tab{min-width:120px;padding:9px 14px;font-size:14px}.product-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.product-card{min-height:94px;padding:9px}.product-top{gap:8px}.product-main{grid-template-rows:2.05em auto;gap:4px}.product-side{min-width:62px}.product-name{min-height:2.05em;font-size:12px}.product-sku{font-size:15px}.product-stock{font-size:8px;padding:4px 6px}.product-price{font-size:14px}.sticky-cart{left:14px;right:14px;bottom:14px;border-radius:24px}.cart-main,.cart-pay{padding:14px 16px}.cart-title{font-size:22px}.cart-list{max-height:160px}.summary{padding:12px}.summary-total{font-size:24px}.payment-grid{gap:8px}.payment-btn{padding:12px 10px;font-size:15px}.action-btn{padding:14px;font-size:17px}.dashboard-card{width:min(760px,calc(100vw - 20px))}.dashboard-head h2{font-size:24px}.dashboard-hero-amount{font-size:36px}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{min-height:96px}}
-@media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;gap:8px;align-items:center}.brand-line-the{font-size:15px}.brand-line-meow{gap:4px;font-size:32px}.brand-line-seum{font-size:24px;letter-spacing:.028em;padding-left:.035em}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{min-height:98px;padding:9px}.product-top{gap:8px}.product-main{grid-template-rows:2.05em auto;gap:4px}.product-side{min-width:60px}.product-name{min-height:2.05em;font-size:12px}.product-sku{font-size:14px}.product-stock{font-size:8px;padding:4px 6px}.product-price{font-size:14px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{min-height:96px}.dashboard-stat-label{font-size:12px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:20px}.inventory-kpis{grid-template-columns:1fr}.dashboard-days{grid-template-columns:1fr}}
+@media (max-width:1024px){body{padding:14px}.app{padding-bottom:390px}.topbar{padding:16px 18px;align-items:flex-start}.brand-line-the{font-size:17px}.brand-line-meow{gap:5px;font-size:38px}.brand-line-seum{font-size:29px;letter-spacing:.032em;padding-left:.04em}.tabbar{gap:8px}.tab{min-width:120px;padding:9px 14px;font-size:14px}.product-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.product-card{min-height:94px;padding:9px}.product-top{gap:8px}.product-main{grid-template-rows:2.05em auto;gap:4px}.product-side{min-width:62px}.product-name{min-height:2.05em;font-size:12px}.product-sku{font-size:15px}.product-stock{font-size:8px;padding:4px 6px}.product-price{font-size:14px}.sticky-cart{left:14px;right:14px;bottom:14px;border-radius:24px}.cart-main,.cart-pay{padding:14px 16px}.cart-title{font-size:22px}.cart-list{max-height:160px}.summary{padding:12px}.summary-total{font-size:24px}.payment-grid{gap:8px}.payment-btn{padding:12px 10px;font-size:15px}.action-btn{padding:14px;font-size:17px}.dashboard-card{width:min(900px,calc(100vw - 20px))}.dashboard-head h2{font-size:24px}.dashboard-hero{padding:12px 16px}.dashboard-status-badge{padding:7px 11px}.dashboard-status-emoji{font-size:20px}.dashboard-status-copy{font-size:12px}.dashboard-hero-amount{font-size:30px}.dashboard-hero-goal{font-size:15px}.dashboard-progress{grid-template-columns:104px minmax(0,1fr);gap:12px;margin-top:8px}.goal-gauge{width:104px;height:104px}.goal-gauge::before{width:74px;height:74px}.goal-gauge-percent{font-size:22px}.dashboard-progress-bar{height:12px}.dashboard-progress-note{font-size:11px}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:66px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.dashboard-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.dashboard-day-card{padding:10px;gap:7px}.dashboard-day-title{font-size:14px}.dashboard-day-total{font-size:20px}.dashboard-day-meta span{padding:8px 9px;font-size:10px}.dashboard-day-meta strong{font-size:14px}}
+@media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;gap:8px;align-items:center}.brand-line-the{font-size:15px}.brand-line-meow{gap:4px;font-size:32px}.brand-line-seum{font-size:24px;letter-spacing:.028em;padding-left:.035em}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{min-height:98px;padding:9px}.product-top{gap:8px}.product-main{grid-template-rows:2.05em auto;gap:4px}.product-side{min-width:60px}.product-name{min-height:2.05em;font-size:12px}.product-sku{font-size:14px}.product-stock{font-size:8px;padding:4px 6px}.product-price{font-size:14px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:64px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-days{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -270,8 +284,8 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
     </div>
     <div class="meta">
       <button class="emoji-access" id="inventoryAccessBtn" type="button" aria-label="Open inventory dashboard">&#128230;</button>
-      <button class="emoji-access" id="developerAccessBtn" type="button" aria-label="Open developer tools">&#128736;</button>
       <button class="emoji-access" id="dashboardAccessBtn" type="button" aria-label="Open internal dashboard">&#128202;</button>
+      <button class="emoji-access" id="developerAccessBtn" type="button" aria-label="Open developer tools">&#128736;</button>
     </div>
   </header>
 
@@ -291,6 +305,7 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
       <div class="cart-top">
         <div class="cart-head-line">
           <h2 class="cart-title">Current Cart</h2>
+          <button class="cart-gift-toggle" id="freeGiftBtn" type="button" aria-label="Toggle free gift">🧣</button>
           <div class="cart-sub" id="cartMeta">0 items ready</div>
         </div>
         <button class="cart-clear" id="clearCartBtn" type="button">Clear Cart</button>
@@ -441,6 +456,17 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
   </div>
 </section>
 
+<section class="overlay" id="confirmInventoryAddOverlay" aria-hidden="true">
+  <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmInventoryAddTitle" aria-describedby="confirmInventoryAddMessage">
+    <h2 id="confirmInventoryAddTitle">Add inventory today?</h2>
+    <p id="confirmInventoryAddMessage">Confirm this top-up before it changes the active day stock.</p>
+    <div class="confirm-actions">
+      <button class="action-btn secondary" id="cancelInventoryAddBtn" type="button">Cancel</button>
+      <button class="action-btn primary" id="confirmInventoryAddBtn" type="button">Confirm Add</button>
+    </div>
+  </div>
+</section>
+
 <section class="dashboard-overlay" id="inventoryViewOverlay">
   <div class="dashboard-card">
     <div class="dashboard-panel" style="display:block">
@@ -459,6 +485,10 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
             <div class="inventory-kpi">
               <div class="inventory-kpi-label">Starting Stock</div>
               <div class="inventory-kpi-value" id="inventoryViewStartingTotal">0</div>
+            </div>
+            <div class="inventory-kpi">
+              <div class="inventory-kpi-label">Added Stock</div>
+              <div class="inventory-kpi-value" id="inventoryViewAddedTotal">0</div>
             </div>
             <div class="inventory-kpi">
               <div class="inventory-kpi-label">Sold</div>
@@ -480,12 +510,22 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
                 <tr>
                   <th>Product</th>
                   <th>Starting Stock</th>
+                  <th>Added Stock</th>
                   <th>Sold Quantity</th>
                   <th>Remaining Stock</th>
                 </tr>
               </thead>
               <tbody id="inventoryViewTableBody"></tbody>
             </table>
+          </div>
+          <div class="inventory-log">
+            <div class="inventory-log-head">
+              <strong>Daily add-stock record</strong>
+              <span id="inventoryViewAddLogSummary">No top-ups yet.</span>
+            </div>
+            <div class="inventory-log-list" id="inventoryViewAddLogList">
+              <div class="inventory-log-empty">No stock has been added for this day yet.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -528,14 +568,14 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
       <div class="dashboard-head">
         <div>
           <h2>Developer Tools</h2>
-          <p>Set Day 1 stock and low-stock alerts without exposing these controls to the sales team.</p>
+          <p>Set Day 1 stock, low-stock alerts, and tracked daily top-ups without exposing these controls to the sales team.</p>
         </div>
         <button class="dashboard-close" id="inventoryCloseBtn" type="button">Close</button>
       </div>
       <div class="dashboard-tools">
         <div class="dashboard-tool-card">
           <h3>Developer Mode</h3>
-          <p>Each product has one compact card with the Day 1 opening stock and the low-stock warning level.</p>
+          <p>Each product card keeps Day 1 opening stock separate from any stock you add later in the day.</p>
           <div class="inventory-editor-list" id="inventoryControlList"></div>
           <div class="dashboard-tool-actions">
             <button class="action-btn danger" id="resetSalesNowBtn" type="button">Reset Sales + Inventory</button>
@@ -581,7 +621,6 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
       <div class="dashboard-head">
         <div>
           <h2>Internal Dashboard</h2>
-          <p>One-screen event pulse from the sales saved on this device.</p>
         </div>
         <button class="dashboard-close" id="dashboardCloseBtn" type="button">Close</button>
       </div>
@@ -636,7 +675,6 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
         </div>
         <div class="dashboard-tool-card">
           <h3>Operating Day Sales</h3>
-          <p>Track how each event day is performing from the same saved sales records.</p>
           <div class="dashboard-days" id="dashboardDayCards"></div>
         </div>
       </div>
@@ -646,20 +684,29 @@ linear-gradient(135deg,#fffdf8 0%,#f7eedf 58%,#efe2cf 100%);box-shadow:var(--sha
 
 <script>
 const PRODUCTS = [
-  { sku:"002A", name:"Cat the Curator 🔵", price:790, category:"Signature", tab:"meowseum" },
-  { sku:"002B", name:"Cat the Curator 🟡", price:790, category:"Signature", tab:"meowseum" },
-  { sku:"003", name:"The Ionic Column", price:890, category:"Classic", tab:"meowseum" },
-  { sku:"004", name:"The Parthenon", price:490, category:"Entry", tab:"meowseum" },
-  { sku:"005", name:"The Colosseum", price:2590, category:"Premium", tab:"meowseum" },
-  { sku:"006", name:"The Triceratops", price:990, category:"Classic", tab:"meowseum" },
-  { sku:"007", name:"Big Ben", price:1190, category:"Premium", tab:"meowseum" },
-  { sku:"010", name:"The Sphinx of Giza", price:790, category:"Signature", tab:"meowseum" },
-  { sku:"011", name:"The Sphinx of Greece", price:990, category:"Classic", tab:"meowseum" },
-  { sku:"012", name:"Bowl Appetit", price:1590, category:"Lifestyle", tab:"meowseum" },
-  { sku:"013", name:"Monalisa", price:1990, category:"Premium", tab:"meowseum" },
-  { sku:"014", name:"Venus", price:790, category:"Signature", tab:"meowseum" },
-  { sku:"MF-001", name:"Lobster Doll", price:690, category:"Plush", tab:"modernfriend" },
-  { sku:"MF-002", name:"Banana Doll", price:590, category:"Plush", tab:"modernfriend" }
+  { sku:"002A", name:"Cat the Curator 🔵", price:650, category:"Signature", tab:"meowseum" },
+  { sku:"002B", name:"Cat the Curator 🟡", price:650, category:"Signature", tab:"meowseum" },
+  { sku:"003", name:"The Ionic Column", price:790, category:"Classic", tab:"meowseum" },
+  { sku:"004", name:"The Parthenon", price:450, category:"Entry", tab:"meowseum" },
+  { sku:"005", name:"The Colosseum", price:2190, category:"Premium", tab:"meowseum" },
+  { sku:"006", name:"The Triceratops", price:790, category:"Classic", tab:"meowseum" },
+  { sku:"007", name:"Big Ben", price:990, category:"Premium", tab:"meowseum" },
+  { sku:"010", name:"The Sphinx of Giza", price:690, category:"Signature", tab:"meowseum" },
+  { sku:"011", name:"The Sphinx of Greece", price:890, category:"Classic", tab:"meowseum" },
+  { sku:"012", name:"Bowl Appetit", price:1290, category:"Lifestyle", tab:"meowseum" },
+  { sku:"013", name:"Mona Lisa", price:1490, category:"Premium", tab:"meowseum" },
+  { sku:"014", name:"Venus", price:590, category:"Signature", tab:"meowseum" },
+  { sku:"015", name:"Starry Night", price:1390, category:"Premium", tab:"meowseum" },
+  { sku:"016", name:"Game of Thrones", price:1490, category:"Premium", tab:"meowseum" },
+  { sku:"017", name:"Banana Doll", price:450, category:"Plush", tab:"modernfriend" },
+  { sku:"018", name:"Lobster Doll", price:450, category:"Plush", tab:"modernfriend" },
+  { sku:"019", name:"Pet Scarf 01 S", price:650, category:"Lifestyle", tab:"modernfriend" },
+  { sku:"020", name:"Pet Scarf 01 M", price:650, category:"Lifestyle", tab:"modernfriend" },
+  { sku:"021", name:"Pet Scarf 02 S", price:650, category:"Lifestyle", tab:"modernfriend" },
+  { sku:"022", name:"Pet Scarf 02 M", price:650, category:"Lifestyle", tab:"modernfriend" },
+  { sku:"023", name:"Sticker Classic (Brown)", price:100, category:"Accessory", tab:"meowseum" },
+  { sku:"024", name:"Sticker Modern (Black)", price:100, category:"Accessory", tab:"meowseum" },
+  { sku:"025", name:"Sticker Travel (White)", price:100, category:"Accessory", tab:"meowseum" }
 ];
 
 const TAGS = [
@@ -670,10 +717,10 @@ const TAGS = [
   "🔁 Returning interest"
 ];
 
-const OPERATORS = ["OP-01","OP-02","OP-03","OP-04","OP-05","OP-06"];
+const OPERATORS = ["Zamm","Ben","Kat","Staff"];
 const STORAGE_KEY = "meowseum_event_sales_v1";
 const INVENTORY_STORAGE_KEY = "meowseum_event_inventory_v1";
-const EVENT_SALES_GOAL = 500000;
+const EVENT_SALES_GOAL = 300000;
 const DASHBOARD_PASSWORD = "456";
 const EVENT_DAYS = [
   { id: "day1", label: "Day 1" },
@@ -695,6 +742,10 @@ const TABS = [
   { id: "modernfriend", label: "ModernFriend >.<", note: "Everyday cat life" }
 ];
 const DISCOUNT_PRESETS = Array.from({length:50},(_,index)=>(index+1)*10);
+const FREE_GIFT_SKU = "GIFT-SCARF";
+const FREE_GIFT_NAME = "Limited Edition Meowseum Scarf";
+const FREE_GIFT_CATEGORY = "Promo Gift";
+const FREE_GIFT_THRESHOLD = 2000;
 
 const state = {
   activeTab: "meowseum",
@@ -702,11 +753,13 @@ const state = {
   qrMode: "online",
   cart: [],
   sales: [],
+  freeGiftOverride: null,
   selectedTags: [],
   selectedOperator: "",
   pendingSale: null,
   transferPayload: "",
   inventory: null,
+  pendingInventoryAdd: null,
   inventoryPin: "",
   dashboardPin: ""
 };
@@ -714,14 +767,14 @@ const state = {
 const els = {};
 
 function $(id){return document.getElementById(id);}
-function cacheElements(){["tabBar","productGrid","inventoryAccessBtn","developerAccessBtn","inventoryViewOverlay","inventoryViewCloseBtn","inventoryViewDaySwitch","inventoryViewStartingTotal","inventoryViewSoldTotal","inventoryViewRemainingTotal","inventoryViewDayStatus","inventoryViewCloseDayNote","inventoryViewCloseDayBtn","inventoryViewTableBody","inventoryOverlay","inventoryLockScreen","inventoryPanel","inventoryCloseBtn","inventoryPinDot1","inventoryPinDot2","inventoryPinDot3","inventoryPinText","inventoryPinError","inventoryNumpad","inventoryControlList","dashboardAccessBtn","dashboardOverlay","dashboardLockScreen","dashboardPanel","dashboardCloseBtn","dashboardPinDot1","dashboardPinDot2","dashboardPinDot3","dashboardPinText","dashboardPinError","dashboardNumpad","dashboardHero","dashboardStatusEmoji","dashboardStatusText","dashboardGoalGauge","dashboardProgressFill","dashboardGoalCurrent","dashboardGoalTarget","dashboardGoalPercent","dashboardGoalRemaining","dashboardGoalOverage","dashboardTotalSales","dashboardTodaySales","dashboardReceipts","dashboardItemsSold","dashboardAvgBill","dashboardDayCards","resetSalesNowBtn","confirmResetSalesOverlay","cancelResetSalesBtn","confirmResetSalesBtn","cartList","cartMeta","summaryItems","summarySubtotal","summaryDiscount","summaryTotal","paymentGrid","transferBox","transferModeToggle","transferQrImage","qrCanvas","transferAmountText","transferInfoText","transferSourceText","transferHintText","transferNoteText","transferPayloadText","completeSaleBtn","clearCartBtn","clearCartOverlay","cancelClearCartBtn","confirmClearCartBtn","successOverlay","backToSaleBtn","receiptDateText","receiptBillIdText","receiptStaffText","receiptPaymentText","receiptItems","receiptSubtotalText","receiptDiscountText","receiptTotal","receiptReceivedText","receiptChangeText","receiptEmailInput","paymentConfirmedInput","paymentConfirmTitle","paymentConfirmNote","paymentReferenceInput","operatorGrid","tagGrid","finishHint","saveSaleBtn","pendingTransferBox","pendingTransferStatus","pendingTransferQrImage","pendingQrCanvas","pendingTransferAmountText","pendingTransferInfoText","pendingTransferSourceText","pendingTransferHintText","pendingTransferNoteText","pendingTransferPayloadText"].forEach(id=>els[id]=$(id));}
+function cacheElements(){["tabBar","productGrid","inventoryAccessBtn","developerAccessBtn","inventoryViewOverlay","inventoryViewCloseBtn","inventoryViewDaySwitch","inventoryViewStartingTotal","inventoryViewAddedTotal","inventoryViewSoldTotal","inventoryViewRemainingTotal","inventoryViewDayStatus","inventoryViewCloseDayNote","inventoryViewCloseDayBtn","inventoryViewTableBody","inventoryViewAddLogSummary","inventoryViewAddLogList","inventoryOverlay","inventoryLockScreen","inventoryPanel","inventoryCloseBtn","inventoryPinDot1","inventoryPinDot2","inventoryPinDot3","inventoryPinText","inventoryPinError","inventoryNumpad","inventoryControlList","dashboardAccessBtn","dashboardOverlay","dashboardLockScreen","dashboardPanel","dashboardCloseBtn","dashboardPinDot1","dashboardPinDot2","dashboardPinDot3","dashboardPinText","dashboardPinError","dashboardNumpad","dashboardHero","dashboardStatusEmoji","dashboardStatusText","dashboardGoalGauge","dashboardProgressFill","dashboardGoalCurrent","dashboardGoalTarget","dashboardGoalPercent","dashboardGoalRemaining","dashboardGoalOverage","dashboardTotalSales","dashboardTodaySales","dashboardReceipts","dashboardItemsSold","dashboardAvgBill","dashboardDayCards","resetSalesNowBtn","confirmResetSalesOverlay","cancelResetSalesBtn","confirmResetSalesBtn","confirmInventoryAddOverlay","confirmInventoryAddTitle","confirmInventoryAddMessage","cancelInventoryAddBtn","confirmInventoryAddBtn","cartList","cartMeta","summaryItems","summarySubtotal","summaryDiscount","summaryTotal","paymentGrid","transferBox","transferModeToggle","transferQrImage","qrCanvas","transferAmountText","transferInfoText","transferSourceText","transferHintText","transferNoteText","transferPayloadText","completeSaleBtn","clearCartBtn","freeGiftBtn","clearCartOverlay","cancelClearCartBtn","confirmClearCartBtn","successOverlay","backToSaleBtn","receiptDateText","receiptBillIdText","receiptStaffText","receiptPaymentText","receiptItems","receiptSubtotalText","receiptDiscountText","receiptTotal","receiptReceivedText","receiptChangeText","receiptEmailInput","paymentConfirmedInput","paymentConfirmTitle","paymentConfirmNote","paymentReferenceInput","operatorGrid","tagGrid","finishHint","saveSaleBtn","pendingTransferBox","pendingTransferStatus","pendingTransferQrImage","pendingQrCanvas","pendingTransferAmountText","pendingTransferInfoText","pendingTransferSourceText","pendingTransferHintText","pendingTransferNoteText","pendingTransferPayloadText"].forEach(id=>els[id]=$(id));}
 function loadSales(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]").map(sale=>({...sale,operatingDay:EVENT_DAYS.some(day=>day.id===sale.operatingDay)?sale.operatingDay:"day1"}));}catch(_){return[];}}
 function saveSales(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.sales));return true;}catch(error){alert("Could not save this sale on this device. Please copy the receipt and check storage settings before continuing.");console.error(error);return false;}}
 function buildSkuMap(factory){const output={};PRODUCTS.forEach(product=>{output[product.sku]=factory(product);});return output;}
 function clampCount(value){return Math.max(0,Math.floor(Number(value)||0));}
-function createInventoryDay(startingStock){return{startingStock:buildSkuMap(product=>clampCount(startingStock?.[product.sku])),closed:false,closedAt:null,exportedAt:null};}
+function createInventoryDay(startingStock,addedStock,addLog){return{startingStock:buildSkuMap(product=>clampCount(startingStock?.[product.sku])),addedStock:buildSkuMap(product=>clampCount(addedStock?.[product.sku])),addLog:Array.isArray(addLog)?addLog.filter(entry=>entry&&typeof entry==="object").map(entry=>({sku:String(entry.sku||""),qty:clampCount(entry.qty),at:entry.at||new Date().toISOString(),dayId:entry.dayId||null})):[],closed:false,closedAt:null,exportedAt:null};}
 function createDefaultInventory(){const days={};EVENT_DAYS.forEach(day=>{days[day.id]=createInventoryDay();});return{currentDay:"day1",viewDay:"day1",thresholds:buildSkuMap(()=>DEFAULT_LOW_STOCK_TRIGGER),days};}
-function normalizeInventory(raw){const normalized=createDefaultInventory();if(!raw||typeof raw!=="object")return normalized;normalized.currentDay=EVENT_DAYS.some(day=>day.id===raw.currentDay)?raw.currentDay:"day1";normalized.viewDay=EVENT_DAYS.some(day=>day.id===raw.viewDay)?raw.viewDay:normalized.currentDay;normalized.thresholds=buildSkuMap(product=>clampCount(raw.thresholds?.[product.sku]));EVENT_DAYS.forEach(day=>{const source=raw.days?.[day.id]||{};normalized.days[day.id]={startingStock:buildSkuMap(product=>clampCount(source.startingStock?.[product.sku])),closed:Boolean(source.closed),closedAt:source.closedAt||null,exportedAt:source.exportedAt||null};});return normalized;}
+function normalizeInventory(raw){const normalized=createDefaultInventory();if(!raw||typeof raw!=="object")return normalized;normalized.currentDay=EVENT_DAYS.some(day=>day.id===raw.currentDay)?raw.currentDay:"day1";normalized.viewDay=EVENT_DAYS.some(day=>day.id===raw.viewDay)?raw.viewDay:normalized.currentDay;normalized.thresholds=buildSkuMap(product=>clampCount(raw.thresholds?.[product.sku]));EVENT_DAYS.forEach(day=>{const source=raw.days?.[day.id]||{};normalized.days[day.id]={startingStock:buildSkuMap(product=>clampCount(source.startingStock?.[product.sku])),addedStock:buildSkuMap(product=>clampCount(source.addedStock?.[product.sku])),addLog:Array.isArray(source.addLog)?source.addLog.filter(entry=>entry&&typeof entry==="object").map(entry=>({sku:String(entry.sku||""),qty:clampCount(entry.qty),at:entry.at||null,dayId:entry.dayId||day.id})):[],closed:Boolean(source.closed),closedAt:source.closedAt||null,exportedAt:source.exportedAt||null};});return normalized;}
 function loadInventory(){try{return normalizeInventory(JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)||"null"));}catch(_){return createDefaultInventory();}}
 function saveInventory(){try{localStorage.setItem(INVENTORY_STORAGE_KEY,JSON.stringify(state.inventory));return true;}catch(error){alert("Could not save inventory data on this device. Please check storage settings before continuing.");console.error(error);return false;}}
 function formatCurrency(value){return new Intl.NumberFormat("en-US",{style:"currency",currency:"THB",minimumFractionDigits:0,maximumFractionDigits:0}).format(value||0);}
@@ -734,10 +787,17 @@ function saleId(date=new Date()){return `BILL-${date.getFullYear()}${String(date
 function getProductTab(product){return product.tab||"meowseum";}
 function getLineDiscountAmount(line){return roundMoney(Math.max(0,Number(line.discountAmount)||0));}
 function normalizeLineDiscount(line,value){const maxDiscount=Math.max(0,Number(line.basePrice)||0);return roundMoney(Math.min(maxDiscount,Math.max(0,Number(value)||0)));}
+function isFreeGiftLine(line){return line?.sku===FREE_GIFT_SKU||Boolean(line?.isFreeGift);}
+function qualifyingCartTotal(){return roundMoney(state.cart.filter(line=>!isFreeGiftLine(line)).reduce((sum,line)=>sum+lineTotal(line),0));}
+function findFreeGiftLine(){return state.cart.find(line=>isFreeGiftLine(line))||null;}
+function createFreeGiftLine(mode="auto"){return{sku:FREE_GIFT_SKU,name:FREE_GIFT_NAME,category:FREE_GIFT_CATEGORY,qty:1,basePrice:0,discountAmount:0,isFreeGift:true,giftMode:mode};}
+function removeFreeGiftLine(){state.cart=state.cart.filter(line=>!isFreeGiftLine(line));}
+function syncFreeGift(){const qualifies=qualifyingCartTotal()>=FREE_GIFT_THRESHOLD;const existing=findFreeGiftLine();if(!qualifies){removeFreeGiftLine();state.freeGiftOverride=null;return;}if(existing)return;if(state.freeGiftOverride==="removed")return;state.cart.push(createFreeGiftLine(state.freeGiftOverride==="added"?"manual":"auto"));}
+function toggleFreeGift(){const qualifies=qualifyingCartTotal()>=FREE_GIFT_THRESHOLD;const existing=findFreeGiftLine();if(existing){removeFreeGiftLine();state.freeGiftOverride="removed";renderCart();return;}if(!qualifies)return;state.cart.push(createFreeGiftLine("manual"));state.freeGiftOverride="added";renderCart();}
 function currentUnitPrice(line){return roundMoney(Math.max(0,line.basePrice-getLineDiscountAmount(line)));}
 function lineTotal(line){return roundMoney(currentUnitPrice(line)*line.qty);}
 function cartTotals(){const subtotal=roundMoney(state.cart.reduce((sum,line)=>sum+line.basePrice*line.qty,0));const total=roundMoney(state.cart.reduce((sum,line)=>sum+lineTotal(line),0));return{items:state.cart.reduce((sum,line)=>sum+line.qty,0),subtotal,discount:roundMoney(subtotal-total),total};}
-function serializeCartLine(line){const finalUnitPrice=currentUnitPrice(line);const lineSubtotal=roundMoney(line.basePrice*line.qty);const lineTotalValue=roundMoney(finalUnitPrice*line.qty);const discountPerItem=getLineDiscountAmount(line);const discountAmount=roundMoney(lineSubtotal-lineTotalValue);return{sku:line.sku,name:line.name,category:line.category,qty:line.qty,basePrice:line.basePrice,discounted:discountPerItem>0,discountPerItem,finalUnitPrice,lineSubtotal,discountAmount,lineDiscount:discountAmount,lineTotal:lineTotalValue};}
+function serializeCartLine(line){const finalUnitPrice=currentUnitPrice(line);const lineSubtotal=roundMoney(line.basePrice*line.qty);const lineTotalValue=roundMoney(finalUnitPrice*line.qty);const discountPerItem=getLineDiscountAmount(line);const discountAmount=roundMoney(lineSubtotal-lineTotalValue);return{sku:line.sku,name:line.name,category:line.category,qty:line.qty,basePrice:line.basePrice,discounted:discountPerItem>0,discountPerItem,finalUnitPrice,lineSubtotal,discountAmount,lineDiscount:discountAmount,lineTotal:lineTotalValue,isFreeGift:Boolean(line.isFreeGift)};}
 function requiresPaymentConfirmation(payment){return payment==="transfer"||payment==="card";}
 function paymentLabel(payment){return payment==="transfer"?"Bank Transfer":payment.charAt(0).toUpperCase()+payment.slice(1);}
 function finishActionsEnabled(){if(!state.pendingSale)return false;if(!state.selectedOperator)return false;if(requiresPaymentConfirmation(state.pendingSale.payment)&&!els.paymentConfirmedInput.checked)return false;return true;}
@@ -750,12 +810,13 @@ function exportDayCsv(dayId){try{const csv=daySalesToCsv(dayId);const blob=new B
 function getBestCategory(){if(!state.sales.length)return"Signature";const bucket={};state.sales.forEach(sale=>sale.items.forEach(item=>{bucket[item.category]=(bucket[item.category]||0)+item.qty;}));return Object.entries(bucket).sort((a,b)=>b[1]-a[1])[0]?.[0]||"Signature";}
 function dateKey(value){const date=value instanceof Date?value:new Date(value);if(Number.isNaN(date.getTime()))return"";return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;}
 function dayLabel(dayId){return EVENT_DAYS.find(day=>day.id===dayId)?.label||dayId;}
+function formatInventoryLogTime(value){const date=new Date(value);if(Number.isNaN(date.getTime()))return"--:--";return date.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});}
 function saleDay(sale){return EVENT_DAYS.some(day=>day.id===sale?.operatingDay)?sale.operatingDay:"day1";}
 function getInventoryDay(dayId){return state.inventory.days[dayId];}
 function getDaySales(dayId){return state.sales.filter(sale=>saleDay(sale)===dayId);}
 function getDaySoldMap(dayId){const sold=buildSkuMap(()=>0);getDaySales(dayId).forEach(sale=>sale.items.forEach(item=>{if(item.sku in sold)sold[item.sku]+=Number(item.qty||0);}));return sold;}
-function getDayRemainingMap(dayId){const starting=getInventoryDay(dayId).startingStock;const sold=getDaySoldMap(dayId);return buildSkuMap(product=>Math.max(0,clampCount(starting[product.sku])-clampCount(sold[product.sku])));}
-function getProductInventorySnapshot(dayId,sku){const starting=clampCount(getInventoryDay(dayId).startingStock[sku]);const sold=clampCount(getDaySoldMap(dayId)[sku]);const remaining=Math.max(0,starting-sold);const threshold=clampCount(state.inventory.thresholds[sku]);return{starting,sold,remaining,threshold,isLow:remaining<=threshold,isSoldOut:remaining<=0};}
+function getDayRemainingMap(dayId){const dayRecord=getInventoryDay(dayId);const sold=getDaySoldMap(dayId);return buildSkuMap(product=>Math.max(0,clampCount(dayRecord.startingStock[product.sku])+clampCount(dayRecord.addedStock[product.sku])-clampCount(sold[product.sku])));}
+function getProductInventorySnapshot(dayId,sku){const dayRecord=getInventoryDay(dayId);const starting=clampCount(dayRecord.startingStock[sku]);const added=clampCount(dayRecord.addedStock[sku]);const sold=clampCount(getDaySoldMap(dayId)[sku]);const remaining=Math.max(0,starting+added-sold);const threshold=clampCount(state.inventory.thresholds[sku]);return{starting,added,sold,remaining,threshold,isLow:remaining<=threshold,isSoldOut:remaining<=0};}
 function currentDayId(){return state.inventory.currentDay;}
 function viewDayId(){return state.inventory.viewDay;}
 function isCurrentDayClosed(){return Boolean(getInventoryDay(currentDayId()).closed);}
@@ -774,8 +835,8 @@ function closeDashboard(){els.dashboardOverlay.classList.remove("open");resetDas
 function renderInventoryPin(){const dots=[els.inventoryPinDot1,els.inventoryPinDot2,els.inventoryPinDot3];dots.forEach((dot,index)=>dot.classList.toggle("filled",index<state.inventoryPin.length));els.inventoryPinText.textContent=state.inventoryPin?"Enter passcode":"Passcode";}
 function resetInventoryLock(){state.inventoryPin="";els.inventoryPinError.textContent="";els.inventoryLockScreen.classList.remove("hidden");els.inventoryPanel.classList.add("hidden");renderInventoryPin();}
 function bindDaySwitch(container,onSelect){container.innerHTML=EVENT_DAYS.map(day=>{const isSelected=viewDayId()===day.id;const isClosed=getInventoryDay(day.id).closed;return`<button class="day-chip ${isSelected?"active":""} ${isClosed?"closed":""}" type="button" data-view-day="${day.id}">${escapeHtml(day.label)}${day.id===currentDayId()?" • live":isClosed?" • closed":""}</button>`;}).join("");container.querySelectorAll("[data-view-day]").forEach(button=>button.addEventListener("click",()=>{state.inventory.viewDay=button.dataset.viewDay;saveInventory();onSelect();}));}
-function renderInventoryManagement(){if(!els.inventoryControlList)return;const canEditStartingStock=!getInventoryDay("day1").closed&&getDaySales("day1").length===0;els.inventoryControlList.innerHTML=PRODUCTS.map(product=>`<div class="inventory-editor-item"><div class="inventory-editor-head"><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku)}</span></div><div class="inventory-editor-fields"><div class="inventory-editor-field"><label for="starting-stock-${escapeHtml(product.sku)}">Start</label><input class="inventory-number-input" id="starting-stock-${escapeHtml(product.sku)}" type="number" min="0" step="1" data-starting-stock-sku="${product.sku}" value="${clampCount(state.inventory.days.day1.startingStock[product.sku])}" ${canEditStartingStock?"":"disabled"}></div><div class="inventory-editor-field"><label for="threshold-${escapeHtml(product.sku)}">Low alert</label><input class="inventory-number-input" id="threshold-${escapeHtml(product.sku)}" type="number" min="0" step="1" data-threshold-sku="${product.sku}" value="${clampCount(state.inventory.thresholds[product.sku])}"></div></div></div>`).join("");els.inventoryControlList.querySelectorAll("[data-starting-stock-sku]").forEach(input=>input.addEventListener("change",event=>{state.inventory.days.day1.startingStock[event.target.dataset.startingStockSku]=clampCount(event.target.value);saveInventory();renderInventoryManagement();renderInventoryView();renderProducts();}));els.inventoryControlList.querySelectorAll("[data-threshold-sku]").forEach(input=>input.addEventListener("change",event=>{state.inventory.thresholds[event.target.dataset.thresholdSku]=clampCount(event.target.value);saveInventory();renderInventoryManagement();renderInventoryView();renderProducts();}));}
-function renderInventoryView(){if(!els.inventoryViewDaySwitch)return;const selectedDay=viewDayId();const activeDay=currentDayId();const dayRecord=getInventoryDay(selectedDay);const soldMap=getDaySoldMap(selectedDay);const remainingMap=getDayRemainingMap(selectedDay);const totalStarting=PRODUCTS.reduce((sum,product)=>sum+clampCount(dayRecord.startingStock[product.sku]),0);const totalSold=PRODUCTS.reduce((sum,product)=>sum+clampCount(soldMap[product.sku]),0);const totalRemaining=PRODUCTS.reduce((sum,product)=>sum+clampCount(remainingMap[product.sku]),0);bindDaySwitch(els.inventoryViewDaySwitch,renderInventoryView);els.inventoryViewStartingTotal.textContent=String(totalStarting);els.inventoryViewSoldTotal.textContent=String(totalSold);els.inventoryViewRemainingTotal.textContent=String(totalRemaining);els.inventoryViewDayStatus.textContent=`Viewing ${dayLabel(selectedDay)}. Active selling day: ${dayLabel(activeDay)}${getInventoryDay(activeDay).closed?" (closed)":" (open)"}.`;els.inventoryViewTableBody.innerHTML=PRODUCTS.map(product=>{const starting=clampCount(dayRecord.startingStock[product.sku]);const sold=clampCount(soldMap[product.sku]);const remaining=clampCount(remainingMap[product.sku]);const remainingClass=remaining<=0?"inventory-remaining soldout":remaining<=clampCount(state.inventory.thresholds[product.sku])?"inventory-remaining low":"inventory-remaining";return`<tr><td><strong>${escapeHtml(product.name)}</strong><div class="muted">${escapeHtml(product.sku)}</div></td><td><span class="inventory-number-static">${starting}</span></td><td>${sold}</td><td><span class="${remainingClass}">${remaining}</span></td></tr>`;}).join("");const activeDayRecord=getInventoryDay(activeDay);const nextDayId=getNextDayId(activeDay);els.inventoryViewCloseDayBtn.disabled=activeDayRecord.closed;els.inventoryViewCloseDayNote.textContent=activeDayRecord.closed?`${dayLabel(activeDay)} is locked.${nextDayId?` Selling has moved to ${dayLabel(nextDayId)}.`:" All event days are closed."}`:nextDayId?`When the day is over, close ${dayLabel(activeDay)} to export its CSV and copy remaining stock into ${dayLabel(nextDayId)}.`:`When the day is over, close ${dayLabel(activeDay)} to export the final CSV and lock the event.`;}
+function renderInventoryManagement(){if(!els.inventoryControlList)return;const canEditStartingStock=!getInventoryDay("day1").closed&&getDaySales("day1").length===0;const activeDay=currentDayId();const canAddInventory=!getInventoryDay(activeDay).closed;els.inventoryControlList.innerHTML=PRODUCTS.map(product=>`<div class="inventory-editor-item"><div class="inventory-editor-head"><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku)}</span></div><div class="inventory-editor-fields"><div class="inventory-editor-field"><label for="starting-stock-${escapeHtml(product.sku)}">Start</label><input class="inventory-number-input" id="starting-stock-${escapeHtml(product.sku)}" type="number" min="0" step="1" data-starting-stock-sku="${product.sku}" value="${clampCount(state.inventory.days.day1.startingStock[product.sku])}" ${canEditStartingStock?"":"disabled"}></div><div class="inventory-editor-field"><label for="threshold-${escapeHtml(product.sku)}">Low alert</label><input class="inventory-number-input" id="threshold-${escapeHtml(product.sku)}" type="number" min="0" step="1" data-threshold-sku="${product.sku}" value="${clampCount(state.inventory.thresholds[product.sku])}"></div></div><div class="inventory-editor-actions"><div class="inventory-editor-field" style="min-width:92px"><label for="add-stock-${escapeHtml(product.sku)}">Add today</label><input class="inventory-number-input" id="add-stock-${escapeHtml(product.sku)}" type="number" min="0" step="1" data-add-stock-sku="${product.sku}" value="0" ${canAddInventory?"":"disabled"}></div><button class="action-btn secondary" type="button" data-confirm-add-sku="${product.sku}" ${canAddInventory?"":"disabled"}>Confirm add</button></div></div>`).join("");els.inventoryControlList.querySelectorAll("[data-starting-stock-sku]").forEach(input=>input.addEventListener("change",event=>{state.inventory.days.day1.startingStock[event.target.dataset.startingStockSku]=clampCount(event.target.value);saveInventory();renderInventoryManagement();renderInventoryView();renderProducts();}));els.inventoryControlList.querySelectorAll("[data-threshold-sku]").forEach(input=>input.addEventListener("change",event=>{state.inventory.thresholds[event.target.dataset.thresholdSku]=clampCount(event.target.value);saveInventory();renderInventoryManagement();renderInventoryView();renderProducts();}));els.inventoryControlList.querySelectorAll("[data-confirm-add-sku]").forEach(button=>button.addEventListener("click",()=>{const sku=button.dataset.confirmAddSku;const input=els.inventoryControlList.querySelector(`[data-add-stock-sku="${sku}"]`);openInventoryAddConfirmDialog(sku,input?input.value:0);}));}
+function renderInventoryView(){if(!els.inventoryViewDaySwitch)return;const selectedDay=viewDayId();const activeDay=currentDayId();const dayRecord=getInventoryDay(selectedDay);const soldMap=getDaySoldMap(selectedDay);const remainingMap=getDayRemainingMap(selectedDay);const totalStarting=PRODUCTS.reduce((sum,product)=>sum+clampCount(dayRecord.startingStock[product.sku]),0);const totalAdded=PRODUCTS.reduce((sum,product)=>sum+clampCount(dayRecord.addedStock[product.sku]),0);const totalSold=PRODUCTS.reduce((sum,product)=>sum+clampCount(soldMap[product.sku]),0);const totalRemaining=PRODUCTS.reduce((sum,product)=>sum+clampCount(remainingMap[product.sku]),0);const addLog=Array.isArray(dayRecord.addLog)?dayRecord.addLog.filter(entry=>entry&&entry.qty>0):[];bindDaySwitch(els.inventoryViewDaySwitch,renderInventoryView);els.inventoryViewStartingTotal.textContent=String(totalStarting);els.inventoryViewAddedTotal.textContent=String(totalAdded);els.inventoryViewSoldTotal.textContent=String(totalSold);els.inventoryViewRemainingTotal.textContent=String(totalRemaining);els.inventoryViewDayStatus.textContent=`Viewing ${dayLabel(selectedDay)}. Active selling day: ${dayLabel(activeDay)}${getInventoryDay(activeDay).closed?" (closed)":" (open)"}.`;els.inventoryViewTableBody.innerHTML=PRODUCTS.map(product=>{const starting=clampCount(dayRecord.startingStock[product.sku]);const added=clampCount(dayRecord.addedStock[product.sku]);const sold=clampCount(soldMap[product.sku]);const remaining=clampCount(remainingMap[product.sku]);const remainingClass=remaining<=0?"inventory-remaining soldout":remaining<=clampCount(state.inventory.thresholds[product.sku])?"inventory-remaining low":"inventory-remaining";return`<tr><td><strong>${escapeHtml(product.name)}</strong><div class="muted">${escapeHtml(product.sku)}</div></td><td><span class="inventory-number-static">${starting}</span></td><td>${added}</td><td>${sold}</td><td><span class="${remainingClass}">${remaining}</span></td></tr>`;}).join("");if(els.inventoryViewAddLogSummary)els.inventoryViewAddLogSummary.textContent=addLog.length?`${addLog.length} top-up${addLog.length===1?"":"s"} recorded for ${dayLabel(selectedDay)}.`:`No top-ups recorded for ${dayLabel(selectedDay)}.`;if(els.inventoryViewAddLogList)els.inventoryViewAddLogList.innerHTML=addLog.length?addLog.slice().sort((a,b)=>new Date(b.at||0)-new Date(a.at||0)).map(entry=>{const product=PRODUCTS.find(item=>item.sku===entry.sku);return`<div class="inventory-log-item"><div><strong>${escapeHtml(product?.name||entry.sku)}</strong><div class="muted">${escapeHtml(entry.sku)} • +${clampCount(entry.qty)}</div></div><span>${escapeHtml(formatInventoryLogTime(entry.at))}</span></div>`;}).join(""):`<div class="inventory-log-empty">No stock has been added for this day yet.</div>`;const activeDayRecord=getInventoryDay(activeDay);const nextDayId=getNextDayId(activeDay);els.inventoryViewCloseDayBtn.disabled=activeDayRecord.closed;els.inventoryViewCloseDayNote.textContent=activeDayRecord.closed?`${dayLabel(activeDay)} is locked.${nextDayId?` Selling has moved to ${dayLabel(nextDayId)}.`:" All event days are closed."}`:nextDayId?`When the day is over, close ${dayLabel(activeDay)} to export its CSV and carry remaining stock into ${dayLabel(nextDayId)}. Added stock stays recorded on the day it was topped up.`:`When the day is over, close ${dayLabel(activeDay)} to export the final CSV and lock the event. Added stock stays recorded on the day it was topped up.`;}
 function unlockInventory(){renderInventoryManagement();els.inventoryLockScreen.classList.add("hidden");els.inventoryPanel.classList.remove("hidden");}
 function submitInventoryPin(){if(state.inventoryPin===DASHBOARD_PASSWORD){els.inventoryPinError.textContent="";unlockInventory();return;}state.inventoryPin="";els.inventoryPinError.textContent="Incorrect password";renderInventoryPin();}
 function handleInventoryPinInput(value){if(state.inventoryPin.length>=3)return;state.inventoryPin+=value;els.inventoryPinError.textContent="";renderInventoryPin();if(state.inventoryPin.length===3)submitInventoryPin();}
@@ -784,10 +845,13 @@ function openInventoryView(){state.inventory.viewDay=currentDayId();saveInventor
 function closeInventoryView(){els.inventoryViewOverlay.classList.remove("open");}
 function openInventory(){state.inventory.viewDay=currentDayId();saveInventory();resetInventoryLock();els.inventoryOverlay.classList.add("open");}
 function closeInventory(){els.inventoryOverlay.classList.remove("open");resetInventoryLock();}
-function closeOperatingDay(){const activeDay=currentDayId();const dayRecord=getInventoryDay(activeDay);if(dayRecord.closed)return;if(!exportDayCsv(activeDay))return;dayRecord.closed=true;dayRecord.closedAt=new Date().toISOString();dayRecord.exportedAt=dayRecord.closedAt;const nextDayId=getNextDayId(activeDay);if(nextDayId){state.inventory.days[nextDayId].startingStock=getDayRemainingMap(activeDay);state.inventory.currentDay=nextDayId;state.inventory.viewDay=nextDayId;}if(!saveInventory())return;renderInventoryManagement();renderInventoryView();renderProducts();renderCart();}
+function closeOperatingDay(){const activeDay=currentDayId();const dayRecord=getInventoryDay(activeDay);if(dayRecord.closed)return;if(!exportDayCsv(activeDay))return;dayRecord.closed=true;dayRecord.closedAt=new Date().toISOString();dayRecord.exportedAt=dayRecord.closedAt;const nextDayId=getNextDayId(activeDay);if(nextDayId){state.inventory.days[nextDayId].startingStock=getDayRemainingMap(activeDay);state.inventory.days[nextDayId].addedStock=buildSkuMap(()=>0);state.inventory.days[nextDayId].addLog=[];state.inventory.currentDay=nextDayId;state.inventory.viewDay=nextDayId;}if(!saveInventory())return;renderInventoryManagement();renderInventoryView();renderProducts();renderCart();}
 function openResetSalesConfirmDialog(){els.confirmResetSalesOverlay.classList.add("open");els.confirmResetSalesOverlay.setAttribute("aria-hidden","false");}
 function closeResetSalesConfirmDialog(){els.confirmResetSalesOverlay.classList.remove("open");els.confirmResetSalesOverlay.setAttribute("aria-hidden","true");}
 function requestResetSavedSales(){openResetSalesConfirmDialog();}
+function openInventoryAddConfirmDialog(sku,qty){const product=PRODUCTS.find(item=>item.sku===sku);const amount=clampCount(qty);if(!product||amount<=0)return;const activeDay=currentDayId();if(getInventoryDay(activeDay).closed){alert(`${dayLabel(activeDay)} is closed. Move to the next active day before adding stock.`);return;}state.pendingInventoryAdd={sku,qty:amount,dayId:activeDay};els.confirmInventoryAddTitle.textContent=`Add ${amount} more today?`;els.confirmInventoryAddMessage.textContent=`This will log a +${amount} stock top-up for ${product.name} on ${dayLabel(activeDay)} and update remaining stock immediately.`;els.confirmInventoryAddOverlay.classList.add("open");els.confirmInventoryAddOverlay.setAttribute("aria-hidden","false");}
+function closeInventoryAddConfirmDialog(){state.pendingInventoryAdd=null;els.confirmInventoryAddOverlay.classList.remove("open");els.confirmInventoryAddOverlay.setAttribute("aria-hidden","true");}
+function confirmInventoryAdd(){const pending=state.pendingInventoryAdd;if(!pending)return;const dayRecord=getInventoryDay(pending.dayId);if(!dayRecord||dayRecord.closed){closeInventoryAddConfirmDialog();return;}dayRecord.addedStock[pending.sku]=clampCount(dayRecord.addedStock[pending.sku])+clampCount(pending.qty);dayRecord.addLog.push({sku:pending.sku,qty:clampCount(pending.qty),at:new Date().toISOString(),dayId:pending.dayId});if(!saveInventory())return;renderInventoryManagement();renderInventoryView();renderProducts();renderCart();closeInventoryAddConfirmDialog();}
 function resetSavedSales(){state.sales=[];state.inventory=createDefaultInventory();localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(INVENTORY_STORAGE_KEY);renderDashboard();renderInventoryManagement();renderInventoryView();renderProducts();renderCart();renderTabs();closeResetSalesConfirmDialog();}
 function renderTabs(){els.tabBar.innerHTML=TABS.map(tab=>`<button class="tab ${state.activeTab===tab.id?"active":""}" type="button" data-tab="${tab.id}">${escapeHtml(tab.label)}</button>`).join("");els.tabBar.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{state.activeTab=button.dataset.tab;renderTabs();renderProducts();}));}
 function renderProducts(){const activeDay=currentDayId();const dayClosed=isCurrentDayClosed();const visible=PRODUCTS.filter(product=>getProductTab(product)===state.activeTab).sort((a,b)=>{const familyCompare=productFamilyKey(a).localeCompare(productFamilyKey(b));if(familyCompare===0){const variantCompare=productVariantOrder(a)-productVariantOrder(b);return variantCompare||b.price-a.price||a.name.localeCompare(b.name);}return b.price-a.price||familyCompare;});els.productGrid.innerHTML=visible.map(product=>{const snapshot=getProductInventorySnapshot(activeDay,product.sku);const blocked=dayClosed||snapshot.isSoldOut;const stockLabel=dayClosed?`${dayLabel(activeDay)} closed`:snapshot.isSoldOut?"Sold out":snapshot.isLow?`Low stock: ${snapshot.remaining} left`:`${snapshot.remaining} left`;const stockClass=dayClosed||snapshot.isSoldOut?"product-stock soldout":snapshot.isLow?"product-stock low":"product-stock";return`<article class="product-card ${blocked?"is-disabled":""}" role="button" tabindex="${blocked?"-1":"0"}" aria-disabled="${blocked?"true":"false"}" data-sku="${escapeHtml(product.sku)}" data-blocked="${blocked?"true":"false"}"><div class="product-top"><div class="product-copy"><div class="product-main"><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div><div class="product-side"><div class="${stockClass}">${escapeHtml(stockLabel)}</div><div class="product-price">${escapeHtml(formatCompactProductPrice(product.price))}</div></div></div></div></article>`;}).join("");els.productGrid.querySelectorAll("[data-sku]").forEach(card=>{if(card.dataset.blocked==="true")return;card.addEventListener("click",()=>addToCart(card.dataset.sku));card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();addToCart(card.dataset.sku);}});});}
@@ -800,9 +864,9 @@ function getLineDiscountAmount(line){return roundMoney(Math.max(0,Number(line.di
 function normalizeLineDiscount(line,value){const maxDiscount=Math.max(0,Number(line.basePrice)||0);return roundMoney(Math.min(maxDiscount,Math.max(0,Number(value)||0)));}
 function currentUnitPrice(line){return roundMoney(Math.max(0,line.basePrice-getLineDiscountAmount(line)));}
 function serializeCartLine(line){const finalUnitPrice=currentUnitPrice(line);const lineSubtotal=roundMoney(line.basePrice*line.qty);const lineTotalValue=roundMoney(finalUnitPrice*line.qty);const discountPerItem=getLineDiscountAmount(line);const discountAmount=roundMoney(lineSubtotal-lineTotalValue);return{sku:line.sku,name:line.name,category:line.category,qty:line.qty,basePrice:line.basePrice,discounted:discountPerItem>0,discountPerItem,finalUnitPrice,lineSubtotal,discountAmount,lineDiscount:discountAmount,lineTotal:lineTotalValue};}
-function addToCart(sku){const product=PRODUCTS.find(item=>item.sku===sku);if(!product)return;const existing=state.cart.find(line=>line.sku===sku&&getLineDiscountAmount(line)===0);if(existing)existing.qty+=1;else state.cart.push({sku:product.sku,name:product.name,category:product.category,qty:1,basePrice:product.price,discountAmount:0});renderCart();}
+function addToCart(sku){const product=PRODUCTS.find(item=>item.sku===sku);if(!product)return;const existing=state.cart.find(line=>line.sku===sku&&!isFreeGiftLine(line)&&getLineDiscountAmount(line)===0);if(existing)existing.qty+=1;else state.cart.push({sku:product.sku,name:product.name,category:product.category,qty:1,basePrice:product.price,discountAmount:0});renderCart();}
 function setLineDiscount(index,value){const line=state.cart[index];if(!line)return;line.discountAmount=normalizeLineDiscount(line,value);renderCart();}
-function renderCart(){const totals=cartTotals();const closed=isCurrentDayClosed();els.cartMeta.textContent=closed?`${dayLabel(currentDayId())} closed`:`${totals.items} item${totals.items===1?"":"s"} ready`;els.summaryItems.textContent=String(totals.items);els.summarySubtotal.textContent=formatCurrency(totals.subtotal);els.summaryDiscount.textContent=formatCurrency(totals.discount);els.summaryTotal.textContent=formatCurrency(totals.total);els.completeSaleBtn.disabled=!state.cart.length||closed;if(!state.cart.length){els.cartList.innerHTML=`<div class="cart-empty">${closed?`${dayLabel(currentDayId())} is closed. Open Inventory Control to move to the next event day.`:"Tap a product card to start the sale."}</div>`;}else{els.cartList.innerHTML=state.cart.map((line,index)=>{const currentDiscount=getLineDiscountAmount(line);const currentUnit=currentUnitPrice(line);const isPresetDiscount=currentDiscount===0||DISCOUNT_PRESETS.includes(currentDiscount);return`<article class="cart-item"><div><h3>${escapeHtml(line.name)}</h3><div class="sku">${escapeHtml(line.sku)}</div><div class="cart-actions"><div class="qty-controls"><button class="qty-btn minus" type="button" data-action="minus" data-index="${index}">-</button><button class="qty-btn plus" type="button" data-action="plus" data-index="${index}" ${closed?"disabled":""}>+</button></div><div class="discount-controls"><select class="discount-select" data-action="discount-preset" data-index="${index}"><option value="0" ${currentDiscount===0?"selected":""}>No discount</option>${DISCOUNT_PRESETS.map(amount=>`<option value="${amount}" ${currentDiscount===amount?"selected":""}>-${formatCurrency(amount)}</option>`).join("")}<option value="custom" ${!isPresetDiscount?"selected":""}>Custom</option></select><input class="discount-input" type="number" min="0" step="1" data-action="discount-custom" data-index="${index}" value="${currentDiscount}" placeholder="0"></div></div></div><div class="line-total"><strong>${formatCurrency(lineTotal(line))}</strong><div class="line-note">x${line.qty} • ${formatCurrency(currentUnit)}${currentDiscount>0?` • -${formatCurrency(currentDiscount)}`:" • no discount"}</div></div></article>`;}).join("");els.cartList.querySelectorAll("[data-action]").forEach(control=>{const index=Number(control.dataset.index);if(control.dataset.action==="minus")control.addEventListener("click",()=>updateQty(index,-1));if(control.dataset.action==="plus")control.addEventListener("click",()=>updateQty(index,1));if(control.dataset.action==="discount-preset")control.addEventListener("change",event=>{if(event.target.value==="custom")return;setLineDiscount(index,Number(event.target.value));});if(control.dataset.action==="discount-custom")control.addEventListener("change",event=>setLineDiscount(index,event.target.value));});}refreshTransferQr();}
+function renderCart(){syncFreeGift();const totals=cartTotals();const closed=isCurrentDayClosed();const qualifies=qualifyingCartTotal()>=FREE_GIFT_THRESHOLD;const hasGift=Boolean(findFreeGiftLine());els.cartMeta.textContent=closed?`${dayLabel(currentDayId())} closed`:hasGift?`🎁 Free scarf added • ${totals.items} items ready`:qualifies?`🎁 Free scarf unlocked • ${totals.items} items ready`:`${totals.items} item${totals.items===1?"":"s"} ready`;els.summaryItems.textContent=String(totals.items);els.summarySubtotal.textContent=formatCurrency(totals.subtotal);els.summaryDiscount.textContent=formatCurrency(totals.discount);els.summaryTotal.textContent=formatCurrency(totals.total);els.completeSaleBtn.disabled=!state.cart.length||closed;if(els.freeGiftBtn){els.freeGiftBtn.classList.toggle("active",hasGift);els.freeGiftBtn.disabled=closed||(!qualifies&&!hasGift);els.freeGiftBtn.title=hasGift?"Remove free scarf":qualifies?"Add free scarf":"Unlock free scarf at THB 2,000";}if(!state.cart.length){els.cartList.innerHTML=`<div class="cart-empty">${closed?`${dayLabel(currentDayId())} is closed. Open Inventory Control to move to the next event day.`:"Tap a product card to start the sale."}</div>`;}else{els.cartList.innerHTML=state.cart.map((line,index)=>{if(isFreeGiftLine(line)){return`<article class="cart-item is-gift"><div><h3>🧣 ${escapeHtml(line.name)}</h3><div class="sku">${escapeHtml(line.sku)} • ${escapeHtml(line.category)}</div><div class="line-note">${qualifies?"Auto gift for orders at THB 2,000+":"Promo gift"}</div></div><div class="line-total"><strong>${formatCurrency(0)}</strong><button class="remove-btn" type="button" data-action="remove-gift" data-index="${index}">Remove</button></div></article>`;}const currentDiscount=getLineDiscountAmount(line);const currentUnit=currentUnitPrice(line);const isPresetDiscount=currentDiscount===0||DISCOUNT_PRESETS.includes(currentDiscount);return`<article class="cart-item"><div><h3>${escapeHtml(line.name)}</h3><div class="sku">${escapeHtml(line.sku)}</div><div class="cart-actions"><div class="qty-controls"><button class="qty-btn minus" type="button" data-action="minus" data-index="${index}">-</button><button class="qty-btn plus" type="button" data-action="plus" data-index="${index}" ${closed?"disabled":""}>+</button></div><div class="discount-controls"><select class="discount-select" data-action="discount-preset" data-index="${index}"><option value="0" ${currentDiscount===0?"selected":""}>No discount</option>${DISCOUNT_PRESETS.map(amount=>`<option value="${amount}" ${currentDiscount===amount?"selected":""}>-${formatCurrency(amount)}</option>`).join("")}<option value="custom" ${!isPresetDiscount?"selected":""}>Custom</option></select><input class="discount-input" type="number" min="0" step="1" data-action="discount-custom" data-index="${index}" value="${currentDiscount}" placeholder="0"></div></div></div><div class="line-total"><strong>${formatCurrency(lineTotal(line))}</strong><div class="line-note">x${line.qty} • ${formatCurrency(currentUnit)}${currentDiscount>0?` • -${formatCurrency(currentDiscount)}`:" • no discount"}</div></div></article>`;}).join("");els.cartList.querySelectorAll("[data-action]").forEach(control=>{const index=Number(control.dataset.index);if(control.dataset.action==="minus")control.addEventListener("click",()=>updateQty(index,-1));if(control.dataset.action==="plus")control.addEventListener("click",()=>updateQty(index,1));if(control.dataset.action==="remove-gift")control.addEventListener("click",()=>{state.freeGiftOverride="removed";removeLine(index);});if(control.dataset.action==="discount-preset")control.addEventListener("change",event=>{if(event.target.value==="custom")return;setLineDiscount(index,Number(event.target.value));});if(control.dataset.action==="discount-custom")control.addEventListener("change",event=>setLineDiscount(index,event.target.value));});}refreshTransferQr();}
 function renderPayments(){const options=[{id:"cash",label:"\uD83D\uDCB5 Cash"},{id:"transfer",label:"\uD83C\uDFE6 Bank Transfer"},{id:"card",label:"\uD83D\uDCB3 Card"}];els.paymentGrid.innerHTML=options.map(option=>`<button class="payment-btn ${state.payment===option.id?"active":""}" type="button" data-payment="${option.id}">${escapeHtml(option.label)}</button>`).join("");els.paymentGrid.querySelectorAll("[data-payment]").forEach(button=>button.addEventListener("click",()=>{state.payment=button.dataset.payment;renderPayments();refreshTransferQr();}));}
 function sanitizePromptPayId(value,type){const digits=String(value||"").replace(/\D/g,"");if(!digits)return"";if(type==="phone"){const local=digits.startsWith("66")?"0"+digits.slice(2):digits;return local.length===10?local:"";}if(type==="nationalId")return digits.length>=13?digits.slice(0,13):"";if(type==="ewallet")return digits;return"";}
 function sanitizeEmvText(value,maxLength,fallback){const clean=String(value||"").normalize("NFKD").replace(/[^\x20-\x7E]/g,"").replace(/\s+/g," ").trim().toUpperCase();return(clean||fallback).slice(0,maxLength);}
@@ -829,7 +893,7 @@ function closeClearCartDialog(){els.clearCartOverlay.classList.remove("open");el
 function openClearCartDialog(){if(!state.cart.length)return;els.clearCartOverlay.classList.add("open");els.clearCartOverlay.setAttribute("aria-hidden","false");}
 function confirmClearCart(){state.cart=[];closeClearCartDialog();renderCart();}
 function clearCart(){openClearCartDialog();}
-function bindEvents(){els.inventoryAccessBtn.addEventListener("click",openInventoryView);els.developerAccessBtn.addEventListener("click",openInventory);els.dashboardAccessBtn.addEventListener("click",openDashboard);els.inventoryViewCloseBtn.addEventListener("click",closeInventoryView);els.inventoryCloseBtn.addEventListener("click",closeInventory);els.dashboardCloseBtn.addEventListener("click",closeDashboard);els.inventoryViewOverlay.addEventListener("click",event=>{if(event.target===els.inventoryViewOverlay)closeInventoryView();});els.inventoryOverlay.addEventListener("click",event=>{if(event.target===els.inventoryOverlay)closeInventory();});els.dashboardOverlay.addEventListener("click",event=>{if(event.target===els.dashboardOverlay)closeDashboard();});els.inventoryNumpad.addEventListener("click",event=>{const button=event.target.closest("button");if(!button)return;if(button.dataset.inventoryPinKey)handleInventoryPinInput(button.dataset.inventoryPinKey);if(button.dataset.inventoryPinAction)handleInventoryPinAction(button.dataset.inventoryPinAction);});els.dashboardNumpad.addEventListener("click",event=>{const button=event.target.closest("button");if(!button)return;if(button.dataset.pinKey)handleDashboardPinInput(button.dataset.pinKey);if(button.dataset.pinAction)handleDashboardPinAction(button.dataset.pinAction);});els.inventoryViewCloseDayBtn.addEventListener("click",closeOperatingDay);els.resetSalesNowBtn.addEventListener("click",requestResetSavedSales);els.confirmResetSalesOverlay.addEventListener("click",event=>{if(event.target===els.confirmResetSalesOverlay)closeResetSalesConfirmDialog();});els.cancelResetSalesBtn.addEventListener("click",closeResetSalesConfirmDialog);els.confirmResetSalesBtn.addEventListener("click",resetSavedSales);els.completeSaleBtn.addEventListener("click",completeSale);els.clearCartBtn.addEventListener("click",clearCart);els.clearCartOverlay.addEventListener("click",event=>{if(event.target===els.clearCartOverlay)closeClearCartDialog();});els.cancelClearCartBtn.addEventListener("click",closeClearCartDialog);els.confirmClearCartBtn.addEventListener("click",confirmClearCart);els.backToSaleBtn.addEventListener("click",()=>els.successOverlay.classList.remove("open"));els.saveSaleBtn.addEventListener("click",()=>finalizeSale("save"));els.paymentConfirmedInput.addEventListener("change",()=>{if(!state.pendingSale)return;state.pendingSale.paymentConfirmed=els.paymentConfirmedInput.checked;state.pendingSale.paymentStatus=els.paymentConfirmedInput.checked?"confirmed":"pending";renderSuccess();});els.paymentReferenceInput.addEventListener("input",()=>{if(!state.pendingSale)return;state.pendingSale.paymentReference=els.paymentReferenceInput.value.trim();});window.addEventListener("online",refreshTransferQr);window.addEventListener("offline",refreshTransferQr);window.addEventListener("storage",event=>{if(event.key===STORAGE_KEY){state.sales=loadSales();renderDashboard();renderInventoryManagement();renderInventoryView();renderProducts();renderCart();renderTabs();return;}if(event.key===INVENTORY_STORAGE_KEY){state.inventory=loadInventory();renderInventoryManagement();renderInventoryView();renderProducts();renderCart();}});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&els.clearCartOverlay.classList.contains("open"))closeClearCartDialog();if(event.key==="Escape"&&els.confirmResetSalesOverlay.classList.contains("open"))closeResetSalesConfirmDialog();if(event.key==="Escape"&&els.dashboardOverlay.classList.contains("open"))closeDashboard();if(event.key==="Escape"&&els.inventoryOverlay.classList.contains("open"))closeInventory();if(event.key==="Escape"&&els.inventoryViewOverlay.classList.contains("open"))closeInventoryView();});}
+function bindEvents(){els.inventoryAccessBtn.addEventListener("click",openInventoryView);els.developerAccessBtn.addEventListener("click",openInventory);els.dashboardAccessBtn.addEventListener("click",openDashboard);els.inventoryViewCloseBtn.addEventListener("click",closeInventoryView);els.inventoryCloseBtn.addEventListener("click",closeInventory);els.dashboardCloseBtn.addEventListener("click",closeDashboard);els.inventoryViewOverlay.addEventListener("click",event=>{if(event.target===els.inventoryViewOverlay)closeInventoryView();});els.inventoryOverlay.addEventListener("click",event=>{if(event.target===els.inventoryOverlay)closeInventory();});els.dashboardOverlay.addEventListener("click",event=>{if(event.target===els.dashboardOverlay)closeDashboard();});els.inventoryNumpad.addEventListener("click",event=>{const button=event.target.closest("button");if(!button)return;if(button.dataset.inventoryPinKey)handleInventoryPinInput(button.dataset.inventoryPinKey);if(button.dataset.inventoryPinAction)handleInventoryPinAction(button.dataset.inventoryPinAction);});els.dashboardNumpad.addEventListener("click",event=>{const button=event.target.closest("button");if(!button)return;if(button.dataset.pinKey)handleDashboardPinInput(button.dataset.pinKey);if(button.dataset.pinAction)handleDashboardPinAction(button.dataset.pinAction);});els.inventoryViewCloseDayBtn.addEventListener("click",closeOperatingDay);els.resetSalesNowBtn.addEventListener("click",requestResetSavedSales);els.confirmResetSalesOverlay.addEventListener("click",event=>{if(event.target===els.confirmResetSalesOverlay)closeResetSalesConfirmDialog();});els.cancelResetSalesBtn.addEventListener("click",closeResetSalesConfirmDialog);els.confirmResetSalesBtn.addEventListener("click",resetSavedSales);els.confirmInventoryAddOverlay.addEventListener("click",event=>{if(event.target===els.confirmInventoryAddOverlay)closeInventoryAddConfirmDialog();});els.cancelInventoryAddBtn.addEventListener("click",closeInventoryAddConfirmDialog);els.confirmInventoryAddBtn.addEventListener("click",confirmInventoryAdd);els.completeSaleBtn.addEventListener("click",completeSale);els.clearCartBtn.addEventListener("click",clearCart);els.freeGiftBtn.addEventListener("click",toggleFreeGift);els.clearCartOverlay.addEventListener("click",event=>{if(event.target===els.clearCartOverlay)closeClearCartDialog();});els.cancelClearCartBtn.addEventListener("click",closeClearCartDialog);els.confirmClearCartBtn.addEventListener("click",confirmClearCart);els.backToSaleBtn.addEventListener("click",()=>els.successOverlay.classList.remove("open"));els.saveSaleBtn.addEventListener("click",()=>finalizeSale("save"));els.paymentConfirmedInput.addEventListener("change",()=>{if(!state.pendingSale)return;state.pendingSale.paymentConfirmed=els.paymentConfirmedInput.checked;state.pendingSale.paymentStatus=els.paymentConfirmedInput.checked?"confirmed":"pending";renderSuccess();});els.paymentReferenceInput.addEventListener("input",()=>{if(!state.pendingSale)return;state.pendingSale.paymentReference=els.paymentReferenceInput.value.trim();});window.addEventListener("online",refreshTransferQr);window.addEventListener("offline",refreshTransferQr);window.addEventListener("storage",event=>{if(event.key===STORAGE_KEY){state.sales=loadSales();renderDashboard();renderInventoryManagement();renderInventoryView();renderProducts();renderCart();renderTabs();return;}if(event.key===INVENTORY_STORAGE_KEY){state.inventory=loadInventory();renderInventoryManagement();renderInventoryView();renderProducts();renderCart();}});document.addEventListener("keydown",event=>{if(event.key==="Escape"&&els.clearCartOverlay.classList.contains("open"))closeClearCartDialog();if(event.key==="Escape"&&els.confirmResetSalesOverlay.classList.contains("open"))closeResetSalesConfirmDialog();if(event.key==="Escape"&&els.confirmInventoryAddOverlay.classList.contains("open"))closeInventoryAddConfirmDialog();if(event.key==="Escape"&&els.dashboardOverlay.classList.contains("open"))closeDashboard();if(event.key==="Escape"&&els.inventoryOverlay.classList.contains("open"))closeInventory();if(event.key==="Escape"&&els.inventoryViewOverlay.classList.contains("open"))closeInventoryView();});}
 function playSuccessTone(){try{const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;const ctx=new AudioContextClass();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type="triangle";osc.frequency.setValueAtTime(660,ctx.currentTime);osc.frequency.linearRampToValueAtTime(980,ctx.currentTime+0.12);gain.gain.setValueAtTime(0.001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.18,ctx.currentTime+0.01);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.22);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.24);}catch(_){}}
 function clearQrCanvas(canvas=els.qrCanvas){const ctx=canvas.getContext("2d");ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);}
 function drawQrToCanvas(canvas,matrix){const ctx=canvas.getContext("2d");const size=canvas.width;const padding=18;const count=matrix.length;const tile=(size-padding*2)/count;ctx.clearRect(0,0,size,size);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,size,size);ctx.fillStyle="#111111";for(let row=0;row<count;row++){for(let col=0;col<count;col++){if(!matrix[row][col])continue;const x=Math.round(padding+col*tile);const y=Math.round(padding+row*tile);const w=Math.ceil(padding+(col+1)*tile)-x;const h=Math.ceil(padding+(row+1)*tile)-y;ctx.fillRect(x,y,w,h);}}}
