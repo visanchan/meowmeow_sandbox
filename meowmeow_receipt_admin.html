@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meowseum Receipt Admin</title>
+<style>
+:root{--bg:#f6f0e6;--panel:#fffaf3;--line:#ddcfbe;--text:#2b231d;--muted:#736555;--accent:#8d6236;--soft:#efe5d6;--shadow:0 22px 52px rgba(77,53,29,.10);--r-xl:28px;--r-lg:20px;--r-md:14px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Aptos","Segoe UI",Tahoma,sans-serif;background:linear-gradient(180deg,#fbf7ef 0%,#f1e7d6 100%);color:var(--text)}
+body{padding:18px}
+.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(320px,.95fr) minmax(320px,.85fr);gap:18px}
+.panel{border:1px solid rgba(141,98,54,.14);border-radius:var(--r-xl);background:linear-gradient(180deg,#fffdf9 0%,#fcf5e9 100%);box-shadow:var(--shadow);padding:20px}
+.panel h1,.panel h2,.panel h3{margin:0}
+.panel-head{display:grid;gap:8px;margin-bottom:16px}
+.muted{color:var(--muted)}
+textarea,input{font:inherit}
+textarea,input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text)}
+textarea{min-height:220px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{padding:14px 16px;border:0;border-radius:16px;font-weight:900;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#a9763f 0%,#7e552a 100%);color:#fffdf8}
+.btn.secondary{background:#f1e7d9;color:#5f462a}
+.status{margin-top:12px;font-size:13px;color:var(--muted);min-height:20px}
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.meta-card{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.meta-card strong{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.slip-receipt{max-width:360px;margin:0 auto;padding:14px 14px 18px;border:1px solid #cfc7bc;border-radius:0;background:#fff}
+.slip-top{text-align:center;padding-bottom:10px}
+.slip-brand{display:grid;justify-items:start;gap:0;line-height:.78;font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.055em;width:max-content;margin:0 auto;text-align:left;color:#2f261e}
+.slip-brand-line-the{font-size:22px;letter-spacing:-.03em}
+.slip-brand-line-meow,.slip-brand-line-seum{display:flex;justify-content:space-between;align-items:flex-end;width:4.35ch}
+.slip-brand-line-meow{font-size:56px}
+.slip-brand-line-seum{font-size:44px}
+.slip-company{margin-top:8px;font-size:15px;font-weight:900;letter-spacing:.08em}
+.slip-subbrand{margin-top:3px;font-size:12px;color:var(--muted);font-weight:700}
+.slip-badge{display:inline-block;margin-top:6px;padding:6px 14px;border-radius:999px;background:#eef1ff;font-size:12px}
+.slip-meta{display:grid;gap:4px;padding:8px 0 12px;font-size:12px;border-bottom:1px dashed #cfc7bc}
+.slip-meta-row{display:flex;justify-content:space-between;gap:12px}
+.slip-table{padding:10px 0;border-bottom:1px dashed #cfc7bc}
+.slip-table-head,.slip-item-row,.slip-sum-row,.slip-pay-row,.slip-total-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.slip-table-head{padding-bottom:6px;font-size:12px;font-weight:800;background:#f3f5fb;padding-left:6px;padding-right:6px}
+.slip-item-wrap{display:grid;gap:8px}
+.slip-item-row{padding-top:8px;border-top:1px dashed #d7d0c6;font-size:12px}
+.slip-item-name{font-weight:700}
+.slip-item-qty{color:var(--muted);font-size:12px}
+.slip-summary{display:grid;gap:4px;padding:10px 0}
+.slip-sum-row,.slip-pay-row{font-size:12px}
+.slip-total-row{padding-top:8px;border-top:1px solid #2f261e;font-size:18px;font-weight:900}
+.slip-thanks{display:grid;gap:5px;text-align:center;padding-top:14px;font-size:12px;line-height:1.45}
+.mail-box{display:grid;gap:10px;margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff}
+.mail-row{display:grid;gap:6px}
+.mail-row strong{font-size:12px;color:var(--muted)}
+a.mail-link{color:#6e4b27;font-weight:800;text-decoration:none}
+@media (max-width:900px){.app{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="panel">
+    <div class="panel-head">
+      <h1>Receipt Admin Tool</h1>
+      <div class="muted">Paste the sale CSV header and the rows for one bill. The tool will rebuild the branded visual receipt and prep the follow-up email details.</div>
+    </div>
+    <label for="csvInput"><strong>Sale CSV input</strong></label>
+    <textarea id="csvInput" placeholder="Paste the exported CSV header and the rows for one bill here."></textarea>
+    <div class="actions">
+      <button class="btn primary" id="renderBtn" type="button">Render Receipt</button>
+      <button class="btn secondary" id="loadExampleBtn" type="button">Load Example</button>
+      <button class="btn secondary" id="copyMailBtn" type="button">Copy Email Draft</button>
+    </div>
+    <div class="status" id="statusText">Waiting for sale CSV.</div>
+    <div class="meta-grid">
+      <div class="meta-card"><strong>Receipt request</strong><span id="requestStateText">-</span></div>
+      <div class="meta-card"><strong>Customer email</strong><span id="customerEmailText">-</span></div>
+      <div class="meta-card"><strong>Bill ID</strong><span id="billIdText">-</span></div>
+      <div class="meta-card"><strong>Payment</strong><span id="paymentText">-</span></div>
+    </div>
+    <div class="mail-box">
+      <div class="mail-row"><strong>Email subject</strong><input id="mailSubjectInput" type="text" readonly></div>
+      <div class="mail-row"><strong>Email body</strong><textarea id="mailBodyInput" readonly></textarea></div>
+      <a class="mail-link" id="mailtoLink" href="#">Open mail draft</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Visual Receipt Preview</h2>
+      <div class="muted">Matches the POS branded receipt layout for post-sale sending.</div>
+    </div>
+    <div class="slip-receipt">
+      <div class="slip-top">
+        <div class="slip-brand">
+          <div class="slip-brand-line-the">THE</div>
+          <div class="slip-brand-line-meow"><span>M</span><span>e</span><span>o</span><span>w</span></div>
+          <div class="slip-brand-line-seum"><span>S</span><span>E</span><span>U</span><span>M</span></div>
+        </div>
+        <div class="slip-company">PHIPHETTHAPHAN</div>
+        <div class="slip-subbrand">Meowseum | Modern Friends</div>
+        <div class="slip-badge">Event POS Receipt</div>
+      </div>
+      <div class="slip-meta" id="receiptMeta"></div>
+      <div class="slip-table">
+        <div class="slip-table-head"><span>Item</span><span>Amt</span></div>
+        <div class="slip-item-wrap" id="receiptItems"></div>
+      </div>
+      <div class="slip-summary" id="receiptSummary"></div>
+      <div class="slip-thanks">
+        <div>Thank you for supporting Phiphetthaphan.</div>
+        <div>Thank you for letting us be part of your pet&rsquo;s daily joy.</div>
+        <div>For inquiries, please contact phiphetthaphan@gmail.com</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DEFAULT_HEADERS=["billId","datetime","timestamp","lineNumber","sku","itemName","category","qty","basePrice","lineSubtotal","discountPerItem","discountAmount","discountApplied","finalUnitPrice","lineTotal","isFreeGift","giftMode","autoGiftQty","manualGiftQty","manualGiftOverride","saleSubtotal","saleDiscountAmount","saleTotal","operator","paymentMethod","paymentStatus","paymentReference","receiptEmailRequested","customerEmail","tags"];
+
+const els={
+  csvInput:document.getElementById("csvInput"),
+  renderBtn:document.getElementById("renderBtn"),
+  loadExampleBtn:document.getElementById("loadExampleBtn"),
+  copyMailBtn:document.getElementById("copyMailBtn"),
+  statusText:document.getElementById("statusText"),
+  requestStateText:document.getElementById("requestStateText"),
+  customerEmailText:document.getElementById("customerEmailText"),
+  billIdText:document.getElementById("billIdText"),
+  paymentText:document.getElementById("paymentText"),
+  mailSubjectInput:document.getElementById("mailSubjectInput"),
+  mailBodyInput:document.getElementById("mailBodyInput"),
+  mailtoLink:document.getElementById("mailtoLink"),
+  receiptMeta:document.getElementById("receiptMeta"),
+  receiptItems:document.getElementById("receiptItems"),
+  receiptSummary:document.getElementById("receiptSummary")
+};
+
+function parseCsv(text){
+  const rows=[];let row=[];let value="";let quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(ch==='"'){
+      if(quoted&&next==='"'){value+='"';i++;continue;}
+      quoted=!quoted;continue;
+    }
+    if(ch===","&&!quoted){row.push(value);value="";continue;}
+    if((ch==="\n"||ch==="\r")&&!quoted){
+      if(ch==="\r"&&next==="\n")i++;
+      row.push(value);rows.push(row);row=[];value="";continue;
+    }
+    value+=ch;
+  }
+  if(value.length||row.length){row.push(value);rows.push(row);}
+  return rows.filter(entry=>entry.some(cell=>String(cell).trim()!==""));
+}
+
+function toBool(value){return /^(true|1|yes)$/i.test(String(value||"").trim());}
+function toNumber(value){const n=Number(value);return Number.isFinite(n)?n:0;}
+function formatCurrency(value){return `THB ${toNumber(value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;}
+function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function paymentLabel(value){return value==="transfer"?"Bank Transfer":value==="card"?"Card":"Cash";}
+
+function parseSaleInput(text){
+  const rows=parseCsv(text.trim());
+  if(!rows.length)throw new Error("Paste the CSV header and at least one sale row.");
+  const maybeHeader=rows[0];
+  const useHeader=maybeHeader.includes("billId")&&maybeHeader.includes("itemName");
+  const headers=useHeader?maybeHeader:DEFAULT_HEADERS;
+  const dataRows=useHeader?rows.slice(1):rows;
+  if(!dataRows.length)throw new Error("No sale rows found after the header.");
+  const records=dataRows.map(cells=>{
+    const record={};
+    headers.forEach((header,index)=>record[header]=cells[index]??"");
+    return record;
+  });
+  const billId=records[0].billId;
+  const saleRows=records.filter(record=>record.billId===billId);
+  if(!saleRows.length)throw new Error("Could not find sale rows for a single bill.");
+  return{
+    billId,
+    datetime:saleRows[0].datetime||"",
+    paymentMethod:saleRows[0].paymentMethod||"",
+    paymentStatus:saleRows[0].paymentStatus||"",
+    paymentReference:saleRows[0].paymentReference||"",
+    operator:saleRows[0].operator||"",
+    receiptEmailRequested:toBool(saleRows[0].receiptEmailRequested),
+    customerEmail:saleRows[0].customerEmail||"",
+    subtotal:toNumber(saleRows[0].saleSubtotal),
+    discount:toNumber(saleRows[0].saleDiscountAmount),
+    total:toNumber(saleRows[0].saleTotal),
+    items:saleRows.map(record=>({name:record.itemName||record.sku||"-",qty:toNumber(record.qty)||1,lineTotal:toNumber(record.lineTotal)}))
+  };
+}
+
+function receiptText(sale){
+  return[
+    "THE",
+    "MEOW",
+    "SEUM",
+    "PHIPHETTHAPHAN",
+    "Meowseum | Modern Friends",
+    "",
+    `Bill ID: ${sale.billId}`,
+    `Date: ${sale.datetime}`,
+    `Payment: ${paymentLabel(sale.paymentMethod)} (${sale.paymentStatus||"-"})`,
+    sale.paymentReference?`Payment ref: ${sale.paymentReference}`:"",
+    sale.operator?`Operator: ${sale.operator}`:"",
+    "",
+    ...sale.items.map(item=>`${item.name} x ${item.qty} = ${formatCurrency(item.lineTotal)}`),
+    "",
+    `Subtotal: ${formatCurrency(sale.subtotal)}`,
+    `Discount: ${formatCurrency(sale.discount)}`,
+    `Total: ${formatCurrency(sale.total)}`,
+    sale.receiptEmailRequested?"Email receipt requested":"Email receipt not requested",
+    sale.customerEmail?`Customer email: ${sale.customerEmail}`:""
+  ].filter(Boolean).join("\n");
+}
+
+function renderSale(sale){
+  els.receiptMeta.innerHTML=[
+    ["Receipt",sale.billId],
+    ["Date",sale.datetime||"-"],
+    ["Customer","Walk-in customer"],
+    ["Phone","-"],
+    ["Staff",sale.operator||"-"],
+    ["Payment",paymentLabel(sale.paymentMethod)]
+  ].map(([label,value])=>`<div class="slip-meta-row"><span>${escapeHtml(label)}:</span><span>${escapeHtml(value)}</span></div>`).join("");
+  els.receiptItems.innerHTML=sale.items.map(item=>`<div class="slip-item-row"><div><div class="slip-item-name">${escapeHtml(item.name)}</div><div class="slip-item-qty">x ${item.qty}</div></div><strong>${escapeHtml(formatCurrency(item.lineTotal))}</strong></div>`).join("");
+  els.receiptSummary.innerHTML=[
+    ["Subtotal",formatCurrency(sale.subtotal),"slip-sum-row"],
+    ["Item Discount",formatCurrency(sale.discount),"slip-sum-row"],
+    ["Order Discount","THB 0.00","slip-sum-row"],
+    ["Total",formatCurrency(sale.total),"slip-total-row"]
+  ].map(([label,value,className])=>`<div class="${className}"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join("");
+  els.requestStateText.textContent=sale.receiptEmailRequested?"Requested":"Not requested";
+  els.customerEmailText.textContent=sale.customerEmail||"-";
+  els.billIdText.textContent=sale.billId||"-";
+  els.paymentText.textContent=`${paymentLabel(sale.paymentMethod)}${sale.paymentStatus?` • ${sale.paymentStatus}`:""}`;
+  const subject=`Your Meowseum receipt - ${sale.billId}`;
+  const body=receiptText(sale);
+  els.mailSubjectInput.value=subject;
+  els.mailBodyInput.value=body;
+  els.mailtoLink.href=sale.customerEmail?`mailto:${encodeURIComponent(sale.customerEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`:"#";
+  els.statusText.textContent=`Receipt ready for ${sale.billId}.`;
+}
+
+function renderFromInput(){
+  try{
+    const sale=parseSaleInput(els.csvInput.value);
+    renderSale(sale);
+  }catch(error){
+    els.statusText.textContent=error.message||"Could not parse the pasted CSV.";
+  }
+}
+
+els.renderBtn.addEventListener("click",renderFromInput);
+els.loadExampleBtn.addEventListener("click",()=>{
+  els.csvInput.value=`${DEFAULT_HEADERS.join(",")}\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,1,012,Bowl Appetit,Lifestyle,1,1290,1290,0,0,false,1290,1290,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,2,005,The Colosseum,Premium,1,2190,2190,0,0,false,2190,2190,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,3,GIFT-SCARF,Limited Edition Meowseum Scarf,Promo Gift,1,0,0,0,0,false,0,0,true,auto,1,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo`;
+  renderFromInput();
+});
+els.copyMailBtn.addEventListener("click",()=>{if(!els.mailBodyInput.value)return;navigator.clipboard?.writeText(`Subject: ${els.mailSubjectInput.value}\n\n${els.mailBodyInput.value}`).then(()=>{els.statusText.textContent="Email draft copied.";}).catch(()=>{els.statusText.textContent="Could not copy the email draft on this device.";});});
+</script>
+</body>
+</html>
