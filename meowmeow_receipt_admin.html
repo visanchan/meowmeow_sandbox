@@ -55,16 +55,26 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .detail-box{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
 .detail-label{font-size:12px;color:var(--muted)}
 .detail-value{margin-top:6px;font-weight:800;line-height:1.35;word-break:break-word}
-.detail-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .preview-layout{display:grid;grid-template-columns:minmax(0,420px) minmax(320px,1fr);gap:18px;align-items:start}
 .receipt-card,.mail-card{padding:18px;border:1px solid var(--line);border-radius:22px;background:#fff}
-.mail-card{display:grid;gap:12px}
+.mail-card{display:grid;gap:16px}
+.work-card-head{display:grid;gap:4px}
+.work-card-head h3{margin:0;font-size:20px}
+.work-card-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.priority-actions{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fff9ef 0%,#f7eedf 100%)}
+.priority-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.priority-btn{padding:11px 14px;border-radius:14px;font-weight:900;font-size:15px;line-height:1.15;min-height:52px}
+.priority-btn.nav{background:#fff;border:1px solid var(--line);color:#6a4a26}
+.priority-btn.receipt{background:#f1e7d9;color:#5f462a}
+.priority-btn.done{background:linear-gradient(180deg,#a87640 0%,#85572b 100%);color:#fffaf3}
+.priority-btn.skip{background:#f8eee1;color:#7a5330}
+.support-grid{display:grid;gap:12px}
 .field{display:grid;gap:6px}
+.field-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .field label{font-size:12px;color:var(--muted);font-weight:700}
 .field input,.field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.field textarea{min-height:180px;resize:vertical}
-.mail-actions{display:flex;gap:10px;flex-wrap:wrap}
-.mail-link{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:14px;background:#fff3df;color:#7c5528;font-weight:800;text-decoration:none}
+.field textarea{min-height:110px;max-height:150px;resize:vertical}
+.field-copy-btn{padding:9px 12px;border-radius:12px;background:#f7efe1;color:#6a4a26;font-weight:800}
 .hint{font-size:12px;color:var(--muted);line-height:1.45}
 .slip-receipt{max-width:360px;margin:0 auto;padding:14px 14px 18px;border-radius:0;border-color:#cfc7bc;background:#fff;box-shadow:none}
 .slip-top{text-align:center;padding-bottom:10px}
@@ -89,7 +99,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .slip-total-row{padding-top:8px;border-top:1px solid #2f261e;font-size:18px;font-weight:900}
 .slip-thanks{display:grid;gap:5px;text-align:center;padding-top:14px;font-size:12px;line-height:1.45}
 .export-stage{position:fixed;left:-10000px;top:0;pointer-events:none;opacity:0}
-@media (max-width:1200px){.layout,.preview-layout,.detail-grid{grid-template-columns:1fr}.queue-list{max-height:none}}
+@media (max-width:1200px){.layout,.preview-layout,.detail-grid,.priority-row{grid-template-columns:1fr}.queue-list{max-height:none}}
 </style>
 </head>
 <body>
@@ -99,10 +109,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <div class="eyebrow">Post-event workflow</div>
       <h1>Receipt Admin Tool</h1>
       <p>Import one or more end-of-day sales CSV files, build a follow-up queue for customers who explicitly requested an email receipt, then work through each bill with a ready-made receipt image and email draft.</p>
-    </div>
-    <div class="top-actions">
-      <button class="btn ghost" id="loadExampleBtn" type="button">Load example data</button>
-      <button class="btn" id="resetBtn" type="button">Reset queue</button>
     </div>
   </section>
 
@@ -119,6 +125,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
         </div>
         <div class="top-actions">
           <button class="btn primary" id="importBtn" type="button">Import CSV</button>
+          <button class="btn ghost" id="exportWorkCsvBtn" type="button">Export Admin CSV</button>
           <button class="btn ghost" id="resetQueueInlineBtn" type="button">Reset saved queue</button>
         </div>
         <div class="status-text" id="statusText">No CSV imported yet.</div>
@@ -127,7 +134,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <div class="summary-grid">
         <div class="summary-card"><div class="summary-label">Bills scanned</div><div class="summary-value" id="scannedCountText">0</div></div>
         <div class="summary-card"><div class="summary-label">Queued to send</div><div class="summary-value" id="queuedCountText">0</div></div>
-        <div class="summary-card"><div class="summary-label">Duplicates skipped</div><div class="summary-value" id="duplicateCountText">0</div></div>
+        <div class="summary-card"><div class="summary-label">Bills sent</div><div class="summary-value" id="duplicateCountText">0</div></div>
         <div class="summary-card"><div class="summary-label">Pending in queue</div><div class="summary-value" id="pendingCountText">0</div></div>
       </div>
 
@@ -156,15 +163,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
           <div class="detail-box"><div class="detail-label">Customer email</div><div class="detail-value" id="customerEmailText">-</div></div>
           <div class="detail-box"><div class="detail-label">Payment</div><div class="detail-value" id="paymentText">-</div></div>
           <div class="detail-box"><div class="detail-label">Queue state</div><div class="detail-value" id="requestStateText">-</div></div>
-        </div>
-        <div class="detail-actions">
-          <button class="btn ghost" id="prevBillBtn" type="button">Previous</button>
-          <button class="btn ghost" id="nextBillBtn" type="button">Next</button>
-          <button class="btn" id="downloadPngBtn" type="button">Download PNG</button>
-          <button class="btn" id="copyReceiptBtn" type="button">Copy Receipt Image</button>
-          <button class="btn" id="copyDraftBtn" type="button">Copy Draft</button>
-          <button class="btn primary" id="markDoneBtn" type="button">Mark Done</button>
-          <button class="btn ghost" id="markSkipBtn" type="button">Skip</button>
         </div>
       </section>
 
@@ -195,26 +193,48 @@ button:disabled{opacity:.45;cursor:not-allowed}
         </div>
 
         <div class="mail-card">
-          <div class="field">
-            <label for="recipientInput">To</label>
-            <input id="recipientInput" type="email" placeholder="customer@example.com">
+          <div class="work-card-head">
+            <h3>Admin Work Flow</h3>
           </div>
-          <div class="field">
-            <label for="mailSubjectInput">Email subject</label>
-            <input id="mailSubjectInput" type="text" placeholder="Your Meowseum receipt">
+          <div class="priority-actions">
+            <div class="priority-row">
+              <button class="priority-btn nav" id="prevBillBtn" type="button">Previous</button>
+              <button class="priority-btn nav" id="nextBillBtn" type="button">Next</button>
+            </div>
           </div>
-          <div class="field">
-            <label for="mailBodyInput">Email body</label>
-            <textarea id="mailBodyInput" placeholder="Draft email body will appear here."></textarea>
+          <div class="support-grid">
+            <div class="field">
+              <div class="field-head">
+                <label for="recipientInput">To</label>
+                <button class="field-copy-btn" id="copyEmailBtn" type="button">Copy email</button>
+              </div>
+              <input id="recipientInput" type="email" placeholder="customer@example.com">
+            </div>
+            <div class="field">
+              <div class="field-head">
+                <label for="mailSubjectInput">Email subject</label>
+                <button class="field-copy-btn" id="copySubjectBtn" type="button">Copy subject</button>
+              </div>
+              <input id="mailSubjectInput" type="text" placeholder="Your Meowseum receipt">
+            </div>
+            <div class="field">
+              <div class="field-head">
+                <label for="mailBodyInput">Email body</label>
+                <button class="field-copy-btn" id="copyBodyBtn" type="button">Copy body</button>
+              </div>
+              <textarea id="mailBodyInput" placeholder="Draft email body will appear here."></textarea>
+            </div>
           </div>
-          <div class="mail-actions">
-            <button class="btn ghost" id="copyEmailBtn" type="button">Copy email</button>
-            <button class="btn ghost" id="copySubjectBtn" type="button">Copy subject</button>
-            <button class="btn ghost" id="copyBodyBtn" type="button">Copy body</button>
-            <button class="btn" id="copyDraftBtn" type="button">Copy full draft</button>
-            <a class="mail-link" id="mailtoLink" href="#">Open in mail app</a>
+          <div class="priority-actions">
+            <div class="priority-row">
+              <button class="priority-btn receipt" id="copyReceiptBtn" type="button">Copy Receipt Image</button>
+              <button class="priority-btn receipt" id="downloadPngBtn" type="button">Download PNG</button>
+            </div>
+            <div class="priority-row">
+              <button class="priority-btn done" id="markDoneBtn" type="button">Mark Done</button>
+              <button class="priority-btn skip" id="markSkipBtn" type="button">Skip</button>
+            </div>
           </div>
-          <div class="hint">If your computer has no default mail app, the mail-app button may appear to do nothing. The copy buttons are the reliable fallback: copy email, subject, body, attach the receipt image, then send from your own mail client.</div>
         </div>
       </section>
     </main>
@@ -250,9 +270,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 const els = {
   csvFiles: document.getElementById("csvFiles"),
   importBtn: document.getElementById("importBtn"),
+  exportWorkCsvBtn: document.getElementById("exportWorkCsvBtn"),
   resetQueueInlineBtn: document.getElementById("resetQueueInlineBtn"),
-  loadExampleBtn: document.getElementById("loadExampleBtn"),
-  resetBtn: document.getElementById("resetBtn"),
   statusText: document.getElementById("statusText"),
   scannedCountText: document.getElementById("scannedCountText"),
   queuedCountText: document.getElementById("queuedCountText"),
@@ -270,7 +289,6 @@ const els = {
   nextBillBtn: document.getElementById("nextBillBtn"),
   downloadPngBtn: document.getElementById("downloadPngBtn"),
   copyReceiptBtn: document.getElementById("copyReceiptBtn"),
-  copyDraftBtn: document.getElementById("copyDraftBtn"),
   copyEmailBtn: document.getElementById("copyEmailBtn"),
   copySubjectBtn: document.getElementById("copySubjectBtn"),
   copyBodyBtn: document.getElementById("copyBodyBtn"),
@@ -279,7 +297,6 @@ const els = {
   recipientInput: document.getElementById("recipientInput"),
   mailSubjectInput: document.getElementById("mailSubjectInput"),
   mailBodyInput: document.getElementById("mailBodyInput"),
-  mailtoLink: document.getElementById("mailtoLink"),
   receiptMeta: document.getElementById("receiptMeta"),
   receiptItems: document.getElementById("receiptItems"),
   receiptSummary: document.getElementById("receiptSummary"),
@@ -296,12 +313,6 @@ const state = {
   summary: { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 }
 };
 const STORAGE_KEY = "meowmeowReceiptAdminQueueV1";
-
-const EXAMPLE_DAY_CSV = `operatingDay,billId,datetime,timestamp,lineNumber,sku,itemName,category,qty,basePrice,lineSubtotal,discountPerItem,discountAmount,discountApplied,finalUnitPrice,lineTotal,isFreeGift,giftMode,autoGiftQty,manualGiftQty,manualGiftOverride,saleSubtotal,saleDiscountAmount,saleTotal,operator,paymentMethod,paymentStatus,paymentReference,receiptEmailRequested,customerEmail,tags
-Day 1,DAY1-0001,2026-03-30T13:12:00.000Z,1774876320000,1,012,Bowl Appetit,Main,1,1290,1290,0,0,false,1290,1290,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP001,true,customer.one@example.com,VIP
-Day 1,DAY1-0001,2026-03-30T13:12:00.000Z,1774876320000,2,GIFT-SCARF,Limited Edition Meowseum Scarf,Promo Gift,2,0,0,0,0,false,0,0,true,auto,2,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP001,true,customer.one@example.com,VIP
-Day 1,DAY1-0002,2026-03-30T14:45:00.000Z,1774881900000,1,022,Cloud Carrier,Main,1,1790,1790,0,0,false,1790,1790,false,,0,0,false,1790,0,1790,Ben,cash,confirmed,,false,marketing.only@example.com,
-Day 1,DAY1-0003,2026-03-30T15:30:00.000Z,1774884600000,1,033,Nap Nest,Main,1,990,990,0,0,false,990,990,false,,0,0,false,990,0,990,Kat,card,confirmed,APPROVAL7,true,,Meowseum :)`;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -336,6 +347,21 @@ function formatDate(value) {
   return date.toLocaleString("en-GB", { hour12: false });
 }
 
+function stampNow() {
+  return new Date().toISOString();
+}
+
+function recordAdminAction(sale, action, detail = "") {
+  if (!sale) return;
+  sale.adminActions = Array.isArray(sale.adminActions) ? sale.adminActions : [];
+  sale.adminActions.push({ at: stampNow(), action, detail });
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 function saveState() {
   try {
     const payload = {
@@ -363,10 +389,12 @@ function restoreState() {
       items: Array.isArray(sale.items) ? sale.items : [],
       tags: Array.isArray(sale.tags) ? sale.tags : [],
       queueStatus: sale.queueStatus || "pending",
+      completedAt: sale.completedAt || "",
       mailSubject: sale.mailSubject || defaultMailSubject(sale),
       mailBody: sale.mailBody || defaultMailBody(sale),
       pngDataUrl: "",
-      pngFilename: sale.pngFilename || ""
+      pngFilename: sale.pngFilename || "",
+      adminActions: Array.isArray(sale.adminActions) ? sale.adminActions : []
     })) : [];
     state.queue = state.sales.filter(sale => sale.isQueued);
     state.selectedId = parsed.selectedId || (state.queue[0]?.billId ?? null);
@@ -462,8 +490,10 @@ function recordsToSales(records) {
         tags: (record.tags || "").split("|").map(item => item.trim()).filter(Boolean),
         items: [],
         queueStatus: "pending",
+        completedAt: "",
         pngDataUrl: "",
-        pngFilename: ""
+        pngFilename: "",
+        adminActions: []
       });
     }
     grouped.get(record.billId).items.push({
@@ -497,7 +527,6 @@ function defaultMailBody(sale) {
     "",
     "Best regards,",
     "PHIPHETTHAPHAN",
-    "",
     "Meowseum | Modern Friends"
   ].join("\n");
 }
@@ -527,13 +556,6 @@ function renderReceiptInto(target, sale) {
     ["Order Discount", formatCurrency(0), "slip-sum-row"],
     ["Total", formatCurrency(sale.total), "slip-total-row"]
   ].map(([label, value, className]) => `<div class="${className}"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join("");
-}
-
-function refreshMailtoLink() {
-  const recipient = els.recipientInput.value.trim();
-  const subject = els.mailSubjectInput.value.trim();
-  const body = els.mailBodyInput.value;
-  els.mailtoLink.href = recipient ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : "#";
 }
 
 function wrapReceiptText(value, maxChars) {
@@ -654,13 +676,20 @@ async function generatePngForSale(sale) {
 }
 
 function renderSummary() {
+  const pendingCount = state.queue.filter(sale => sale.queueStatus === "pending").length;
+  const doneCount = state.queue.filter(sale => sale.queueStatus === "done").length;
+  const manuallySkippedCount = state.queue.filter(sale => sale.queueStatus === "skipped").length;
+  const importSkippedCount = state.summary.skippedNoEmail + state.summary.skippedNoRequest;
   els.scannedCountText.textContent = String(state.summary.scanned);
   els.queuedCountText.textContent = String(state.summary.queued);
-  els.duplicateCountText.textContent = String(state.summary.duplicates);
-  els.pendingCountText.textContent = String(state.queue.filter(sale => sale.queueStatus === "pending").length);
-  const skipped = state.summary.skippedNoEmail + state.summary.skippedNoRequest;
-  els.skippedCountText.textContent = String(skipped);
-  els.skipReasonText.textContent = skipped ? `No email: ${state.summary.skippedNoEmail} | No receipt request: ${state.summary.skippedNoRequest}` : "No skipped bills so far.";
+  els.duplicateCountText.textContent = String(doneCount);
+  els.pendingCountText.textContent = String(pendingCount);
+  els.skippedCountText.textContent = String(manuallySkippedCount + importSkippedCount);
+  if (manuallySkippedCount || importSkippedCount) {
+    els.skipReasonText.textContent = `Workflow skipped: ${manuallySkippedCount} | No email: ${state.summary.skippedNoEmail} | No receipt request: ${state.summary.skippedNoRequest}`;
+  } else {
+    els.skipReasonText.textContent = "No skipped bills so far.";
+  }
 }
 
 function renderQueue() {
@@ -692,7 +721,6 @@ function updateSelectionControls() {
   els.nextBillBtn.disabled = !hasSale || index >= state.queue.length - 1;
   els.downloadPngBtn.disabled = !hasSale;
   els.copyReceiptBtn.disabled = !hasSale;
-  els.copyDraftBtn.disabled = !hasSale;
   els.copyEmailBtn.disabled = !hasRecipient;
   els.copySubjectBtn.disabled = !hasSale;
   els.copyBodyBtn.disabled = !hasSale;
@@ -713,14 +741,13 @@ async function renderSelectedSale() {
     els.receiptMeta.innerHTML = "";
     els.receiptItems.innerHTML = "";
     els.receiptSummary.innerHTML = "";
-    refreshMailtoLink();
     updateSelectionControls();
     return;
   }
   els.billIdText.textContent = sale.billId;
   els.customerEmailText.textContent = sale.customerEmail || "-";
-  els.paymentText.textContent = `${paymentLabel(sale.paymentMethod)} | ${sale.paymentStatus || "pending"}`;
-  els.requestStateText.textContent = `${sale.queueStatus} | requested`;
+  els.paymentText.textContent = `${sale.paymentMethod === "transfer" ? "🏦" : sale.paymentMethod === "card" ? "💳" : sale.paymentMethod === "cash" ? "💵" : "🧾"} ${paymentLabel(sale.paymentMethod)}`;
+  els.requestStateText.textContent = `${sale.queueStatus === "done" ? "✅" : sale.queueStatus === "skipped" ? "⏭️" : "⏳"} ${sale.queueStatus}`;
   els.recipientInput.value = sale.customerEmail;
   els.mailSubjectInput.value = sale.mailSubject || defaultMailSubject(sale);
   els.mailBodyInput.value = sale.mailBody || defaultMailBody(sale);
@@ -728,7 +755,6 @@ async function renderSelectedSale() {
   sale.mailBody = els.mailBodyInput.value;
   renderReceiptInto({ meta: els.receiptMeta, items: els.receiptItems, summary: els.receiptSummary }, sale);
   renderReceiptInto({ meta: els.receiptExportMeta, items: els.receiptExportItems, summary: els.receiptExportSummary }, sale);
-  refreshMailtoLink();
   updateSelectionControls();
   try {
     els.statusText.textContent = `Preparing PNG for ${sale.billId}...`;
@@ -746,6 +772,63 @@ function downloadDataUrl(filename, dataUrl) {
   document.body.appendChild(link);
   link.click();
   link.remove();
+}
+
+function adminWorkCsv() {
+  const header = [
+    "billId",
+    "operatingDay",
+    "saleDatetime",
+    "customerEmail",
+    "paymentMethod",
+    "queueStatus",
+    "completedAt",
+    "mailSubject",
+    "mailBody",
+    "adminActionCount",
+    "adminActions"
+  ];
+  const rows = [header.join(",")];
+  state.queue.forEach(sale => {
+    const actionsText = (sale.adminActions || []).map(entry => `${entry.at} | ${entry.action}${entry.detail ? ` | ${entry.detail}` : ""}`).join(" || ");
+    rows.push([
+      sale.billId,
+      sale.operatingDay || "",
+      sale.datetime || "",
+      sale.customerEmail || "",
+      paymentLabel(sale.paymentMethod),
+      sale.queueStatus || "pending",
+      sale.completedAt || "",
+      sale.mailSubject || "",
+      sale.mailBody || "",
+      Array.isArray(sale.adminActions) ? sale.adminActions.length : 0,
+      actionsText
+    ].map(csvEscape).join(","));
+  });
+  return rows.join("\n");
+}
+
+function exportAdminWorkCsv() {
+  if (!state.queue.length) {
+    els.statusText.textContent = "There is no admin work log to export yet.";
+    return;
+  }
+  try {
+    const csv = adminWorkCsv();
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `meowseum-admin-work-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    els.statusText.textContent = "Admin work CSV exported.";
+  } catch (error) {
+    els.statusText.textContent = "Could not export the admin work CSV on this device.";
+    console.error(error);
+  }
 }
 
 async function copyDataUrlImageToClipboard(dataUrl) {
@@ -774,7 +857,15 @@ function moveSelection(delta) {
 function markSelected(status) {
   const sale = selectedSale();
   if (!sale) return;
+  const currentIndex = selectedQueueIndex();
   sale.queueStatus = status;
+  sale.completedAt = status === "done" || status === "skipped" ? stampNow() : "";
+  recordAdminAction(sale, `mark_${status}`);
+  const nextSale = state.queue[currentIndex + 1] || state.queue[currentIndex - 1] || null;
+  if (nextSale) {
+    state.selectedId = nextSale.billId;
+  }
+  renderSummary();
   renderQueue();
   renderSelectedSale();
   saveState();
@@ -876,20 +967,9 @@ function resetQueue() {
   renderSelectedSale();
 }
 
-async function loadExample() {
-  resetQueue();
-  try {
-    await importFromTexts([{ name: "example-day.csv", text: EXAMPLE_DAY_CSV }]);
-    els.statusText.textContent = "Example queue loaded.";
-  } catch (error) {
-    els.statusText.textContent = error.message;
-  }
-}
-
 els.importBtn.addEventListener("click", importFiles);
+els.exportWorkCsvBtn.addEventListener("click", exportAdminWorkCsv);
 els.resetQueueInlineBtn.addEventListener("click", resetQueue);
-els.loadExampleBtn.addEventListener("click", loadExample);
-els.resetBtn.addEventListener("click", resetQueue);
 els.queueList.addEventListener("click", event => {
   const button = event.target.closest("[data-bill-id]");
   if (!button) return;
@@ -904,7 +984,6 @@ els.recipientInput.addEventListener("input", () => {
   if (!sale) return;
   sale.customerEmail = els.recipientInput.value.trim();
   els.customerEmailText.textContent = sale.customerEmail || "-";
-  refreshMailtoLink();
   renderQueue();
   updateSelectionControls();
   saveState();
@@ -913,7 +992,6 @@ els.mailSubjectInput.addEventListener("input", () => {
   const sale = selectedSale();
   if (!sale) return;
   sale.mailSubject = els.mailSubjectInput.value;
-  refreshMailtoLink();
   updateSelectionControls();
   saveState();
 });
@@ -921,7 +999,6 @@ els.mailBodyInput.addEventListener("input", () => {
   const sale = selectedSale();
   if (!sale) return;
   sale.mailBody = els.mailBodyInput.value;
-  refreshMailtoLink();
   updateSelectionControls();
   saveState();
 });
@@ -932,6 +1009,8 @@ els.copyEmailBtn.addEventListener("click", async () => {
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
+    recordAdminAction(sale, "copy_email", value);
+    saveState();
     els.statusText.textContent = `Target email copied for ${sale.billId}.`;
   } catch (_error) {
     els.statusText.textContent = "Clipboard copy is not available in this browser.";
@@ -942,6 +1021,8 @@ els.copySubjectBtn.addEventListener("click", async () => {
   if (!sale) return;
   try {
     await navigator.clipboard.writeText(els.mailSubjectInput.value);
+    recordAdminAction(sale, "copy_subject", els.mailSubjectInput.value);
+    saveState();
     els.statusText.textContent = `Email subject copied for ${sale.billId}.`;
   } catch (_error) {
     els.statusText.textContent = "Clipboard copy is not available in this browser.";
@@ -952,18 +1033,9 @@ els.copyBodyBtn.addEventListener("click", async () => {
   if (!sale) return;
   try {
     await navigator.clipboard.writeText(els.mailBodyInput.value);
+    recordAdminAction(sale, "copy_body");
+    saveState();
     els.statusText.textContent = `Email body copied for ${sale.billId}.`;
-  } catch (_error) {
-    els.statusText.textContent = "Clipboard copy is not available in this browser.";
-  }
-});
-els.copyDraftBtn.addEventListener("click", async () => {
-  const sale = selectedSale();
-  if (!sale) return;
-  const text = `To: ${els.recipientInput.value.trim()}\nSubject: ${els.mailSubjectInput.value.trim()}\n\n${els.mailBodyInput.value}`;
-  try {
-    await navigator.clipboard.writeText(text);
-    els.statusText.textContent = `Full draft copied for ${sale.billId}.`;
   } catch (_error) {
     els.statusText.textContent = "Clipboard copy is not available in this browser.";
   }
@@ -975,6 +1047,8 @@ els.downloadPngBtn.addEventListener("click", async () => {
     els.statusText.textContent = `Generating PNG for ${sale.billId}...`;
     const dataUrl = await generatePngForSale(sale);
     downloadDataUrl(sale.pngFilename || `${sale.billId}.png`, dataUrl);
+    recordAdminAction(sale, "download_png", sale.pngFilename || `${sale.billId}.png`);
+    saveState();
     els.statusText.textContent = `PNG downloaded for ${sale.billId}.`;
   } catch (error) {
     els.statusText.textContent = error.message;
@@ -987,6 +1061,8 @@ els.copyReceiptBtn.addEventListener("click", async () => {
     els.statusText.textContent = `Copying receipt image for ${sale.billId}...`;
     const dataUrl = await generatePngForSale(sale);
     await copyDataUrlImageToClipboard(dataUrl);
+    recordAdminAction(sale, "copy_receipt_image");
+    saveState();
     els.statusText.textContent = `Receipt image copied for ${sale.billId}.`;
   } catch (error) {
     els.statusText.textContent = error.message;
