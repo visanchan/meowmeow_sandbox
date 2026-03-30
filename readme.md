@@ -10,6 +10,13 @@ The product direction is:
 - protect inventory and internal controls from the normal selling flow
 - keep receipt follow-up practical for post-sale admin work
 
+## Working Rule
+
+- Before making any code change, read this `readme.md` first.
+- After finishing any change, update this `readme.md` so it stays aligned with the current product direction and implementation.
+- Treat this file as the shared continuity guide for future developers and future sessions.
+- If behavior, workflow, UI direction, passcodes, CSV shape, or correction logic changes, document that change here before closing the task.
+
 ## Current App Shape
 
 - [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) contains:
@@ -21,6 +28,7 @@ The product direction is:
   - sales storage and CSV export
   - dashboard
   - developer inventory tools
+  - bill correction log for exceptional saved-bill fixes
 - [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html) is a local admin helper that rebuilds the branded visual receipt from pasted sale CSV data.
 
 ## Key Behavior
@@ -78,6 +86,37 @@ The product direction is:
 - Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
 - Low-stock alerts remain editable in developer mode.
 - End-of-day export and stock carry-forward should keep working without requiring staff to understand the internal data model.
+- `Close Day & Export CSV` is passcode-protected and the dialog now uses only the passcode keypad flow without an extra cancel button.
+
+## Bill Correction Log Rules
+
+- The saved-bill correction tool is an exception workflow, not a normal selling workflow.
+- Access stays behind passcode `888`.
+- Staff first unlock the tool, then review a warning before editing.
+- The tool now follows a controlled flow:
+  - select bill
+  - edit allowed fields
+  - review changes
+  - confirm correction
+- Only these fields should be editable:
+  - item quantities
+  - customer email
+  - receipt requested
+  - payment method
+  - payment reference
+  - operator
+  - tags
+- Do not allow direct editing of bill ID, datetime, raw totals, SKU text, or item prices.
+- Item quantities must not exceed the real inventory available for that bill's operating day.
+- Saving a correction updates the saved sale, and inventory follows automatically because sold stock is derived from saved sales.
+- Correction history should stay business-readable and include:
+  - `at`
+  - `reason`
+  - `changedFields`
+  - `before`
+  - `after`
+  - `inventoryImpact`
+- Normal CSV exports should keep only concise correction summary fields, not full correction blobs.
 
 ## Data and Export Notes
 
@@ -108,6 +147,7 @@ The product direction is:
 
 - Read this README first.
 - Then inspect the current HTML before making assumptions.
+- After you finish a change, update this README before you stop.
 - Preserve the compact event-sales flow unless the user explicitly asks for a redesign.
 - Keep the POS receipt and admin receipt visually in sync.
 - Treat `receiptEmailRequested` as the source-of-truth for who actually asked for an emailed receipt.
