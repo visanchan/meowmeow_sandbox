@@ -3,28 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meowseum Receipt Admin</title>
+<title>Meowseum Receipt Admin Tool</title>
 <style>
-:root{--bg:#f6f0e6;--panel:#fffaf3;--line:#ddcfbe;--text:#2b231d;--muted:#736555;--accent:#8d6236;--soft:#efe5d6;--shadow:0 22px 52px rgba(77,53,29,.10);--r-xl:28px;--r-lg:20px;--r-md:14px}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Aptos","Segoe UI",Tahoma,sans-serif;background:linear-gradient(180deg,#fbf7ef 0%,#f1e7d6 100%);color:var(--text)}
-body{padding:18px}
-.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(320px,.95fr) minmax(320px,.85fr);gap:18px}
-.panel{border:1px solid rgba(141,98,54,.14);border-radius:var(--r-xl);background:linear-gradient(180deg,#fffdf9 0%,#fcf5e9 100%);box-shadow:var(--shadow);padding:20px}
-.panel h1,.panel h2,.panel h3{margin:0}
-.panel-head{display:grid;gap:8px;margin-bottom:16px}
-.muted{color:var(--muted)}
-textarea,input{font:inherit}
-textarea,input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text)}
-textarea{min-height:220px;resize:vertical}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.btn{padding:14px 16px;border:0;border-radius:16px;font-weight:900;cursor:pointer}
-.btn.primary{background:linear-gradient(180deg,#a9763f 0%,#7e552a 100%);color:#fffdf8}
-.btn.secondary{background:#f1e7d9;color:#5f462a}
-.status{margin-top:12px;font-size:13px;color:var(--muted);min-height:20px}
-.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
-.meta-card{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
-.meta-card strong{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-.slip-receipt{max-width:360px;margin:0 auto;padding:14px 14px 18px;border:1px solid #cfc7bc;border-radius:0;background:#fff}
+:root{--bg:#f6f0e6;--panel:#fffaf3;--line:#ddcfbe;--text:#2b231d;--muted:#736555;--accent:#8d6236;--accent-strong:#6e4b27;--soft:#efe5d6;--success:#4f7a3f;--danger:#b44b3f;--shadow:0 22px 52px rgba(77,53,29,.10);--r-xl:28px;--r-lg:20px;--r-md:14px}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Aptos","Segoe UI",Tahoma,sans-serif;background:linear-gradient(180deg,#fbf7ef 0%,#f1e7d6 100%);color:var(--text)}
+body{padding:22px}
+button,input,textarea{font:inherit}
+button{border:0;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.app{max-width:1500px;margin:0 auto;display:grid;gap:18px}
+.topbar,.panel{border:1px solid rgba(141,98,54,.14);border-radius:var(--r-xl);background:linear-gradient(180deg,#fffdf9 0%,#fcf5e9 100%);box-shadow:var(--shadow)}
+.topbar{padding:22px 24px;display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.brand-copy{display:grid;gap:8px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.topbar h1{margin:0;font-size:30px;line-height:1.05}
+.topbar p{margin:0;color:var(--muted);max-width:760px;line-height:1.45}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:12px 16px;border-radius:14px;background:#f2e6d7;color:#6a4a26;font-weight:800}
+.btn.primary{background:linear-gradient(180deg,#a87640 0%,#85572b 100%);color:#fffaf3}
+.btn.ghost{background:#fff;border:1px solid var(--line)}
+.layout{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:18px;align-items:start}
+.panel{padding:18px}
+.panel h2,.panel h3{margin:0}
+.panel-head{display:grid;gap:6px;margin-bottom:14px}
+.panel-head p{margin:0;color:var(--muted);line-height:1.4}
+.import-box{display:grid;gap:12px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff}
+.file-input{display:grid;gap:8px}
+.file-input input{width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.status-text{font-size:13px;color:var(--muted);min-height:20px}
+.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.summary-card{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.summary-label{font-size:12px;color:var(--muted)}
+.summary-value{margin-top:4px;font-size:23px;font-weight:900;color:var(--accent-strong)}
+.summary-note{margin-top:4px;font-size:12px;color:var(--muted);line-height:1.35}
+.queue-panel{display:grid;gap:10px}
+.queue-progress{font-size:13px;color:var(--muted)}
+.queue-list{display:grid;gap:8px;max-height:calc(100vh - 330px);overflow:auto;padding-right:4px}
+.queue-item{width:100%;display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:left}
+.queue-item.active{border-color:#a87640;box-shadow:0 0 0 2px rgba(168,118,64,.14)}
+.queue-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.queue-bill{font-weight:900}
+.queue-meta{font-size:12px;color:var(--muted);line-height:1.4}
+.pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.pill.pending{background:#fff1d7;color:#8c6226}
+.pill.done{background:#e7f1de;color:var(--success)}
+.pill.skipped{background:#f8e1de;color:var(--danger)}
+.empty-state{padding:18px;border:1px dashed var(--line);border-radius:18px;background:#fff;text-align:center;color:var(--muted);line-height:1.5}
+.right-shell{display:grid;gap:18px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.detail-box{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.detail-label{font-size:12px;color:var(--muted)}
+.detail-value{margin-top:6px;font-weight:800;line-height:1.35;word-break:break-word}
+.detail-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.preview-layout{display:grid;grid-template-columns:minmax(0,420px) minmax(320px,1fr);gap:18px;align-items:start}
+.receipt-card,.mail-card{padding:18px;border:1px solid var(--line);border-radius:22px;background:#fff}
+.mail-card{display:grid;gap:12px}
+.field{display:grid;gap:6px}
+.field label{font-size:12px;color:var(--muted);font-weight:700}
+.field input,.field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.field textarea{min-height:180px;resize:vertical}
+.mail-actions{display:flex;gap:10px;flex-wrap:wrap}
+.mail-link{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:14px;background:#fff3df;color:#7c5528;font-weight:800;text-decoration:none}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+.slip-receipt{max-width:360px;margin:0 auto;padding:14px 14px 18px;border-radius:0;border-color:#cfc7bc;background:#fff;box-shadow:none}
 .slip-top{text-align:center;padding-bottom:10px}
 .slip-brand{display:grid;justify-items:start;gap:0;line-height:.78;font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.055em;width:max-content;margin:0 auto;text-align:left;color:#2f261e}
 .slip-brand-line-the{font-size:22px;letter-spacing:-.03em}
@@ -37,227 +79,774 @@ textarea{min-height:220px;resize:vertical}
 .slip-meta{display:grid;gap:4px;padding:8px 0 12px;font-size:12px;border-bottom:1px dashed #cfc7bc}
 .slip-meta-row{display:flex;justify-content:space-between;gap:12px}
 .slip-table{padding:10px 0;border-bottom:1px dashed #cfc7bc}
-.slip-table-head,.slip-item-row,.slip-sum-row,.slip-pay-row,.slip-total-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
-.slip-table-head{padding-bottom:6px;font-size:12px;font-weight:800;background:#f3f5fb;padding-left:6px;padding-right:6px}
+.slip-table-head,.slip-item-row,.slip-sum-row,.slip-total-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.slip-table-head{padding:0 6px 6px;background:#f3f5fb;font-size:12px;font-weight:800}
 .slip-item-wrap{display:grid;gap:8px}
 .slip-item-row{padding-top:8px;border-top:1px dashed #d7d0c6;font-size:12px}
 .slip-item-name{font-weight:700}
 .slip-item-qty{color:var(--muted);font-size:12px}
 .slip-summary{display:grid;gap:4px;padding:10px 0}
-.slip-sum-row,.slip-pay-row{font-size:12px}
+.slip-sum-row{font-size:12px}
 .slip-total-row{padding-top:8px;border-top:1px solid #2f261e;font-size:18px;font-weight:900}
 .slip-thanks{display:grid;gap:5px;text-align:center;padding-top:14px;font-size:12px;line-height:1.45}
-.mail-box{display:grid;gap:10px;margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff}
-.mail-row{display:grid;gap:6px}
-.mail-row strong{font-size:12px;color:var(--muted)}
-a.mail-link{color:#6e4b27;font-weight:800;text-decoration:none}
-@media (max-width:900px){.app{grid-template-columns:1fr}}
+.export-stage{position:fixed;left:-10000px;top:0;pointer-events:none;opacity:0}
+@media (max-width:1200px){.layout,.preview-layout,.detail-grid{grid-template-columns:1fr}.queue-list{max-height:none}}
 </style>
 </head>
 <body>
 <div class="app">
-  <section class="panel">
-    <div class="panel-head">
+  <section class="topbar">
+    <div class="brand-copy">
+      <div class="eyebrow">Post-event workflow</div>
       <h1>Receipt Admin Tool</h1>
-      <div class="muted">Paste the sale CSV header and the rows for one bill. The tool will rebuild the branded visual receipt and prep the follow-up email details.</div>
+      <p>Import one or more end-of-day sales CSV files, build a follow-up queue for customers who explicitly requested an email receipt, then work through each bill with a ready-made receipt image and email draft.</p>
     </div>
-    <label for="csvInput"><strong>Sale CSV input</strong></label>
-    <textarea id="csvInput" placeholder="Paste the exported CSV header and the rows for one bill here."></textarea>
-    <div class="actions">
-      <button class="btn primary" id="renderBtn" type="button">Render Receipt</button>
-      <button class="btn secondary" id="loadExampleBtn" type="button">Load Example</button>
-      <button class="btn secondary" id="copyMailBtn" type="button">Copy Email Draft</button>
-    </div>
-    <div class="status" id="statusText">Waiting for sale CSV.</div>
-    <div class="meta-grid">
-      <div class="meta-card"><strong>Receipt request</strong><span id="requestStateText">-</span></div>
-      <div class="meta-card"><strong>Customer email</strong><span id="customerEmailText">-</span></div>
-      <div class="meta-card"><strong>Bill ID</strong><span id="billIdText">-</span></div>
-      <div class="meta-card"><strong>Payment</strong><span id="paymentText">-</span></div>
-    </div>
-    <div class="mail-box">
-      <div class="mail-row"><strong>Email subject</strong><input id="mailSubjectInput" type="text" readonly></div>
-      <div class="mail-row"><strong>Email body</strong><textarea id="mailBodyInput" readonly></textarea></div>
-      <a class="mail-link" id="mailtoLink" href="#">Open mail draft</a>
+    <div class="top-actions">
+      <button class="btn ghost" id="loadExampleBtn" type="button">Load example data</button>
+      <button class="btn" id="resetBtn" type="button">Reset queue</button>
     </div>
   </section>
 
-  <section class="panel">
-    <div class="panel-head">
-      <h2>Visual Receipt Preview</h2>
-      <div class="muted">Matches the POS branded receipt layout for post-sale sending.</div>
-    </div>
-    <div class="slip-receipt">
-      <div class="slip-top">
-        <div class="slip-brand">
-          <div class="slip-brand-line-the">THE</div>
-          <div class="slip-brand-line-meow"><span>M</span><span>e</span><span>o</span><span>w</span></div>
-          <div class="slip-brand-line-seum"><span>S</span><span>E</span><span>U</span><span>M</span></div>
+  <div class="layout">
+    <aside class="panel">
+      <div class="panel-head">
+        <h2>Import & Queue</h2>
+        <p>Use the same daily CSV exported from the POS at the end of each operating day.</p>
+      </div>
+      <div class="import-box">
+        <div class="file-input">
+          <label for="csvFiles">Daily sales CSV files</label>
+          <input id="csvFiles" type="file" accept=".csv,text/csv" multiple>
         </div>
-        <div class="slip-company">PHIPHETTHAPHAN</div>
-        <div class="slip-subbrand">Meowseum | Modern Friends</div>
-        <div class="slip-badge">Event POS Receipt</div>
+        <div class="top-actions">
+          <button class="btn primary" id="importBtn" type="button">Import CSV</button>
+        </div>
+        <div class="status-text" id="statusText">No CSV imported yet.</div>
       </div>
-      <div class="slip-meta" id="receiptMeta"></div>
-      <div class="slip-table">
-        <div class="slip-table-head"><span>Item</span><span>Amt</span></div>
-        <div class="slip-item-wrap" id="receiptItems"></div>
+
+      <div class="summary-grid">
+        <div class="summary-card"><div class="summary-label">Bills scanned</div><div class="summary-value" id="scannedCountText">0</div></div>
+        <div class="summary-card"><div class="summary-label">Queued to send</div><div class="summary-value" id="queuedCountText">0</div></div>
+        <div class="summary-card"><div class="summary-label">Duplicates skipped</div><div class="summary-value" id="duplicateCountText">0</div></div>
+        <div class="summary-card"><div class="summary-label">Pending in queue</div><div class="summary-value" id="pendingCountText">0</div></div>
       </div>
-      <div class="slip-summary" id="receiptSummary"></div>
-      <div class="slip-thanks">
-        <div>Thank you for supporting Phiphetthaphan.</div>
-        <div>Thank you for letting us be part of your pet&rsquo;s daily joy.</div>
-        <div>For inquiries, please contact phiphetthaphan@gmail.com</div>
+
+      <div class="summary-card">
+        <div class="summary-label">Skipped bills</div>
+        <div class="summary-value" id="skippedCountText">0</div>
+        <div class="summary-note" id="skipReasonText">Waiting for imports.</div>
       </div>
+
+      <div class="queue-panel">
+        <div class="queue-progress" id="queueProgressText">0 of 0 selected.</div>
+        <div class="queue-list" id="queueList">
+          <div class="empty-state">Import one or more day CSV files to build the receipt-send queue.</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="right-shell">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Selected Bill</h2>
+          <p>Review the receipt, download the PNG attachment, and draft the email for the selected customer.</p>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-box"><div class="detail-label">Bill ID</div><div class="detail-value" id="billIdText">-</div></div>
+          <div class="detail-box"><div class="detail-label">Customer email</div><div class="detail-value" id="customerEmailText">-</div></div>
+          <div class="detail-box"><div class="detail-label">Payment</div><div class="detail-value" id="paymentText">-</div></div>
+          <div class="detail-box"><div class="detail-label">Queue state</div><div class="detail-value" id="requestStateText">-</div></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn ghost" id="prevBillBtn" type="button">Previous</button>
+          <button class="btn ghost" id="nextBillBtn" type="button">Next</button>
+          <button class="btn" id="downloadPngBtn" type="button">Download PNG</button>
+          <button class="btn" id="copyDraftBtn" type="button">Copy Draft</button>
+          <button class="btn primary" id="markDoneBtn" type="button">Mark Done</button>
+          <button class="btn ghost" id="markSkipBtn" type="button">Skip</button>
+        </div>
+      </section>
+
+      <section class="preview-layout">
+        <div class="receipt-card">
+          <div class="slip-receipt" id="receiptPreview">
+            <div class="slip-top">
+              <div class="slip-brand">
+                <div class="slip-brand-line-the">THE</div>
+                <div class="slip-brand-line-meow"><span>M</span><span>e</span><span>o</span><span>w</span></div>
+                <div class="slip-brand-line-seum"><span>S</span><span>E</span><span>U</span><span>M</span></div>
+              </div>
+              <div class="slip-company">PHIPHETTHAPHAN</div>
+              <div class="slip-subbrand">Meowseum | Modern Friends</div>
+              <div class="slip-badge">Receipt Email Preview</div>
+            </div>
+            <div class="slip-meta" id="receiptMeta"></div>
+            <div class="slip-table">
+              <div class="slip-table-head"><span>Item</span><span>Amt</span></div>
+              <div class="slip-item-wrap" id="receiptItems"></div>
+            </div>
+            <div class="slip-summary" id="receiptSummary"></div>
+            <div class="slip-thanks">
+              <div>Thank you for supporting Phiphetthaphan.</div>
+              <div>Thank you for letting us be part of your pet's daily joy.</div>
+              <div>For inquiries, please contact phiphetthaphan@gmail.com</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mail-card">
+          <div class="field">
+            <label for="recipientInput">To</label>
+            <input id="recipientInput" type="email" placeholder="customer@example.com">
+          </div>
+          <div class="field">
+            <label for="mailSubjectInput">Email subject</label>
+            <input id="mailSubjectInput" type="text" placeholder="Your Meowseum receipt">
+          </div>
+          <div class="field">
+            <label for="mailBodyInput">Email body</label>
+            <textarea id="mailBodyInput" placeholder="Draft email body will appear here."></textarea>
+          </div>
+          <div class="mail-actions">
+            <a class="mail-link" id="mailtoLink" href="#">Open mail draft</a>
+          </div>
+          <div class="hint">Use the generated PNG as the attachment in your mail client. This tool keeps everything local in the browser and does not send email directly.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="export-stage">
+  <div class="slip-receipt" id="receiptExportNode">
+    <div class="slip-top">
+      <div class="slip-brand">
+        <div class="slip-brand-line-the">THE</div>
+        <div class="slip-brand-line-meow"><span>M</span><span>e</span><span>o</span><span>w</span></div>
+        <div class="slip-brand-line-seum"><span>S</span><span>E</span><span>U</span><span>M</span></div>
+      </div>
+      <div class="slip-company">PHIPHETTHAPHAN</div>
+      <div class="slip-subbrand">Meowseum | Modern Friends</div>
+      <div class="slip-badge">Receipt Email Preview</div>
     </div>
-  </section>
+    <div class="slip-meta" id="receiptExportMeta"></div>
+    <div class="slip-table">
+      <div class="slip-table-head"><span>Item</span><span>Amt</span></div>
+      <div class="slip-item-wrap" id="receiptExportItems"></div>
+    </div>
+    <div class="slip-summary" id="receiptExportSummary"></div>
+    <div class="slip-thanks">
+      <div>Thank you for supporting Phiphetthaphan.</div>
+      <div>Thank you for letting us be part of your pet's daily joy.</div>
+      <div>For inquiries, please contact phiphetthaphan@gmail.com</div>
+    </div>
+  </div>
 </div>
 
 <script>
-const DEFAULT_HEADERS=["billId","datetime","timestamp","lineNumber","sku","itemName","category","qty","basePrice","lineSubtotal","discountPerItem","discountAmount","discountApplied","finalUnitPrice","lineTotal","isFreeGift","giftMode","autoGiftQty","manualGiftQty","manualGiftOverride","saleSubtotal","saleDiscountAmount","saleTotal","operator","paymentMethod","paymentStatus","paymentReference","receiptEmailRequested","customerEmail","tags"];
-
-const els={
-  csvInput:document.getElementById("csvInput"),
-  renderBtn:document.getElementById("renderBtn"),
-  loadExampleBtn:document.getElementById("loadExampleBtn"),
-  copyMailBtn:document.getElementById("copyMailBtn"),
-  statusText:document.getElementById("statusText"),
-  requestStateText:document.getElementById("requestStateText"),
-  customerEmailText:document.getElementById("customerEmailText"),
-  billIdText:document.getElementById("billIdText"),
-  paymentText:document.getElementById("paymentText"),
-  mailSubjectInput:document.getElementById("mailSubjectInput"),
-  mailBodyInput:document.getElementById("mailBodyInput"),
-  mailtoLink:document.getElementById("mailtoLink"),
-  receiptMeta:document.getElementById("receiptMeta"),
-  receiptItems:document.getElementById("receiptItems"),
-  receiptSummary:document.getElementById("receiptSummary")
+const els = {
+  csvFiles: document.getElementById("csvFiles"),
+  importBtn: document.getElementById("importBtn"),
+  loadExampleBtn: document.getElementById("loadExampleBtn"),
+  resetBtn: document.getElementById("resetBtn"),
+  statusText: document.getElementById("statusText"),
+  scannedCountText: document.getElementById("scannedCountText"),
+  queuedCountText: document.getElementById("queuedCountText"),
+  duplicateCountText: document.getElementById("duplicateCountText"),
+  pendingCountText: document.getElementById("pendingCountText"),
+  skippedCountText: document.getElementById("skippedCountText"),
+  skipReasonText: document.getElementById("skipReasonText"),
+  queueProgressText: document.getElementById("queueProgressText"),
+  queueList: document.getElementById("queueList"),
+  billIdText: document.getElementById("billIdText"),
+  customerEmailText: document.getElementById("customerEmailText"),
+  paymentText: document.getElementById("paymentText"),
+  requestStateText: document.getElementById("requestStateText"),
+  prevBillBtn: document.getElementById("prevBillBtn"),
+  nextBillBtn: document.getElementById("nextBillBtn"),
+  downloadPngBtn: document.getElementById("downloadPngBtn"),
+  copyDraftBtn: document.getElementById("copyDraftBtn"),
+  markDoneBtn: document.getElementById("markDoneBtn"),
+  markSkipBtn: document.getElementById("markSkipBtn"),
+  recipientInput: document.getElementById("recipientInput"),
+  mailSubjectInput: document.getElementById("mailSubjectInput"),
+  mailBodyInput: document.getElementById("mailBodyInput"),
+  mailtoLink: document.getElementById("mailtoLink"),
+  receiptMeta: document.getElementById("receiptMeta"),
+  receiptItems: document.getElementById("receiptItems"),
+  receiptSummary: document.getElementById("receiptSummary"),
+  receiptExportNode: document.getElementById("receiptExportNode"),
+  receiptExportMeta: document.getElementById("receiptExportMeta"),
+  receiptExportItems: document.getElementById("receiptExportItems"),
+  receiptExportSummary: document.getElementById("receiptExportSummary")
 };
 
-function parseCsv(text){
-  const rows=[];let row=[];let value="";let quoted=false;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i],next=text[i+1];
-    if(ch==='"'){
-      if(quoted&&next==='"'){value+='"';i++;continue;}
-      quoted=!quoted;continue;
-    }
-    if(ch===","&&!quoted){row.push(value);value="";continue;}
-    if((ch==="\n"||ch==="\r")&&!quoted){
-      if(ch==="\r"&&next==="\n")i++;
-      row.push(value);rows.push(row);row=[];value="";continue;
-    }
-    value+=ch;
-  }
-  if(value.length||row.length){row.push(value);rows.push(row);}
-  return rows.filter(entry=>entry.some(cell=>String(cell).trim()!==""));
+const state = {
+  sales: [],
+  queue: [],
+  selectedId: null,
+  summary: { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 }
+};
+
+const EXAMPLE_DAY_CSV = `operatingDay,billId,datetime,timestamp,lineNumber,sku,itemName,category,qty,basePrice,lineSubtotal,discountPerItem,discountAmount,discountApplied,finalUnitPrice,lineTotal,isFreeGift,giftMode,autoGiftQty,manualGiftQty,manualGiftOverride,saleSubtotal,saleDiscountAmount,saleTotal,operator,paymentMethod,paymentStatus,paymentReference,receiptEmailRequested,customerEmail,tags
+Day 1,DAY1-0001,2026-03-30T13:12:00.000Z,1774876320000,1,012,Bowl Appetit,Main,1,1290,1290,0,0,false,1290,1290,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP001,true,customer.one@example.com,VIP
+Day 1,DAY1-0001,2026-03-30T13:12:00.000Z,1774876320000,2,GIFT-SCARF,Limited Edition Meowseum Scarf,Promo Gift,2,0,0,0,0,false,0,0,true,auto,2,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP001,true,customer.one@example.com,VIP
+Day 1,DAY1-0002,2026-03-30T14:45:00.000Z,1774881900000,1,022,Cloud Carrier,Main,1,1790,1790,0,0,false,1790,1790,false,,0,0,false,1790,0,1790,Ben,cash,confirmed,,false,marketing.only@example.com,
+Day 1,DAY1-0003,2026-03-30T15:30:00.000Z,1774884600000,1,033,Nap Nest,Main,1,990,990,0,0,false,990,990,false,,0,0,false,990,0,990,Kat,card,confirmed,APPROVAL7,true,,Meowseum :)`;
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 }
 
-function toBool(value){return /^(true|1|yes)$/i.test(String(value||"").trim());}
-function toNumber(value){const n=Number(value);return Number.isFinite(n)?n:0;}
-function formatCurrency(value){return `THB ${toNumber(value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;}
-function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
-function paymentLabel(value){return value==="transfer"?"Bank Transfer":value==="card"?"Card":"Cash";}
+function escapeXml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[char]));
+}
 
-function parseSaleInput(text){
-  const rows=parseCsv(text.trim());
-  if(!rows.length)throw new Error("Paste the CSV header and at least one sale row.");
-  const maybeHeader=rows[0];
-  const useHeader=maybeHeader.includes("billId")&&maybeHeader.includes("itemName");
-  const headers=useHeader?maybeHeader:DEFAULT_HEADERS;
-  const dataRows=useHeader?rows.slice(1):rows;
-  if(!dataRows.length)throw new Error("No sale rows found after the header.");
-  const records=dataRows.map(cells=>{
-    const record={};
-    headers.forEach((header,index)=>record[header]=cells[index]??"");
+function toBool(value) {
+  return String(value ?? "").trim().toLowerCase() === "true";
+}
+
+function toNumber(value) {
+  const num = Number(String(value ?? "").replace(/,/g, ""));
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatCurrency(value) {
+  return `THB ${toNumber(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function paymentLabel(value) {
+  const map = { cash: "Cash", transfer: "Bank transfer", card: "Card" };
+  return map[value] || value || "-";
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-GB", { hour12: false });
+}
+
+function selectedQueueIndex() {
+  return state.queue.findIndex(sale => sale.billId === state.selectedId);
+}
+
+function selectedSale() {
+  return state.queue.find(sale => sale.billId === state.selectedId) || null;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(cell);
+      cell = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(cell);
+      if (row.some(item => item !== "")) rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+    cell += char;
+  }
+  row.push(cell);
+  if (row.some(item => item !== "")) rows.push(row);
+  return rows;
+}
+
+function parseCsvRecords(text, fileName) {
+  const rows = parseCsv(text.trim());
+  if (rows.length < 2) throw new Error(`${fileName}: no sale rows found.`);
+  const headers = rows[0].map(header => header.trim());
+  if (!headers.includes("billId") || !headers.includes("itemName")) {
+    throw new Error(`${fileName}: this CSV does not match the POS export format.`);
+  }
+  return rows.slice(1).map((row, index) => {
+    const record = {};
+    headers.forEach((header, headerIndex) => {
+      record[header] = row[headerIndex] ?? "";
+    });
+    record.__source = fileName;
+    record.__line = index + 2;
     return record;
+  }).filter(record => record.billId);
+}
+
+function recordsToSales(records) {
+  const grouped = new Map();
+  records.forEach(record => {
+    if (!grouped.has(record.billId)) {
+      grouped.set(record.billId, {
+        operatingDay: record.operatingDay || "",
+        billId: record.billId,
+        datetime: record.datetime || "",
+        timestamp: record.timestamp || "",
+        subtotal: toNumber(record.saleSubtotal),
+        discount: toNumber(record.saleDiscountAmount),
+        total: toNumber(record.saleTotal),
+        operator: record.operator || "",
+        paymentMethod: record.paymentMethod || "",
+        paymentStatus: record.paymentStatus || "",
+        paymentReference: record.paymentReference || "",
+        receiptEmailRequested: toBool(record.receiptEmailRequested),
+        customerEmail: (record.customerEmail || "").trim(),
+        tags: (record.tags || "").split("|").map(item => item.trim()).filter(Boolean),
+        items: [],
+        queueStatus: "pending",
+        pngDataUrl: "",
+        pngFilename: ""
+      });
+    }
+    grouped.get(record.billId).items.push({
+      sku: record.sku || "",
+      itemName: record.itemName || "",
+      category: record.category || "",
+      qty: toNumber(record.qty),
+      lineTotal: toNumber(record.lineTotal),
+      isFreeGift: toBool(record.isFreeGift),
+      giftMode: record.giftMode || ""
+    });
   });
-  const billId=records[0].billId;
-  const saleRows=records.filter(record=>record.billId===billId);
-  if(!saleRows.length)throw new Error("Could not find sale rows for a single bill.");
-  return{
-    billId,
-    datetime:saleRows[0].datetime||"",
-    paymentMethod:saleRows[0].paymentMethod||"",
-    paymentStatus:saleRows[0].paymentStatus||"",
-    paymentReference:saleRows[0].paymentReference||"",
-    operator:saleRows[0].operator||"",
-    receiptEmailRequested:toBool(saleRows[0].receiptEmailRequested),
-    customerEmail:saleRows[0].customerEmail||"",
-    subtotal:toNumber(saleRows[0].saleSubtotal),
-    discount:toNumber(saleRows[0].saleDiscountAmount),
-    total:toNumber(saleRows[0].saleTotal),
-    items:saleRows.map(record=>({name:record.itemName||record.sku||"-",qty:toNumber(record.qty)||1,lineTotal:toNumber(record.lineTotal)}))
-  };
+  return [...grouped.values()].map(sale => ({
+    ...sale,
+    items: sale.items.sort((a, b) => (a.isFreeGift === b.isFreeGift ? 0 : a.isFreeGift ? 1 : -1))
+  }));
 }
 
-function receiptText(sale){
-  return[
-    "THE",
-    "MEOW",
-    "SEUM",
-    "PHIPHETTHAPHAN",
-    "Meowseum | Modern Friends",
-    "",
-    `Bill ID: ${sale.billId}`,
-    `Date: ${sale.datetime}`,
-    `Payment: ${paymentLabel(sale.paymentMethod)} (${sale.paymentStatus||"-"})`,
-    sale.paymentReference?`Payment ref: ${sale.paymentReference}`:"",
-    sale.operator?`Operator: ${sale.operator}`:"",
-    "",
-    ...sale.items.map(item=>`${item.name} x ${item.qty} = ${formatCurrency(item.lineTotal)}`),
-    "",
-    `Subtotal: ${formatCurrency(sale.subtotal)}`,
-    `Discount: ${formatCurrency(sale.discount)}`,
-    `Total: ${formatCurrency(sale.total)}`,
-    sale.receiptEmailRequested?"Email receipt requested":"Email receipt not requested",
-    sale.customerEmail?`Customer email: ${sale.customerEmail}`:""
-  ].filter(Boolean).join("\n");
+function defaultMailSubject(sale) {
+  return `Your Meowseum receipt - ${sale.billId}`;
 }
 
-function renderSale(sale){
-  els.receiptMeta.innerHTML=[
-    ["Receipt",sale.billId],
-    ["Date",sale.datetime||"-"],
-    ["Customer","Walk-in customer"],
-    ["Phone","-"],
-    ["Staff",sale.operator||"-"],
-    ["Payment",paymentLabel(sale.paymentMethod)]
-  ].map(([label,value])=>`<div class="slip-meta-row"><span>${escapeHtml(label)}:</span><span>${escapeHtml(value)}</span></div>`).join("");
-  els.receiptItems.innerHTML=sale.items.map(item=>`<div class="slip-item-row"><div><div class="slip-item-name">${escapeHtml(item.name)}</div><div class="slip-item-qty">x ${item.qty}</div></div><strong>${escapeHtml(formatCurrency(item.lineTotal))}</strong></div>`).join("");
-  els.receiptSummary.innerHTML=[
-    ["Subtotal",formatCurrency(sale.subtotal),"slip-sum-row"],
-    ["Item Discount",formatCurrency(sale.discount),"slip-sum-row"],
-    ["Order Discount","THB 0.00","slip-sum-row"],
-    ["Total",formatCurrency(sale.total),"slip-total-row"]
-  ].map(([label,value,className])=>`<div class="${className}"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join("");
-  els.requestStateText.textContent=sale.receiptEmailRequested?"Requested":"Not requested";
-  els.customerEmailText.textContent=sale.customerEmail||"-";
-  els.billIdText.textContent=sale.billId||"-";
-  els.paymentText.textContent=`${paymentLabel(sale.paymentMethod)}${sale.paymentStatus?` • ${sale.paymentStatus}`:""}`;
-  const subject=`Your Meowseum receipt - ${sale.billId}`;
-  const body=receiptText(sale);
-  els.mailSubjectInput.value=subject;
-  els.mailBodyInput.value=body;
-  els.mailtoLink.href=sale.customerEmail?`mailto:${encodeURIComponent(sale.customerEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`:"#";
-  els.statusText.textContent=`Receipt ready for ${sale.billId}.`;
+function defaultMailBody(sale) {
+  return [
+    "Hello,",
+    "",
+    "Thank you for visiting Phiphetthaphan at the event.",
+    `Attached is your receipt for bill ${sale.billId}.`,
+    "",
+    "If you have any questions, please reply to this email.",
+    "",
+    "Best regards,",
+    "Phiphetthaphan"
+  ].join("\n");
 }
 
-function renderFromInput(){
-  try{
-    const sale=parseSaleInput(els.csvInput.value);
-    renderSale(sale);
-  }catch(error){
-    els.statusText.textContent=error.message||"Could not parse the pasted CSV.";
+function renderReceiptInto(target, sale) {
+  const metaRows = [
+    ["Receipt:", sale.billId],
+    ["Date:", formatDate(sale.datetime)],
+    ["Customer:", sale.customerEmail || "Walk-in customer"],
+    ["Phone:", "-"],
+    ["Staff:", sale.operator || "-"],
+    ["Payment:", paymentLabel(sale.paymentMethod)]
+  ];
+  target.meta.innerHTML = metaRows.map(([label, value]) => `<div class="slip-meta-row"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join("");
+  target.items.innerHTML = sale.items.map(item => `
+    <div class="slip-item-row">
+      <div>
+        <div class="slip-item-name">${escapeHtml(item.itemName)}</div>
+        <div class="slip-item-qty">x ${escapeHtml(item.qty)}${item.isFreeGift ? " | Promo gift" : ""}</div>
+      </div>
+      <strong>${escapeHtml(formatCurrency(item.lineTotal))}</strong>
+    </div>
+  `).join("");
+  target.summary.innerHTML = [
+    ["Subtotal", formatCurrency(sale.subtotal), "slip-sum-row"],
+    ["Item Discount", formatCurrency(sale.discount), "slip-sum-row"],
+    ["Order Discount", formatCurrency(0), "slip-sum-row"],
+    ["Total", formatCurrency(sale.total), "slip-total-row"]
+  ].map(([label, value, className]) => `<div class="${className}"><span>${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></div>`).join("");
+}
+
+function refreshMailtoLink() {
+  const recipient = els.recipientInput.value.trim();
+  const subject = els.mailSubjectInput.value.trim();
+  const body = els.mailBodyInput.value;
+  els.mailtoLink.href = recipient ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : "#";
+}
+
+function receiptSvgMarkup(sale) {
+  const width = 720;
+  const lineHeight = 24;
+  const itemBlock = sale.items.length * 52;
+  const height = 640 + itemBlock;
+  const metaRows = [
+    ["Receipt:", sale.billId],
+    ["Date:", formatDate(sale.datetime)],
+    ["Customer:", sale.customerEmail || "Walk-in customer"],
+    ["Phone:", "-"],
+    ["Staff:", sale.operator || "-"],
+    ["Payment:", paymentLabel(sale.paymentMethod)]
+  ];
+  const itemRows = sale.items.map((item, index) => {
+    const top = 272 + (index * 52);
+    return `
+      <line x1="42" y1="${top - 10}" x2="678" y2="${top - 10}" stroke="#d7d0c6" stroke-dasharray="5 5"/>
+      <text x="42" y="${top}" font-size="24" font-weight="700" fill="#2b231d">${escapeXml(item.itemName)}</text>
+      <text x="42" y="${top + 24}" font-size="20" fill="#736555">x ${escapeXml(item.qty)}${item.isFreeGift ? " | Promo gift" : ""}</text>
+      <text x="678" y="${top + 8}" font-size="24" font-weight="700" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(item.lineTotal))}</text>
+    `;
+  }).join("");
+  const summaryTop = 286 + itemBlock;
+  const thanksTop = summaryTop + 128;
+  return `
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <rect width="${width}" height="${height}" fill="#ffffff"/>
+    <text x="214" y="56" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="44" font-weight="700" letter-spacing="-1.2" fill="#2f261e">THE</text>
+    <text x="214" y="122" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="112" font-weight="700" letter-spacing="-3.4" fill="#2f261e">Meow</text>
+    <text x="214" y="184" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="88" font-weight="700" letter-spacing="-1.8" fill="#2f261e">SEUM</text>
+    <text x="360" y="220" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="21" font-weight="900" letter-spacing="2.2" fill="#2b231d">PHIPHETTHAPHAN</text>
+    <text x="360" y="246" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#736555">Meowseum | Modern Friends</text>
+    <text x="360" y="278" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="15" fill="#4c5b8d">Receipt Email Preview</text>
+    <line x1="42" y1="296" x2="678" y2="296" stroke="#cfc7bc" stroke-dasharray="5 5"/>
+    ${metaRows.map(([label, value], index) => `
+      <text x="42" y="${330 + (index * lineHeight)}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">${escapeXml(label)}</text>
+      <text x="678" y="${330 + (index * lineHeight)}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(value)}</text>
+    `).join("")}
+    <line x1="42" y1="478" x2="678" y2="478" stroke="#cfc7bc" stroke-dasharray="5 5"/>
+    <rect x="42" y="490" width="636" height="30" fill="#f3f5fb"/>
+    <text x="54" y="512" font-family="Aptos, Segoe UI, sans-serif" font-size="19" font-weight="800" fill="#2b231d">Item</text>
+    <text x="666" y="512" font-family="Aptos, Segoe UI, sans-serif" font-size="19" font-weight="800" fill="#2b231d" text-anchor="end">Amt</text>
+    ${itemRows}
+    <line x1="42" y1="${summaryTop}" x2="678" y2="${summaryTop}" stroke="#cfc7bc" stroke-dasharray="5 5"/>
+    <text x="42" y="${summaryTop + 34}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Subtotal</text>
+    <text x="678" y="${summaryTop + 34}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.subtotal))}</text>
+    <text x="42" y="${summaryTop + 62}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Item Discount</text>
+    <text x="678" y="${summaryTop + 62}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.discount))}</text>
+    <text x="42" y="${summaryTop + 90}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Order Discount</text>
+    <text x="678" y="${summaryTop + 90}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(0))}</text>
+    <line x1="42" y1="${summaryTop + 104}" x2="678" y2="${summaryTop + 104}" stroke="#2f261e"/>
+    <text x="42" y="${summaryTop + 136}" font-family="Aptos, Segoe UI, sans-serif" font-size="32" font-weight="900" fill="#2b231d">Total</text>
+    <text x="678" y="${summaryTop + 136}" font-family="Aptos, Segoe UI, sans-serif" font-size="32" font-weight="900" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.total))}</text>
+    <text x="360" y="${thanksTop}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">Thank you for supporting Phiphetthaphan.</text>
+    <text x="360" y="${thanksTop + 28}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">Thank you for letting us be part of your pet's daily joy.</text>
+    <text x="360" y="${thanksTop + 56}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">For inquiries, please contact phiphetthaphan@gmail.com</text>
+  </svg>`;
+}
+
+function svgToPngDataUrl(svgMarkup) {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not generate the PNG receipt image on this device."));
+    };
+    image.src = url;
+  });
+}
+
+async function generatePngForSale(sale) {
+  if (sale.pngDataUrl) return sale.pngDataUrl;
+  const svgMarkup = receiptSvgMarkup(sale);
+  sale.pngDataUrl = await svgToPngDataUrl(svgMarkup);
+  sale.pngFilename = `${sale.billId}.png`;
+  return sale.pngDataUrl;
+}
+
+function renderSummary() {
+  els.scannedCountText.textContent = String(state.summary.scanned);
+  els.queuedCountText.textContent = String(state.summary.queued);
+  els.duplicateCountText.textContent = String(state.summary.duplicates);
+  els.pendingCountText.textContent = String(state.queue.filter(sale => sale.queueStatus === "pending").length);
+  const skipped = state.summary.skippedNoEmail + state.summary.skippedNoRequest;
+  els.skippedCountText.textContent = String(skipped);
+  els.skipReasonText.textContent = skipped ? `No email: ${state.summary.skippedNoEmail} | No receipt request: ${state.summary.skippedNoRequest}` : "No skipped bills so far.";
+}
+
+function renderQueue() {
+  if (!state.queue.length) {
+    els.queueList.innerHTML = `<div class="empty-state">No qualifying bills yet. Import day CSV files to queue email receipt requests.</div>`;
+    els.queueProgressText.textContent = "0 of 0 selected.";
+    return;
+  }
+  els.queueList.innerHTML = state.queue.map(sale => `
+    <button class="queue-item ${sale.billId === state.selectedId ? "active" : ""}" type="button" data-bill-id="${escapeHtml(sale.billId)}">
+      <div class="queue-row">
+        <div class="queue-bill">${escapeHtml(sale.billId)}</div>
+        <span class="pill ${escapeHtml(sale.queueStatus)}">${escapeHtml(sale.queueStatus)}</span>
+      </div>
+      <div class="queue-meta">${escapeHtml(sale.customerEmail)}</div>
+      <div class="queue-meta">${escapeHtml(formatDate(sale.datetime))} | ${escapeHtml(paymentLabel(sale.paymentMethod))}</div>
+    </button>
+  `).join("");
+  const selectedIndex = selectedQueueIndex();
+  els.queueProgressText.textContent = `${selectedIndex + 1} of ${state.queue.length} selected.`;
+}
+
+function updateSelectionControls() {
+  const sale = selectedSale();
+  const index = selectedQueueIndex();
+  const hasSale = Boolean(sale);
+  els.prevBillBtn.disabled = !hasSale || index <= 0;
+  els.nextBillBtn.disabled = !hasSale || index >= state.queue.length - 1;
+  els.downloadPngBtn.disabled = !hasSale;
+  els.copyDraftBtn.disabled = !hasSale;
+  els.markDoneBtn.disabled = !hasSale;
+  els.markSkipBtn.disabled = !hasSale;
+}
+
+async function renderSelectedSale() {
+  const sale = selectedSale();
+  if (!sale) {
+    els.billIdText.textContent = "-";
+    els.customerEmailText.textContent = "-";
+    els.paymentText.textContent = "-";
+    els.requestStateText.textContent = "-";
+    els.recipientInput.value = "";
+    els.mailSubjectInput.value = "";
+    els.mailBodyInput.value = "";
+    els.receiptMeta.innerHTML = "";
+    els.receiptItems.innerHTML = "";
+    els.receiptSummary.innerHTML = "";
+    refreshMailtoLink();
+    updateSelectionControls();
+    return;
+  }
+  els.billIdText.textContent = sale.billId;
+  els.customerEmailText.textContent = sale.customerEmail || "-";
+  els.paymentText.textContent = `${paymentLabel(sale.paymentMethod)} | ${sale.paymentStatus || "pending"}`;
+  els.requestStateText.textContent = `${sale.queueStatus} | requested`;
+  els.recipientInput.value = sale.customerEmail;
+  els.mailSubjectInput.value = sale.mailSubject || defaultMailSubject(sale);
+  els.mailBodyInput.value = sale.mailBody || defaultMailBody(sale);
+  sale.mailSubject = els.mailSubjectInput.value;
+  sale.mailBody = els.mailBodyInput.value;
+  renderReceiptInto({ meta: els.receiptMeta, items: els.receiptItems, summary: els.receiptSummary }, sale);
+  renderReceiptInto({ meta: els.receiptExportMeta, items: els.receiptExportItems, summary: els.receiptExportSummary }, sale);
+  refreshMailtoLink();
+  updateSelectionControls();
+  try {
+    els.statusText.textContent = `Preparing PNG for ${sale.billId}...`;
+    await generatePngForSale(sale);
+    els.statusText.textContent = `Ready to send ${sale.billId}.`;
+  } catch (error) {
+    els.statusText.textContent = error.message;
   }
 }
 
-els.renderBtn.addEventListener("click",renderFromInput);
-els.loadExampleBtn.addEventListener("click",()=>{
-  els.csvInput.value=`${DEFAULT_HEADERS.join(",")}\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,1,012,Bowl Appetit,Lifestyle,1,1290,1290,0,0,false,1290,1290,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,2,005,The Colosseum,Premium,1,2190,2190,0,0,false,2190,2190,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo\nBILL-20260331-001,2026-03-31T10:45:00.000Z,1774947900000,3,GIFT-SCARF,Limited Edition Meowseum Scarf,Promo Gift,1,0,0,0,0,false,0,0,true,auto,1,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP-20260331,true,customer@example.com,pet expo`;
-  renderFromInput();
+function downloadDataUrl(filename, dataUrl) {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function setSelectedBill(billId) {
+  state.selectedId = billId || null;
+  renderQueue();
+  renderSelectedSale();
+}
+
+function moveSelection(delta) {
+  const index = selectedQueueIndex();
+  if (index < 0) return;
+  const next = state.queue[index + delta];
+  if (next) setSelectedBill(next.billId);
+}
+
+function markSelected(status) {
+  const sale = selectedSale();
+  if (!sale) return;
+  sale.queueStatus = status;
+  renderQueue();
+  renderSelectedSale();
+}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+    reader.readAsText(file, "utf-8");
+  });
+}
+
+async function importFromTexts(entries) {
+  const nextSales = [...state.sales];
+  const seenBillIds = new Set(nextSales.map(sale => sale.billId));
+  const newlyQueued = [];
+  let scanned = 0;
+  let duplicates = 0;
+  let skippedNoEmail = 0;
+  let skippedNoRequest = 0;
+
+  for (const entry of entries) {
+    const records = parseCsvRecords(entry.text, entry.name);
+    const importedSales = recordsToSales(records);
+    scanned += importedSales.length;
+    for (const sale of importedSales) {
+      if (seenBillIds.has(sale.billId)) {
+        duplicates += 1;
+        continue;
+      }
+      seenBillIds.add(sale.billId);
+      nextSales.push(sale);
+      if (!sale.receiptEmailRequested) {
+        skippedNoRequest += 1;
+        continue;
+      }
+      if (!sale.customerEmail) {
+        skippedNoEmail += 1;
+        continue;
+      }
+      sale.mailSubject = defaultMailSubject(sale);
+      sale.mailBody = defaultMailBody(sale);
+      state.queue.push(sale);
+      newlyQueued.push(sale);
+    }
+  }
+
+  state.sales = nextSales;
+  state.summary.scanned += scanned;
+  state.summary.duplicates += duplicates;
+  state.summary.skippedNoEmail += skippedNoEmail;
+  state.summary.skippedNoRequest += skippedNoRequest;
+  state.summary.queued = state.queue.length;
+  if (!state.selectedId && state.queue.length) state.selectedId = state.queue[0].billId;
+  renderSummary();
+  renderQueue();
+  await renderSelectedSale();
+  if (newlyQueued.length) {
+    els.statusText.textContent = `Preparing ${newlyQueued.length} receipt image(s)...`;
+    for (const sale of newlyQueued) {
+      try {
+        await generatePngForSale(sale);
+      } catch (_error) {
+        // Keep the queue usable even if one browser blocks PNG generation.
+      }
+    }
+  }
+}
+
+async function importFiles() {
+  if (!els.csvFiles.files.length) {
+    els.statusText.textContent = "Choose one or more CSV files first.";
+    return;
+  }
+  try {
+    els.statusText.textContent = "Reading CSV files...";
+    const entries = await Promise.all([...els.csvFiles.files].map(async file => ({ name: file.name, text: await readFileText(file) })));
+    await importFromTexts(entries);
+    els.statusText.textContent = `Imported ${entries.length} file(s). Queue ready.`;
+  } catch (error) {
+    els.statusText.textContent = error.message;
+  }
+}
+
+function resetQueue() {
+  state.sales = [];
+  state.queue = [];
+  state.selectedId = null;
+  state.summary = { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 };
+  els.csvFiles.value = "";
+  els.statusText.textContent = "Queue cleared.";
+  renderSummary();
+  renderQueue();
+  renderSelectedSale();
+}
+
+async function loadExample() {
+  resetQueue();
+  try {
+    await importFromTexts([{ name: "example-day.csv", text: EXAMPLE_DAY_CSV }]);
+    els.statusText.textContent = "Example queue loaded.";
+  } catch (error) {
+    els.statusText.textContent = error.message;
+  }
+}
+
+els.importBtn.addEventListener("click", importFiles);
+els.loadExampleBtn.addEventListener("click", loadExample);
+els.resetBtn.addEventListener("click", resetQueue);
+els.queueList.addEventListener("click", event => {
+  const button = event.target.closest("[data-bill-id]");
+  if (!button) return;
+  setSelectedBill(button.dataset.billId);
 });
-els.copyMailBtn.addEventListener("click",()=>{if(!els.mailBodyInput.value)return;navigator.clipboard?.writeText(`Subject: ${els.mailSubjectInput.value}\n\n${els.mailBodyInput.value}`).then(()=>{els.statusText.textContent="Email draft copied.";}).catch(()=>{els.statusText.textContent="Could not copy the email draft on this device.";});});
+els.prevBillBtn.addEventListener("click", () => moveSelection(-1));
+els.nextBillBtn.addEventListener("click", () => moveSelection(1));
+els.markDoneBtn.addEventListener("click", () => markSelected("done"));
+els.markSkipBtn.addEventListener("click", () => markSelected("skipped"));
+els.recipientInput.addEventListener("input", () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  sale.customerEmail = els.recipientInput.value.trim();
+  els.customerEmailText.textContent = sale.customerEmail || "-";
+  refreshMailtoLink();
+  renderQueue();
+});
+els.mailSubjectInput.addEventListener("input", () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  sale.mailSubject = els.mailSubjectInput.value;
+  refreshMailtoLink();
+});
+els.mailBodyInput.addEventListener("input", () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  sale.mailBody = els.mailBodyInput.value;
+  refreshMailtoLink();
+});
+els.copyDraftBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  const text = `To: ${els.recipientInput.value.trim()}\nSubject: ${els.mailSubjectInput.value.trim()}\n\n${els.mailBodyInput.value}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    els.statusText.textContent = `Draft copied for ${sale.billId}.`;
+  } catch (_error) {
+    els.statusText.textContent = "Clipboard copy is not available in this browser.";
+  }
+});
+els.downloadPngBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  try {
+    els.statusText.textContent = `Generating PNG for ${sale.billId}...`;
+    const dataUrl = await generatePngForSale(sale);
+    downloadDataUrl(sale.pngFilename || `${sale.billId}.png`, dataUrl);
+    els.statusText.textContent = `PNG downloaded for ${sale.billId}.`;
+  } catch (error) {
+    els.statusText.textContent = error.message;
+  }
+});
+
+renderSummary();
+renderQueue();
+renderSelectedSale();
 </script>
 </body>
 </html>
