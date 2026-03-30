@@ -137,7 +137,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <div class="summary-grid">
         <div class="summary-card"><div class="summary-label">Bills scanned</div><div class="summary-value" id="scannedCountText">0</div></div>
         <div class="summary-card"><div class="summary-label">Queued to send</div><div class="summary-value" id="queuedCountText">0</div></div>
-        <div class="summary-card"><div class="summary-label">Bills sent</div><div class="summary-value" id="duplicateCountText">0</div></div>
+        <div class="summary-card"><div class="summary-label">Bills sent</div><div class="summary-value" id="sentCountText">0</div></div>
         <div class="summary-card"><div class="summary-label">Pending in queue</div><div class="summary-value" id="pendingCountText">0</div></div>
       </div>
 
@@ -288,7 +288,7 @@ const els = {
   statusText: document.getElementById("statusText"),
   scannedCountText: document.getElementById("scannedCountText"),
   queuedCountText: document.getElementById("queuedCountText"),
-  duplicateCountText: document.getElementById("duplicateCountText"),
+  sentCountText: document.getElementById("sentCountText"),
   pendingCountText: document.getElementById("pendingCountText"),
   skippedCountText: document.getElementById("skippedCountText"),
   skipReasonText: document.getElementById("skipReasonText"),
@@ -327,6 +327,10 @@ const state = {
   summary: { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 }
 };
 const STORAGE_KEY = "meowmeowReceiptAdminQueueV1";
+const MAX_IMPORT_FILES = 12;
+const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_IMPORT_ROWS = 6000;
+const FREE_ITEM_LABEL = "Free item";
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -345,6 +349,12 @@ function toNumber(value) {
   return Number.isFinite(num) ? num : 0;
 }
 
+function isValidEmail(value) {
+  const email = String(value ?? "").trim();
+  if (!email) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email) && !email.includes("..");
+}
+
 function formatCurrency(value) {
   return `THB ${toNumber(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -352,6 +362,28 @@ function formatCurrency(value) {
 function paymentLabel(value) {
   const map = { cash: "Cash", transfer: "Bank transfer", card: "Card" };
   return map[value] || value || "-";
+}
+
+function paymentLabelWithIcon(value) {
+  const icon = value === "transfer" ? "🏦" : value === "card" ? "💳" : value === "cash" ? "💵" : "🧾";
+  return `${icon} ${paymentLabel(value)}`;
+}
+
+function queueStatusLabel(value) {
+  if (value === "done") return "✅ done";
+  if (value === "skipped") return "⚠️ skipped";
+  return "⏳ pending";
+}
+
+function appendFreeItemLabel(name, isFreeGift) {
+  const base = String(name || "").trim();
+  if (!base) return base;
+  if (!isFreeGift) return base;
+  return /\(Free item\)$/i.test(base) ? base : `${base} (${FREE_ITEM_LABEL})`;
+}
+
+function displayReceiptItemName(item) {
+  return appendFreeItemLabel(item?.itemName || item?.name || "", Boolean(item?.isFreeGift));
 }
 
 function formatDate(value) {
@@ -462,6 +494,7 @@ function parseCsv(text) {
 function parseCsvRecords(text, fileName) {
   const rows = parseCsv(text.trim());
   if (rows.length < 2) throw new Error(`${fileName}: no sale rows found.`);
+  if (rows.length > MAX_IMPORT_ROWS) throw new Error(`${fileName}: too many rows for one import. Split the CSV into smaller files first.`);
   const headers = rows[0].map(header => header.trim());
   if (!headers.includes("billId") || !headers.includes("itemName")) {
     throw new Error(`${fileName}: this CSV does not match the POS export format.`);
@@ -552,8 +585,8 @@ function renderReceiptInto(target, sale) {
   target.items.innerHTML = sale.items.map(item => `
     <div class="slip-item-row">
       <div>
-        <div class="slip-item-name">${escapeHtml(item.itemName)}</div>
-        <div class="slip-item-qty">x ${escapeHtml(item.qty)}${item.isFreeGift ? " | Promo gift" : ""}</div>
+        <div class="slip-item-name">${escapeHtml(displayReceiptItemName(item))}</div>
+        <div class="slip-item-qty">x ${escapeHtml(item.qty)}${item.isFreeGift ? ` (${FREE_ITEM_LABEL})` : ""}</div>
       </div>
       <strong>${escapeHtml(formatCurrency(item.lineTotal))}</strong>
     </div>
@@ -591,8 +624,8 @@ function receiptSvgMarkup(sale) {
   const centerX = width / 2;
   const wordmarkLeft = centerX - 108;
   const itemRows = sale.items.flatMap(item => {
-    const nameLines = wrapReceiptText(item.itemName, 26);
-    const qtyLine = `x ${item.qty}${item.isFreeGift ? " | Promo gift" : ""}`;
+    const nameLines = wrapReceiptText(displayReceiptItemName(item), 26);
+    const qtyLine = `x ${item.qty}${item.isFreeGift ? ` (${FREE_ITEM_LABEL})` : ""}`;
     return [{ type: "name", text: nameLines[0], amount: formatCurrency(item.lineTotal) }, ...nameLines.slice(1).map(line => ({ type: "name-cont", text: line, amount: "" })), { type: "qty", text: qtyLine, amount: "" }];
   });
   const metaRows = [
@@ -690,7 +723,7 @@ function renderSummary() {
   const importSkippedCount = state.summary.skippedNoEmail + state.summary.skippedNoRequest;
   els.scannedCountText.textContent = String(state.summary.scanned);
   els.queuedCountText.textContent = String(state.summary.queued);
-  els.duplicateCountText.textContent = String(doneCount);
+  els.sentCountText.textContent = String(doneCount);
   els.pendingCountText.textContent = String(pendingCount);
   els.skippedCountText.textContent = String(manuallySkippedCount + importSkippedCount);
   if (manuallySkippedCount || importSkippedCount) {
@@ -725,14 +758,15 @@ function updateSelectionControls() {
   const index = selectedQueueIndex();
   const hasSale = Boolean(sale);
   const hasRecipient = hasSale && Boolean(els.recipientInput.value.trim());
+  const recipientValid = hasSale ? isValidEmail(els.recipientInput.value.trim()) : false;
   els.prevBillBtn.disabled = !hasSale || index <= 0;
   els.nextBillBtn.disabled = !hasSale || index >= state.queue.length - 1;
   els.downloadPngBtn.disabled = !hasSale;
   els.copyReceiptBtn.disabled = !hasSale;
-  els.copyEmailBtn.disabled = !hasRecipient;
+  els.copyEmailBtn.disabled = !hasRecipient || !recipientValid;
   els.copySubjectBtn.disabled = !hasSale;
   els.copyBodyBtn.disabled = !hasSale;
-  els.markDoneBtn.disabled = !hasSale;
+  els.markDoneBtn.disabled = !hasSale || !recipientValid;
   els.markSkipBtn.disabled = !hasSale;
   els.skipReasonSelect.disabled = !hasSale;
 }
@@ -759,6 +793,8 @@ async function renderSelectedSale() {
   els.paymentText.textContent = `${sale.paymentMethod === "transfer" ? "🏦" : sale.paymentMethod === "card" ? "💳" : sale.paymentMethod === "cash" ? "💵" : "🧾"} ${paymentLabel(sale.paymentMethod)}`;
   els.requestStateText.textContent = `${sale.queueStatus === "done" ? "✅" : sale.queueStatus === "skipped" ? "⏭️" : "⏳"} ${sale.queueStatus}`;
   els.skipReasonSelect.value = sale.skipReason || "other";
+  els.paymentText.textContent = paymentLabelWithIcon(sale.paymentMethod);
+  els.requestStateText.textContent = queueStatusLabel(sale.queueStatus);
   els.recipientInput.value = sale.customerEmail;
   els.mailSubjectInput.value = sale.mailSubject || defaultMailSubject(sale);
   els.mailBodyInput.value = sale.mailBody || defaultMailBody(sale);
@@ -873,6 +909,11 @@ function moveSelection(delta) {
 function markSelected(status) {
   const sale = selectedSale();
   if (!sale) return;
+  if (status === "done" && !isValidEmail(els.recipientInput.value.trim())) {
+    els.statusText.textContent = `Please fix the customer email before marking ${sale.billId} as sent.`;
+    updateSelectionControls();
+    return;
+  }
   const currentIndex = selectedQueueIndex();
   sale.queueStatus = status;
   sale.completedAt = status === "done" || status === "skipped" ? stampNow() : "";
@@ -899,7 +940,6 @@ function readFileText(file) {
 async function importFromTexts(entries) {
   const nextSales = [...state.sales];
   const seenBillIds = new Set(nextSales.map(sale => sale.billId));
-  const newlyQueued = [];
   let scanned = 0;
   let duplicates = 0;
   let skippedNoEmail = 0;
@@ -928,7 +968,6 @@ async function importFromTexts(entries) {
       sale.mailBody = defaultMailBody(sale);
       sale.isQueued = true;
       state.queue.push(sale);
-      newlyQueued.push(sale);
     }
   }
 
@@ -942,22 +981,21 @@ async function importFromTexts(entries) {
   renderSummary();
   renderQueue();
   await renderSelectedSale();
-  if (newlyQueued.length) {
-    els.statusText.textContent = `Preparing ${newlyQueued.length} receipt image(s)...`;
-    for (const sale of newlyQueued) {
-      try {
-        await generatePngForSale(sale);
-      } catch (_error) {
-        // Keep the queue usable even if one browser blocks PNG generation.
-      }
-    }
-  }
   saveState();
 }
 
 async function importFiles() {
   if (!els.csvFiles.files.length) {
     els.statusText.textContent = "Choose one or more CSV files first.";
+    return;
+  }
+  if (els.csvFiles.files.length > MAX_IMPORT_FILES) {
+    els.statusText.textContent = `Import up to ${MAX_IMPORT_FILES} CSV files at a time to keep the tool responsive.`;
+    return;
+  }
+  const oversizedFile = [...els.csvFiles.files].find(file => file.size > MAX_IMPORT_FILE_BYTES);
+  if (oversizedFile) {
+    els.statusText.textContent = `${oversizedFile.name} is too large for one import. Split the CSV first.`;
     return;
   }
   try {
@@ -1006,6 +1044,9 @@ els.recipientInput.addEventListener("input", () => {
   if (!sale) return;
   sale.customerEmail = els.recipientInput.value.trim();
   els.customerEmailText.textContent = sale.customerEmail || "-";
+  if (sale.customerEmail && !isValidEmail(sale.customerEmail)) {
+    els.statusText.textContent = `Please fix the email format for ${sale.billId} before sending.`;
+  }
   renderQueue();
   updateSelectionControls();
   saveState();

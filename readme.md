@@ -29,7 +29,7 @@ The product direction is:
   - dashboard
   - developer inventory tools
   - bill correction log for exceptional saved-bill fixes
-- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html) is a local admin helper that rebuilds the branded visual receipt from pasted sale CSV data.
+- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html) is a local admin helper that imports exported day CSV files, rebuilds the branded visual receipt, and supports manual post-sale email workflow.
 
 ## Key Behavior
 
@@ -45,6 +45,7 @@ The product direction is:
 
 - The promo scarf is a real tracked SKU: `GIFT-SCARF`.
 - Free scarf inventory follows the same stock flow as normal SKUs.
+- User-facing displays should label the promo scarf as `(Free item)` so staff and customers are not confused, while the same SKU still stays in inventory flow and CSV records.
 - The scarf can auto-award based on cart total:
   - every `THB 2,000` of qualifying cart total earns `1` scarf
 - The scarf can also be manually added beyond entitlement, but that requires in-app confirmation.
@@ -87,6 +88,8 @@ The product direction is:
 - Low-stock alerts remain editable in developer mode.
 - End-of-day export and stock carry-forward should keep working without requiring staff to understand the internal data model.
 - `Close Day & Export CSV` is passcode-protected and the dialog now uses only the passcode keypad flow without an extra cancel button.
+- After a saved bill is corrected, inventory carry-forward must be realigned across later event days so Day 2, Day 3, and Day 4 starting stock stay consistent with the corrected earlier day.
+- Sold-count calculations are now cached in-memory during runtime to reduce repeated inventory recomputation on every render.
 
 ## Bill Correction Log Rules
 
@@ -109,6 +112,7 @@ The product direction is:
 - Do not allow direct editing of bill ID, datetime, raw totals, SKU text, or item prices.
 - Item quantities must not exceed the real inventory available for that bill's operating day.
 - Saving a correction updates the saved sale, and inventory follows automatically because sold stock is derived from saved sales.
+- Saving a correction must also realign later-day carried stock, not just the edited bill's own day.
 - Correction history should stay business-readable and include:
   - `at`
   - `reason`
@@ -123,10 +127,14 @@ The product direction is:
 - Sales are stored in `localStorage`.
 - Old sales should continue loading safely even when newer fields are added.
 - CSV export is part of the operating workflow and should stay stable.
+- This is still a local browser app, so passcodes and local-storage data protect normal booth workflow only.
+- They are not a true security boundary against someone with direct device access and browser developer tools.
 - Current receipt-related CSV fields include:
   - `receiptEmailRequested`
   - `customerEmail`
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
+- The admin receipt tool now protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
+- Admin can only mark a receipt bill as sent when the edited customer email still matches a valid email format.
 
 ## Layout Rules
 
@@ -140,7 +148,7 @@ The product direction is:
 ## Files
 
 - [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html): full POS app
-- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html): admin receipt generator from pasted CSV rows
+- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html): admin receipt and follow-up workflow from exported day CSV files
 - [readme.md](c:\Users\USER\Desktop\meowmeow_sandbox\readme.md): continuation notes for future sessions
 
 ## How To Continue Next Time
