@@ -68,6 +68,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .priority-btn.receipt{background:#f1e7d9;color:#5f462a}
 .priority-btn.done{background:linear-gradient(180deg,#a87640 0%,#85572b 100%);color:#fffaf3}
 .priority-btn.skip{background:#f8eee1;color:#7a5330}
+.mini-field{display:grid;gap:6px}
+.mini-field label{font-size:12px;color:var(--muted);font-weight:700}
+.mini-field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .support-grid{display:grid;gap:12px}
 .field{display:grid;gap:6px}
 .field-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
@@ -230,6 +233,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
               <button class="priority-btn receipt" id="copyReceiptBtn" type="button">Copy Receipt Image</button>
               <button class="priority-btn receipt" id="downloadPngBtn" type="button">Download PNG</button>
             </div>
+            <div class="mini-field">
+              <label for="skipReasonSelect">Skip reason</label>
+              <select id="skipReasonSelect">
+                <option value="other">other</option>
+                <option value="invalid_email">invalid_email</option>
+                <option value="no_response">no_response</option>
+                <option value="duplicate">duplicate</option>
+                <option value="customer_cancelled">customer_cancelled</option>
+              </select>
+            </div>
             <div class="priority-row">
               <button class="priority-btn done" id="markDoneBtn" type="button">Mark Done</button>
               <button class="priority-btn skip" id="markSkipBtn" type="button">Skip</button>
@@ -294,6 +307,7 @@ const els = {
   copyBodyBtn: document.getElementById("copyBodyBtn"),
   markDoneBtn: document.getElementById("markDoneBtn"),
   markSkipBtn: document.getElementById("markSkipBtn"),
+  skipReasonSelect: document.getElementById("skipReasonSelect"),
   recipientInput: document.getElementById("recipientInput"),
   mailSubjectInput: document.getElementById("mailSubjectInput"),
   mailBodyInput: document.getElementById("mailBodyInput"),
@@ -351,12 +365,6 @@ function stampNow() {
   return new Date().toISOString();
 }
 
-function recordAdminAction(sale, action, detail = "") {
-  if (!sale) return;
-  sale.adminActions = Array.isArray(sale.adminActions) ? sale.adminActions : [];
-  sale.adminActions.push({ at: stampNow(), action, detail });
-}
-
 function csvEscape(value) {
   const text = String(value ?? "");
   return `"${text.replace(/"/g, '""')}"`;
@@ -390,11 +398,11 @@ function restoreState() {
       tags: Array.isArray(sale.tags) ? sale.tags : [],
       queueStatus: sale.queueStatus || "pending",
       completedAt: sale.completedAt || "",
+      skipReason: sale.skipReason || "",
       mailSubject: sale.mailSubject || defaultMailSubject(sale),
       mailBody: sale.mailBody || defaultMailBody(sale),
       pngDataUrl: "",
-      pngFilename: sale.pngFilename || "",
-      adminActions: Array.isArray(sale.adminActions) ? sale.adminActions : []
+      pngFilename: sale.pngFilename || ""
     })) : [];
     state.queue = state.sales.filter(sale => sale.isQueued);
     state.selectedId = parsed.selectedId || (state.queue[0]?.billId ?? null);
@@ -491,9 +499,9 @@ function recordsToSales(records) {
         items: [],
         queueStatus: "pending",
         completedAt: "",
+        skipReason: "",
         pngDataUrl: "",
-        pngFilename: "",
-        adminActions: []
+        pngFilename: ""
       });
     }
     grouped.get(record.billId).items.push({
@@ -726,6 +734,7 @@ function updateSelectionControls() {
   els.copyBodyBtn.disabled = !hasSale;
   els.markDoneBtn.disabled = !hasSale;
   els.markSkipBtn.disabled = !hasSale;
+  els.skipReasonSelect.disabled = !hasSale;
 }
 
 async function renderSelectedSale() {
@@ -735,6 +744,7 @@ async function renderSelectedSale() {
     els.customerEmailText.textContent = "-";
     els.paymentText.textContent = "-";
     els.requestStateText.textContent = "-";
+    els.skipReasonSelect.value = "other";
     els.recipientInput.value = "";
     els.mailSubjectInput.value = "";
     els.mailBodyInput.value = "";
@@ -748,6 +758,7 @@ async function renderSelectedSale() {
   els.customerEmailText.textContent = sale.customerEmail || "-";
   els.paymentText.textContent = `${sale.paymentMethod === "transfer" ? "🏦" : sale.paymentMethod === "card" ? "💳" : sale.paymentMethod === "cash" ? "💵" : "🧾"} ${paymentLabel(sale.paymentMethod)}`;
   els.requestStateText.textContent = `${sale.queueStatus === "done" ? "✅" : sale.queueStatus === "skipped" ? "⏭️" : "⏳"} ${sale.queueStatus}`;
+  els.skipReasonSelect.value = sale.skipReason || "other";
   els.recipientInput.value = sale.customerEmail;
   els.mailSubjectInput.value = sale.mailSubject || defaultMailSubject(sale);
   els.mailBodyInput.value = sale.mailBody || defaultMailBody(sale);
@@ -781,28 +792,33 @@ function adminWorkCsv() {
     "saleDatetime",
     "customerEmail",
     "paymentMethod",
-    "queueStatus",
-    "completedAt",
-    "mailSubject",
-    "mailBody",
-    "adminActionCount",
-    "adminActions"
+    "saleTotal",
+    "operator",
+    "receiptRequested",
+    "adminStatus",
+    "sentAt",
+    "skipReason",
+    "customerTags",
+    "followUpType"
   ];
   const rows = [header.join(",")];
   state.queue.forEach(sale => {
-    const actionsText = (sale.adminActions || []).map(entry => `${entry.at} | ${entry.action}${entry.detail ? ` | ${entry.detail}` : ""}`).join(" || ");
+    const adminStatus = sale.queueStatus === "done" ? "sent" : sale.queueStatus === "skipped" ? "skipped" : "pending";
+    const followUpType = sale.receiptEmailRequested && sale.customerEmail ? "receipt_only" : "none";
     rows.push([
       sale.billId,
       sale.operatingDay || "",
       sale.datetime || "",
       sale.customerEmail || "",
       paymentLabel(sale.paymentMethod),
-      sale.queueStatus || "pending",
-      sale.completedAt || "",
-      sale.mailSubject || "",
-      sale.mailBody || "",
-      Array.isArray(sale.adminActions) ? sale.adminActions.length : 0,
-      actionsText
+      sale.total || 0,
+      sale.operator || "",
+      Boolean(sale.receiptEmailRequested),
+      adminStatus,
+      sale.queueStatus === "done" ? sale.completedAt || "" : "",
+      sale.queueStatus === "skipped" ? sale.skipReason || "other" : "",
+      Array.isArray(sale.tags) ? sale.tags.join(" | ") : "",
+      followUpType
     ].map(csvEscape).join(","));
   });
   return rows.join("\n");
@@ -860,7 +876,7 @@ function markSelected(status) {
   const currentIndex = selectedQueueIndex();
   sale.queueStatus = status;
   sale.completedAt = status === "done" || status === "skipped" ? stampNow() : "";
-  recordAdminAction(sale, `mark_${status}`);
+  sale.skipReason = status === "skipped" ? (els.skipReasonSelect.value || "other") : "";
   const nextSale = state.queue[currentIndex + 1] || state.queue[currentIndex - 1] || null;
   if (nextSale) {
     state.selectedId = nextSale.billId;
@@ -979,6 +995,12 @@ els.prevBillBtn.addEventListener("click", () => moveSelection(-1));
 els.nextBillBtn.addEventListener("click", () => moveSelection(1));
 els.markDoneBtn.addEventListener("click", () => markSelected("done"));
 els.markSkipBtn.addEventListener("click", () => markSelected("skipped"));
+els.skipReasonSelect.addEventListener("change", () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  sale.skipReason = els.skipReasonSelect.value || "other";
+  saveState();
+});
 els.recipientInput.addEventListener("input", () => {
   const sale = selectedSale();
   if (!sale) return;
@@ -1009,7 +1031,6 @@ els.copyEmailBtn.addEventListener("click", async () => {
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
-    recordAdminAction(sale, "copy_email", value);
     saveState();
     els.statusText.textContent = `Target email copied for ${sale.billId}.`;
   } catch (_error) {
@@ -1021,7 +1042,6 @@ els.copySubjectBtn.addEventListener("click", async () => {
   if (!sale) return;
   try {
     await navigator.clipboard.writeText(els.mailSubjectInput.value);
-    recordAdminAction(sale, "copy_subject", els.mailSubjectInput.value);
     saveState();
     els.statusText.textContent = `Email subject copied for ${sale.billId}.`;
   } catch (_error) {
@@ -1033,7 +1053,6 @@ els.copyBodyBtn.addEventListener("click", async () => {
   if (!sale) return;
   try {
     await navigator.clipboard.writeText(els.mailBodyInput.value);
-    recordAdminAction(sale, "copy_body");
     saveState();
     els.statusText.textContent = `Email body copied for ${sale.billId}.`;
   } catch (_error) {
@@ -1047,7 +1066,6 @@ els.downloadPngBtn.addEventListener("click", async () => {
     els.statusText.textContent = `Generating PNG for ${sale.billId}...`;
     const dataUrl = await generatePngForSale(sale);
     downloadDataUrl(sale.pngFilename || `${sale.billId}.png`, dataUrl);
-    recordAdminAction(sale, "download_png", sale.pngFilename || `${sale.billId}.png`);
     saveState();
     els.statusText.textContent = `PNG downloaded for ${sale.billId}.`;
   } catch (error) {
@@ -1061,7 +1079,6 @@ els.copyReceiptBtn.addEventListener("click", async () => {
     els.statusText.textContent = `Copying receipt image for ${sale.billId}...`;
     const dataUrl = await generatePngForSale(sale);
     await copyDataUrlImageToClipboard(dataUrl);
-    recordAdminAction(sale, "copy_receipt_image");
     saveState();
     els.statusText.textContent = `Receipt image copied for ${sale.billId}.`;
   } catch (error) {
