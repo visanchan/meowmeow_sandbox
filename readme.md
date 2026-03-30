@@ -139,6 +139,7 @@ The product direction is:
 - Use the spreadsheet `Discount` column as each SKU's default per-item event discount.
 - The live booth sell result should therefore default to the spreadsheet `Promotion Price (event price)` value.
 - Product cards can continue showing the event selling price for fast booth use, but cart lines should show the RSP base price, the applied discount, and the resulting event/unit price clearly.
+- Salespeople should be able to adjust the cart-line discount by typing directly into the discount input, not only by using the preset dropdown.
 - This is still a local browser app, so passcodes and local-storage data protect normal booth workflow only.
 - They are not a true security boundary against someone with direct device access and browser developer tools.
 - Current receipt-related CSV fields include:
