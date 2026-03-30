@@ -46,6 +46,8 @@ The product direction is:
 - The promo scarf is a real tracked SKU: `GIFT-SCARF`.
 - Free scarf inventory follows the same stock flow as normal SKUs.
 - User-facing displays should label the promo scarf as `(Free item)` so staff and customers are not confused, while the same SKU still stays in inventory flow and CSV records.
+- In inventory view and internal dashboard, sold counts should split paid vs free-gift quantity using the format `paid (free)` when free gifts exist.
+  Example: `80 (9)` means `80` paid units sold and `9` free gifts given, while stock still deducts all `89`.
 - The scarf can auto-award based on cart total:
   - every `THB 2,000` of qualifying cart total earns `1` scarf
 - The scarf can also be manually added beyond entitlement, but that requires in-app confirmation.
@@ -141,6 +143,7 @@ The product direction is:
 - Optimize for iPad landscape first, then desktop, then mobile.
 - Avoid decorative clutter.
 - Keep product cards compact and scan-friendly.
+- Internal inventory and developer screens should reuse the same compact sticker-name display style as the product cards, including color symbols for the sticker variants.
 - Keep selling actions obvious and low-friction.
 - Keep confirmation and reminder dialogs in-app and visually consistent.
 - When refining the receipt wordmark, preserve the stacked logo direction the user has been iterating on.
