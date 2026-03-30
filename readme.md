@@ -129,6 +129,16 @@ The product direction is:
 - Sales are stored in `localStorage`.
 - Old sales should continue loading safely even when newer fields are added.
 - CSV export is part of the operating workflow and should stay stable.
+- If a salesperson gives a per-item discount above the spreadsheet guideline, the sale should record that exception with:
+  - `hasExtraDiscount`
+  - `extraDiscountItemCount`
+  - `extraDiscountAmount`
+- Normal sale CSV and end-of-day CSV should include those extra-discount fields for later internal review.
+- The default SKU prices in the POS should follow `product/product list-event price.xlsx`.
+- Use the spreadsheet `RSP (ราคาขาย)` column as each SKU's base price in the cart and sale record.
+- Use the spreadsheet `Discount` column as each SKU's default per-item event discount.
+- The live booth sell result should therefore default to the spreadsheet `Promotion Price (event price)` value.
+- Product cards can continue showing the event selling price for fast booth use, but cart lines should show the RSP base price, the applied discount, and the resulting event/unit price clearly.
 - This is still a local browser app, so passcodes and local-storage data protect normal booth workflow only.
 - They are not a true security boundary against someone with direct device access and browser developer tools.
 - Current receipt-related CSV fields include:
@@ -144,6 +154,9 @@ The product direction is:
 - Avoid decorative clutter.
 - Keep product cards compact and scan-friendly.
 - Internal inventory and developer screens should reuse the same compact sticker-name display style as the product cards, including color symbols for the sticker variants.
+- Internal dashboard totals should flag discount exceptions in red as `(x)` after the money amount.
+  - The value should be the extra discount money given above the default discount guideline, for example `(THB 120.00)`.
+  - Show that both on the overall total sales value and on each daily sales total card.
 - Keep selling actions obvious and low-friction.
 - Keep confirmation and reminder dialogs in-app and visually consistent.
 - When refining the receipt wordmark, preserve the stacked logo direction the user has been iterating on.
