@@ -75,7 +75,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .slip-brand-line-seum{font-size:44px}
 .slip-company{margin-top:8px;font-size:15px;font-weight:900;letter-spacing:.08em}
 .slip-subbrand{margin-top:3px;font-size:12px;color:var(--muted);font-weight:700}
-.slip-badge{display:inline-block;margin-top:6px;padding:6px 14px;border-radius:999px;background:#eef1ff;font-size:12px}
 .slip-meta{display:grid;gap:4px;padding:8px 0 12px;font-size:12px;border-bottom:1px dashed #cfc7bc}
 .slip-meta-row{display:flex;justify-content:space-between;gap:12px}
 .slip-table{padding:10px 0;border-bottom:1px dashed #cfc7bc}
@@ -120,6 +119,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
         </div>
         <div class="top-actions">
           <button class="btn primary" id="importBtn" type="button">Import CSV</button>
+          <button class="btn ghost" id="resetQueueInlineBtn" type="button">Reset saved queue</button>
         </div>
         <div class="status-text" id="statusText">No CSV imported yet.</div>
       </div>
@@ -161,6 +161,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
           <button class="btn ghost" id="prevBillBtn" type="button">Previous</button>
           <button class="btn ghost" id="nextBillBtn" type="button">Next</button>
           <button class="btn" id="downloadPngBtn" type="button">Download PNG</button>
+          <button class="btn" id="copyReceiptBtn" type="button">Copy Receipt Image</button>
           <button class="btn" id="copyDraftBtn" type="button">Copy Draft</button>
           <button class="btn primary" id="markDoneBtn" type="button">Mark Done</button>
           <button class="btn ghost" id="markSkipBtn" type="button">Skip</button>
@@ -178,7 +179,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
               </div>
               <div class="slip-company">PHIPHETTHAPHAN</div>
               <div class="slip-subbrand">Meowseum | Modern Friends</div>
-              <div class="slip-badge">Receipt Email Preview</div>
             </div>
             <div class="slip-meta" id="receiptMeta"></div>
             <div class="slip-table">
@@ -208,9 +208,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
             <textarea id="mailBodyInput" placeholder="Draft email body will appear here."></textarea>
           </div>
           <div class="mail-actions">
-            <a class="mail-link" id="mailtoLink" href="#">Open mail draft</a>
+            <button class="btn ghost" id="copyEmailBtn" type="button">Copy email</button>
+            <button class="btn ghost" id="copySubjectBtn" type="button">Copy subject</button>
+            <button class="btn ghost" id="copyBodyBtn" type="button">Copy body</button>
+            <button class="btn" id="copyDraftBtn" type="button">Copy full draft</button>
+            <a class="mail-link" id="mailtoLink" href="#">Open in mail app</a>
           </div>
-          <div class="hint">Use the generated PNG as the attachment in your mail client. This tool keeps everything local in the browser and does not send email directly.</div>
+          <div class="hint">If your computer has no default mail app, the mail-app button may appear to do nothing. The copy buttons are the reliable fallback: copy email, subject, body, attach the receipt image, then send from your own mail client.</div>
         </div>
       </section>
     </main>
@@ -227,7 +231,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
       </div>
       <div class="slip-company">PHIPHETTHAPHAN</div>
       <div class="slip-subbrand">Meowseum | Modern Friends</div>
-      <div class="slip-badge">Receipt Email Preview</div>
     </div>
     <div class="slip-meta" id="receiptExportMeta"></div>
     <div class="slip-table">
@@ -247,6 +250,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 const els = {
   csvFiles: document.getElementById("csvFiles"),
   importBtn: document.getElementById("importBtn"),
+  resetQueueInlineBtn: document.getElementById("resetQueueInlineBtn"),
   loadExampleBtn: document.getElementById("loadExampleBtn"),
   resetBtn: document.getElementById("resetBtn"),
   statusText: document.getElementById("statusText"),
@@ -265,7 +269,11 @@ const els = {
   prevBillBtn: document.getElementById("prevBillBtn"),
   nextBillBtn: document.getElementById("nextBillBtn"),
   downloadPngBtn: document.getElementById("downloadPngBtn"),
+  copyReceiptBtn: document.getElementById("copyReceiptBtn"),
   copyDraftBtn: document.getElementById("copyDraftBtn"),
+  copyEmailBtn: document.getElementById("copyEmailBtn"),
+  copySubjectBtn: document.getElementById("copySubjectBtn"),
+  copyBodyBtn: document.getElementById("copyBodyBtn"),
   markDoneBtn: document.getElementById("markDoneBtn"),
   markSkipBtn: document.getElementById("markSkipBtn"),
   recipientInput: document.getElementById("recipientInput"),
@@ -287,6 +295,7 @@ const state = {
   selectedId: null,
   summary: { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 }
 };
+const STORAGE_KEY = "meowmeowReceiptAdminQueueV1";
 
 const EXAMPLE_DAY_CSV = `operatingDay,billId,datetime,timestamp,lineNumber,sku,itemName,category,qty,basePrice,lineSubtotal,discountPerItem,discountAmount,discountApplied,finalUnitPrice,lineTotal,isFreeGift,giftMode,autoGiftQty,manualGiftQty,manualGiftOverride,saleSubtotal,saleDiscountAmount,saleTotal,operator,paymentMethod,paymentStatus,paymentReference,receiptEmailRequested,customerEmail,tags
 Day 1,DAY1-0001,2026-03-30T13:12:00.000Z,1774876320000,1,012,Bowl Appetit,Main,1,1290,1290,0,0,false,1290,1290,false,,0,0,false,4470,0,4470,Zamm,transfer,confirmed,SLIP001,true,customer.one@example.com,VIP
@@ -325,6 +334,48 @@ function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("en-GB", { hour12: false });
+}
+
+function saveState() {
+  try {
+    const payload = {
+      sales: state.sales.map(sale => ({
+        ...sale,
+        pngDataUrl: "",
+        pngFilename: sale.pngFilename || ""
+      })),
+      selectedId: state.selectedId,
+      summary: state.summary
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (_error) {
+    // Ignore storage issues and keep the tool usable.
+  }
+}
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    state.sales = Array.isArray(parsed.sales) ? parsed.sales.map(sale => ({
+      ...sale,
+      items: Array.isArray(sale.items) ? sale.items : [],
+      tags: Array.isArray(sale.tags) ? sale.tags : [],
+      queueStatus: sale.queueStatus || "pending",
+      mailSubject: sale.mailSubject || defaultMailSubject(sale),
+      mailBody: sale.mailBody || defaultMailBody(sale),
+      pngDataUrl: "",
+      pngFilename: sale.pngFilename || ""
+    })) : [];
+    state.queue = state.sales.filter(sale => sale.isQueued);
+    state.selectedId = parsed.selectedId || (state.queue[0]?.billId ?? null);
+    state.summary = parsed.summary || { scanned: 0, queued: state.queue.length, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 };
+    state.summary.queued = state.queue.length;
+    return true;
+  } catch (_error) {
+    return false;
+  }
 }
 
 function selectedQueueIndex() {
@@ -445,7 +496,9 @@ function defaultMailBody(sale) {
     "If you have any questions, please reply to this email.",
     "",
     "Best regards,",
-    "Phiphetthaphan"
+    "PHIPHETTHAPHAN",
+    "",
+    "Meowseum | Modern Friends"
   ].join("\n");
 }
 
@@ -483,62 +536,88 @@ function refreshMailtoLink() {
   els.mailtoLink.href = recipient ? `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : "#";
 }
 
+function wrapReceiptText(value, maxChars) {
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  if (!words.length) return [""];
+  const lines = [];
+  let current = "";
+  words.forEach(word => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.slice(0, 2);
+}
+
 function receiptSvgMarkup(sale) {
-  const width = 720;
-  const lineHeight = 24;
-  const itemBlock = sale.items.length * 52;
-  const height = 640 + itemBlock;
+  const width = 760;
+  const margin = 40;
+  const rightX = width - margin;
+  const centerX = width / 2;
+  const wordmarkLeft = centerX - 108;
+  const itemRows = sale.items.flatMap(item => {
+    const nameLines = wrapReceiptText(item.itemName, 26);
+    const qtyLine = `x ${item.qty}${item.isFreeGift ? " | Promo gift" : ""}`;
+    return [{ type: "name", text: nameLines[0], amount: formatCurrency(item.lineTotal) }, ...nameLines.slice(1).map(line => ({ type: "name-cont", text: line, amount: "" })), { type: "qty", text: qtyLine, amount: "" }];
+  });
   const metaRows = [
-    ["Receipt:", sale.billId],
-    ["Date:", formatDate(sale.datetime)],
-    ["Customer:", sale.customerEmail || "Walk-in customer"],
-    ["Phone:", "-"],
-    ["Staff:", sale.operator || "-"],
-    ["Payment:", paymentLabel(sale.paymentMethod)]
+    ["Receipt", sale.billId],
+    ["Date", formatDate(sale.datetime)],
+    ["Customer", sale.customerEmail || "Walk-in customer"],
+    ["Staff", sale.operator || "-"],
+    ["Payment", `${paymentLabel(sale.paymentMethod)} | ${sale.paymentStatus || "pending"}`]
   ];
-  const itemRows = sale.items.map((item, index) => {
-    const top = 272 + (index * 52);
-    return `
-      <line x1="42" y1="${top - 10}" x2="678" y2="${top - 10}" stroke="#d7d0c6" stroke-dasharray="5 5"/>
-      <text x="42" y="${top}" font-size="24" font-weight="700" fill="#2b231d">${escapeXml(item.itemName)}</text>
-      <text x="42" y="${top + 24}" font-size="20" fill="#736555">x ${escapeXml(item.qty)}${item.isFreeGift ? " | Promo gift" : ""}</text>
-      <text x="678" y="${top + 8}" font-size="24" font-weight="700" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(item.lineTotal))}</text>
-    `;
-  }).join("");
-  const summaryTop = 286 + itemBlock;
-  const thanksTop = summaryTop + 128;
+  const itemStartY = 384 + metaRows.length * 26;
+  const itemBlockHeight = itemRows.length * 26;
+  const metaBlockHeight = metaRows.length * 26;
+  const summaryTop = itemStartY + itemBlockHeight + 18;
+  const footerTop = summaryTop + 174;
+  const height = footerTop + 92;
   return `
   <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <rect width="${width}" height="${height}" fill="#ffffff"/>
-    <text x="214" y="56" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="44" font-weight="700" letter-spacing="-1.2" fill="#2f261e">THE</text>
-    <text x="214" y="122" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="112" font-weight="700" letter-spacing="-3.4" fill="#2f261e">Meow</text>
-    <text x="214" y="184" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="88" font-weight="700" letter-spacing="-1.8" fill="#2f261e">SEUM</text>
-    <text x="360" y="220" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="21" font-weight="900" letter-spacing="2.2" fill="#2b231d">PHIPHETTHAPHAN</text>
-    <text x="360" y="246" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#736555">Meowseum | Modern Friends</text>
-    <text x="360" y="278" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="15" fill="#4c5b8d">Receipt Email Preview</text>
-    <line x1="42" y1="296" x2="678" y2="296" stroke="#cfc7bc" stroke-dasharray="5 5"/>
+    <text x="${wordmarkLeft}" y="46" font-family="Georgia, Times New Roman, serif" font-size="34" font-weight="700" letter-spacing="-1" fill="#2f261e">THE</text>
+    <text x="${wordmarkLeft}" y="110" font-family="Georgia, Times New Roman, serif" font-size="86" font-weight="700" letter-spacing="-3" fill="#2f261e">Meow</text>
+    <text x="${wordmarkLeft}" y="164" font-family="Georgia, Times New Roman, serif" font-size="68" font-weight="700" letter-spacing="-1.2" fill="#2f261e">SEUM</text>
+    <text x="${centerX}" y="198" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="19" font-weight="900" letter-spacing="2" fill="#2b231d">PHIPHETTHAPHAN</text>
+    <text x="${centerX}" y="224" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#736555">Meowseum | Modern Friends</text>
+    <line x1="${margin}" y1="252" x2="${rightX}" y2="252" stroke="#d5ccbe" stroke-dasharray="4 4"/>
     ${metaRows.map(([label, value], index) => `
-      <text x="42" y="${330 + (index * lineHeight)}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">${escapeXml(label)}</text>
-      <text x="678" y="${330 + (index * lineHeight)}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(value)}</text>
+      <text x="${margin}" y="${278 + (index * 26)}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#736555">${escapeXml(label)}</text>
+      <text x="${rightX}" y="${278 + (index * 26)}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d" text-anchor="end">${escapeXml(value)}</text>
     `).join("")}
-    <line x1="42" y1="478" x2="678" y2="478" stroke="#cfc7bc" stroke-dasharray="5 5"/>
-    <rect x="42" y="490" width="636" height="30" fill="#f3f5fb"/>
-    <text x="54" y="512" font-family="Aptos, Segoe UI, sans-serif" font-size="19" font-weight="800" fill="#2b231d">Item</text>
-    <text x="666" y="512" font-family="Aptos, Segoe UI, sans-serif" font-size="19" font-weight="800" fill="#2b231d" text-anchor="end">Amt</text>
-    ${itemRows}
-    <line x1="42" y1="${summaryTop}" x2="678" y2="${summaryTop}" stroke="#cfc7bc" stroke-dasharray="5 5"/>
-    <text x="42" y="${summaryTop + 34}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Subtotal</text>
-    <text x="678" y="${summaryTop + 34}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.subtotal))}</text>
-    <text x="42" y="${summaryTop + 62}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Item Discount</text>
-    <text x="678" y="${summaryTop + 62}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.discount))}</text>
-    <text x="42" y="${summaryTop + 90}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d">Order Discount</text>
-    <text x="678" y="${summaryTop + 90}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(0))}</text>
-    <line x1="42" y1="${summaryTop + 104}" x2="678" y2="${summaryTop + 104}" stroke="#2f261e"/>
-    <text x="42" y="${summaryTop + 136}" font-family="Aptos, Segoe UI, sans-serif" font-size="32" font-weight="900" fill="#2b231d">Total</text>
-    <text x="678" y="${summaryTop + 136}" font-family="Aptos, Segoe UI, sans-serif" font-size="32" font-weight="900" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.total))}</text>
-    <text x="360" y="${thanksTop}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">Thank you for supporting Phiphetthaphan.</text>
-    <text x="360" y="${thanksTop + 28}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">Thank you for letting us be part of your pet's daily joy.</text>
-    <text x="360" y="${thanksTop + 56}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="18" fill="#2b231d">For inquiries, please contact phiphetthaphan@gmail.com</text>
+    <line x1="${margin}" y1="${290 + metaBlockHeight}" x2="${rightX}" y2="${290 + metaBlockHeight}" stroke="#d5ccbe" stroke-dasharray="4 4"/>
+    <rect x="${margin}" y="${308 + metaBlockHeight}" width="${width - (margin * 2)}" height="28" fill="#f3f5fb"/>
+    <text x="${margin + 12}" y="${328 + metaBlockHeight}" font-family="Aptos, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#2b231d">Item</text>
+    <text x="${rightX - 12}" y="${328 + metaBlockHeight}" font-family="Aptos, Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#2b231d" text-anchor="end">Amt</text>
+    ${itemRows.map((row, index) => {
+      const y = itemStartY + (index * 26);
+      const fill = row.type === "qty" || row.type === "name-cont" ? "#736555" : "#2b231d";
+      const fontSize = row.type === "qty" ? 17 : 20;
+      const fontWeight = row.type === "name" ? "700" : "400";
+      return `
+        <text x="${margin}" y="${y}" font-family="Aptos, Segoe UI, sans-serif" font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}">${escapeXml(row.text)}</text>
+        ${row.amount ? `<text x="${rightX}" y="${y}" font-family="Aptos, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#2b231d" text-anchor="end">${escapeXml(row.amount)}</text>` : ""}
+      `;
+    }).join("")}
+    <line x1="${margin}" y1="${summaryTop}" x2="${rightX}" y2="${summaryTop}" stroke="#d5ccbe" stroke-dasharray="4 4"/>
+    <text x="${margin}" y="${summaryTop + 30}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d">Subtotal</text>
+    <text x="${rightX}" y="${summaryTop + 30}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.subtotal))}</text>
+    <text x="${margin}" y="${summaryTop + 56}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d">Item Discount</text>
+    <text x="${rightX}" y="${summaryTop + 56}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.discount))}</text>
+    <text x="${margin}" y="${summaryTop + 82}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d">Order Discount</text>
+    <text x="${rightX}" y="${summaryTop + 82}" font-family="Aptos, Segoe UI, sans-serif" font-size="19" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(0))}</text>
+    <line x1="${margin}" y1="${summaryTop + 96}" x2="${rightX}" y2="${summaryTop + 96}" stroke="#2f261e"/>
+    <text x="${margin}" y="${summaryTop + 132}" font-family="Aptos, Segoe UI, sans-serif" font-size="30" font-weight="900" fill="#2b231d">Total</text>
+    <text x="${rightX}" y="${summaryTop + 132}" font-family="Aptos, Segoe UI, sans-serif" font-size="30" font-weight="900" fill="#2b231d" text-anchor="end">${escapeXml(formatCurrency(sale.total))}</text>
+    <text x="${width / 2}" y="${footerTop}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="17" fill="#2b231d">Thank you for supporting Phiphetthaphan.</text>
+    <text x="${width / 2}" y="${footerTop + 26}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="17" fill="#2b231d">Thank you for letting us be part of your pet's daily joy.</text>
+    <text x="${width / 2}" y="${footerTop + 52}" text-anchor="middle" font-family="Aptos, Segoe UI, sans-serif" font-size="17" fill="#2b231d">For inquiries, please contact phiphetthaphan@gmail.com</text>
   </svg>`;
 }
 
@@ -608,10 +687,15 @@ function updateSelectionControls() {
   const sale = selectedSale();
   const index = selectedQueueIndex();
   const hasSale = Boolean(sale);
+  const hasRecipient = hasSale && Boolean(els.recipientInput.value.trim());
   els.prevBillBtn.disabled = !hasSale || index <= 0;
   els.nextBillBtn.disabled = !hasSale || index >= state.queue.length - 1;
   els.downloadPngBtn.disabled = !hasSale;
+  els.copyReceiptBtn.disabled = !hasSale;
   els.copyDraftBtn.disabled = !hasSale;
+  els.copyEmailBtn.disabled = !hasRecipient;
+  els.copySubjectBtn.disabled = !hasSale;
+  els.copyBodyBtn.disabled = !hasSale;
   els.markDoneBtn.disabled = !hasSale;
   els.markSkipBtn.disabled = !hasSale;
 }
@@ -664,10 +748,20 @@ function downloadDataUrl(filename, dataUrl) {
   link.remove();
 }
 
+async function copyDataUrlImageToClipboard(dataUrl) {
+  if (!navigator.clipboard || typeof window.ClipboardItem === "undefined") {
+    throw new Error("Image clipboard copy is not available in this browser.");
+  }
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+}
+
 function setSelectedBill(billId) {
   state.selectedId = billId || null;
   renderQueue();
   renderSelectedSale();
+  saveState();
 }
 
 function moveSelection(delta) {
@@ -683,6 +777,7 @@ function markSelected(status) {
   sale.queueStatus = status;
   renderQueue();
   renderSelectedSale();
+  saveState();
 }
 
 function readFileText(file) {
@@ -724,6 +819,7 @@ async function importFromTexts(entries) {
       }
       sale.mailSubject = defaultMailSubject(sale);
       sale.mailBody = defaultMailBody(sale);
+      sale.isQueued = true;
       state.queue.push(sale);
       newlyQueued.push(sale);
     }
@@ -749,6 +845,7 @@ async function importFromTexts(entries) {
       }
     }
   }
+  saveState();
 }
 
 async function importFiles() {
@@ -767,12 +864,13 @@ async function importFiles() {
 }
 
 function resetQueue() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (_error) {}
   state.sales = [];
   state.queue = [];
   state.selectedId = null;
   state.summary = { scanned: 0, queued: 0, duplicates: 0, skippedNoEmail: 0, skippedNoRequest: 0 };
   els.csvFiles.value = "";
-  els.statusText.textContent = "Queue cleared.";
+  els.statusText.textContent = "Queue and saved local storage cleared.";
   renderSummary();
   renderQueue();
   renderSelectedSale();
@@ -789,6 +887,7 @@ async function loadExample() {
 }
 
 els.importBtn.addEventListener("click", importFiles);
+els.resetQueueInlineBtn.addEventListener("click", resetQueue);
 els.loadExampleBtn.addEventListener("click", loadExample);
 els.resetBtn.addEventListener("click", resetQueue);
 els.queueList.addEventListener("click", event => {
@@ -807,18 +906,56 @@ els.recipientInput.addEventListener("input", () => {
   els.customerEmailText.textContent = sale.customerEmail || "-";
   refreshMailtoLink();
   renderQueue();
+  updateSelectionControls();
+  saveState();
 });
 els.mailSubjectInput.addEventListener("input", () => {
   const sale = selectedSale();
   if (!sale) return;
   sale.mailSubject = els.mailSubjectInput.value;
   refreshMailtoLink();
+  updateSelectionControls();
+  saveState();
 });
 els.mailBodyInput.addEventListener("input", () => {
   const sale = selectedSale();
   if (!sale) return;
   sale.mailBody = els.mailBodyInput.value;
   refreshMailtoLink();
+  updateSelectionControls();
+  saveState();
+});
+els.copyEmailBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  const value = els.recipientInput.value.trim();
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    els.statusText.textContent = `Target email copied for ${sale.billId}.`;
+  } catch (_error) {
+    els.statusText.textContent = "Clipboard copy is not available in this browser.";
+  }
+});
+els.copySubjectBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  try {
+    await navigator.clipboard.writeText(els.mailSubjectInput.value);
+    els.statusText.textContent = `Email subject copied for ${sale.billId}.`;
+  } catch (_error) {
+    els.statusText.textContent = "Clipboard copy is not available in this browser.";
+  }
+});
+els.copyBodyBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  try {
+    await navigator.clipboard.writeText(els.mailBodyInput.value);
+    els.statusText.textContent = `Email body copied for ${sale.billId}.`;
+  } catch (_error) {
+    els.statusText.textContent = "Clipboard copy is not available in this browser.";
+  }
 });
 els.copyDraftBtn.addEventListener("click", async () => {
   const sale = selectedSale();
@@ -826,7 +963,7 @@ els.copyDraftBtn.addEventListener("click", async () => {
   const text = `To: ${els.recipientInput.value.trim()}\nSubject: ${els.mailSubjectInput.value.trim()}\n\n${els.mailBodyInput.value}`;
   try {
     await navigator.clipboard.writeText(text);
-    els.statusText.textContent = `Draft copied for ${sale.billId}.`;
+    els.statusText.textContent = `Full draft copied for ${sale.billId}.`;
   } catch (_error) {
     els.statusText.textContent = "Clipboard copy is not available in this browser.";
   }
@@ -843,7 +980,22 @@ els.downloadPngBtn.addEventListener("click", async () => {
     els.statusText.textContent = error.message;
   }
 });
+els.copyReceiptBtn.addEventListener("click", async () => {
+  const sale = selectedSale();
+  if (!sale) return;
+  try {
+    els.statusText.textContent = `Copying receipt image for ${sale.billId}...`;
+    const dataUrl = await generatePngForSale(sale);
+    await copyDataUrlImageToClipboard(dataUrl);
+    els.statusText.textContent = `Receipt image copied for ${sale.billId}.`;
+  } catch (error) {
+    els.statusText.textContent = error.message;
+  }
+});
 
+if (restoreState()) {
+  els.statusText.textContent = "Saved queue restored from local storage.";
+}
 renderSummary();
 renderQueue();
 renderSelectedSale();
