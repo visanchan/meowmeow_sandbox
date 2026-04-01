@@ -164,6 +164,7 @@ The product direction is:
 - Current receipt-related CSV fields include:
   - `receiptEmailRequested`
   - `customerEmail`
+- CSV exports from both the POS app and the admin tool should emit SKU values in spreadsheet-safe text form so leading zeros stay intact during sorting, syncing, and post-processing.
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
 - The admin receipt tool now protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
 - Admin can only mark a receipt bill as sent when the edited customer email still matches a valid email format.

@@ -402,6 +402,19 @@ function csvEscape(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function csvSkuText(value) {
+  const text = String(value ?? "").trim();
+  return `="${text.replace(/"/g, '""')}"`;
+}
+
+function normalizeSku(value) {
+  const text = String(value ?? "").trim();
+  const formulaMatch = text.match(/^="([\s\S]*)"$/);
+  if (formulaMatch) return formulaMatch[1].replace(/""/g, '"');
+  if (text.startsWith("'")) return text.slice(1);
+  return text;
+}
+
 function saveState() {
   try {
     const payload = {
@@ -538,7 +551,7 @@ function recordsToSales(records) {
       });
     }
     grouped.get(record.billId).items.push({
-      sku: record.sku || "",
+      sku: normalizeSku(record.sku),
       itemName: record.itemName || "",
       category: record.category || "",
       qty: toNumber(record.qty),
@@ -826,6 +839,7 @@ function adminWorkCsv() {
     "billId",
     "operatingDay",
     "saleDatetime",
+    "skuList",
     "customerEmail",
     "paymentMethod",
     "saleTotal",
@@ -841,10 +855,12 @@ function adminWorkCsv() {
   state.queue.forEach(sale => {
     const adminStatus = sale.queueStatus === "done" ? "sent" : sale.queueStatus === "skipped" ? "skipped" : "pending";
     const followUpType = sale.receiptEmailRequested && sale.customerEmail ? "receipt_only" : "none";
+    const skuList = sale.items.map(item => normalizeSku(item.sku)).filter(Boolean).join(" | ");
     rows.push([
       sale.billId,
       sale.operatingDay || "",
       sale.datetime || "",
+      csvSkuText(skuList),
       sale.customerEmail || "",
       paymentLabel(sale.paymentMethod),
       sale.total || 0,
