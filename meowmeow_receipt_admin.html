@@ -131,7 +131,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
           <button class="btn ghost" id="exportWorkCsvBtn" type="button">Export Admin CSV</button>
           <button class="btn ghost" id="resetQueueInlineBtn" type="button">Reset saved queue</button>
         </div>
-        <div class="status-text" id="statusText">No CSV imported yet.</div>
+        <div class="status-text" id="statusText">No CSV imported yet. Reset the saved queue when follow-up work is finished so customer data does not stay on a shared device.</div>
       </div>
 
       <div class="summary-grid">
@@ -397,14 +397,23 @@ function stampNow() {
   return new Date().toISOString();
 }
 
-function csvEscape(value) {
+function protectCsvText(value) {
   const text = String(value ?? "");
+  return /^[\t ]*[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
+function csvTextCell(value) {
+  const text = protectCsvText(value);
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-function csvSkuText(value) {
-  const text = String(value ?? "").trim();
-  return `="${text.replace(/"/g, '""')}"`;
+function csvSkuCell(value) {
+  const text = String(value ?? "").trim().replace(/"/g, '""');
+  return `"=""${text}"""`;
+}
+
+function normalizeQueueStatus(value) {
+  return value === "done" || value === "skipped" ? value : "pending";
 }
 
 function normalizeSku(value) {
@@ -419,9 +428,35 @@ function saveState() {
   try {
     const payload = {
       sales: state.sales.map(sale => ({
-        ...sale,
-        pngDataUrl: "",
-        pngFilename: sale.pngFilename || ""
+        operatingDay: sale.operatingDay || "",
+        billId: sale.billId || "",
+        datetime: sale.datetime || "",
+        timestamp: sale.timestamp || "",
+        subtotal: toNumber(sale.subtotal),
+        discount: toNumber(sale.discount),
+        total: toNumber(sale.total),
+        operator: sale.operator || "",
+        paymentMethod: sale.paymentMethod || "",
+        paymentStatus: sale.paymentStatus || "",
+        paymentReference: sale.paymentReference || "",
+        receiptEmailRequested: Boolean(sale.receiptEmailRequested),
+        customerEmail: sale.customerEmail || "",
+        tags: Array.isArray(sale.tags) ? [...sale.tags] : [],
+        items: Array.isArray(sale.items) ? sale.items.map(item => ({
+          sku: normalizeSku(item.sku),
+          itemName: item.itemName || item.name || "",
+          category: item.category || "",
+          qty: toNumber(item.qty),
+          lineTotal: toNumber(item.lineTotal),
+          isFreeGift: Boolean(item.isFreeGift),
+          giftMode: item.giftMode || ""
+        })) : [],
+        queueStatus: normalizeQueueStatus(sale.queueStatus),
+        completedAt: sale.completedAt || "",
+        skipReason: sale.skipReason || "",
+        mailSubject: sale.mailSubject || "",
+        mailBody: sale.mailBody || "",
+        isQueued: Boolean(sale.isQueued)
       })),
       selectedId: state.selectedId,
       summary: state.summary
@@ -441,13 +476,14 @@ function restoreState() {
       ...sale,
       items: Array.isArray(sale.items) ? sale.items : [],
       tags: Array.isArray(sale.tags) ? sale.tags : [],
-      queueStatus: sale.queueStatus || "pending",
+      queueStatus: normalizeQueueStatus(sale.queueStatus),
       completedAt: sale.completedAt || "",
       skipReason: sale.skipReason || "",
       mailSubject: sale.mailSubject || defaultMailSubject(sale),
       mailBody: sale.mailBody || defaultMailBody(sale),
       pngDataUrl: "",
-      pngFilename: sale.pngFilename || ""
+      pngFilename: sale.pngFilename || "",
+      isQueued: Boolean(sale.isQueued)
     })) : [];
     state.queue = state.sales.filter(sale => sale.isQueued);
     state.selectedId = parsed.selectedId || (state.queue[0]?.billId ?? null);
@@ -857,21 +893,21 @@ function adminWorkCsv() {
     const followUpType = sale.receiptEmailRequested && sale.customerEmail ? "receipt_only" : "none";
     const skuList = sale.items.map(item => normalizeSku(item.sku)).filter(Boolean).join(" | ");
     rows.push([
-      sale.billId,
-      sale.operatingDay || "",
-      sale.datetime || "",
-      csvSkuText(skuList),
-      sale.customerEmail || "",
-      paymentLabel(sale.paymentMethod),
-      sale.total || 0,
-      sale.operator || "",
-      Boolean(sale.receiptEmailRequested),
-      adminStatus,
-      sale.queueStatus === "done" ? sale.completedAt || "" : "",
-      sale.queueStatus === "skipped" ? sale.skipReason || "other" : "",
-      Array.isArray(sale.tags) ? sale.tags.join(" | ") : "",
-      followUpType
-    ].map(csvEscape).join(","));
+      csvTextCell(sale.billId),
+      csvTextCell(sale.operatingDay || ""),
+      csvTextCell(sale.datetime || ""),
+      csvSkuCell(skuList),
+      csvTextCell(sale.customerEmail || ""),
+      csvTextCell(paymentLabel(sale.paymentMethod)),
+      csvTextCell(sale.total || 0),
+      csvTextCell(sale.operator || ""),
+      csvTextCell(Boolean(sale.receiptEmailRequested)),
+      csvTextCell(adminStatus),
+      csvTextCell(sale.queueStatus === "done" ? sale.completedAt || "" : ""),
+      csvTextCell(sale.queueStatus === "skipped" ? sale.skipReason || "other" : ""),
+      csvTextCell(Array.isArray(sale.tags) ? sale.tags.join(" | ") : ""),
+      csvTextCell(followUpType)
+    ].join(","));
   });
   return rows.join("\n");
 }

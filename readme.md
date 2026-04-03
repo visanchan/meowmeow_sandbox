@@ -123,6 +123,11 @@ The product direction is:
 - Item quantities must not exceed the real inventory available for that bill's operating day.
 - Saving a correction updates the saved sale, and inventory follows automatically because sold stock is derived from saved sales.
 - Saving a correction must also realign later-day carried stock, not just the edited bill's own day.
+- Changing a corrected sale from one payment method to another must not silently auto-confirm a non-cash payment.
+- After correction:
+  - cash should stay `confirmed`
+  - transfer/card should stay `confirmed` only if the sale was already confirmed and the payment method did not change
+  - transfer/card should return to `pending` if the payment method changes during correction
 - Correction history should stay business-readable and include:
   - `at`
   - `reason`
@@ -137,6 +142,9 @@ The product direction is:
 - Sales are stored in `localStorage`.
 - Old sales should continue loading safely even when newer fields are added.
 - CSV export is part of the operating workflow and should stay stable.
+- CSV text fields now harden against spreadsheet formula injection:
+  - user-entered text such as emails, tags, bill text, and correction notes must be neutralized if they begin with spreadsheet formula trigger characters
+  - SKU fields should keep spreadsheet-safe formula-style export only for preserving leading zeros
 - If a salesperson gives a per-item discount above the spreadsheet guideline, the sale should record that exception with:
   - `hasExtraDiscount`
   - `extraDiscountItemCount`
@@ -161,6 +169,7 @@ The product direction is:
 - Keep the discount input and `Default` button as clear 40px+ touch targets so they are easier to hit on iPad landscape.
 - This is still a local browser app, so passcodes and local-storage data protect normal booth workflow only.
 - They are not a true security boundary against someone with direct device access and browser developer tools.
+- Passcodes are now grouped in a single config block in the POS source so future changes do not scatter internal access rules.
 - Current receipt-related CSV fields include:
   - `receiptEmailRequested`
   - `customerEmail`
@@ -168,6 +177,9 @@ The product direction is:
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
 - The admin receipt tool now protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
 - Admin can only mark a receipt bill as sent when the edited customer email still matches a valid email format.
+- The admin receipt tool should persist queue state without storing large generated receipt image payloads in `localStorage`.
+- Developer Tools now include a manual `Clear Saved Customer Emails` action for privacy cleanup on shared devices.
+- The admin screen should keep reminding staff to reset the saved queue after follow-up work is finished on a shared device.
 
 ## Layout Rules
 
