@@ -16,6 +16,11 @@ The product direction is:
 - After finishing any change, update this `readme.md` so it stays aligned with the current product direction and implementation.
 - Treat this file as the shared continuity guide for future developers and future sessions.
 - If behavior, workflow, UI direction, passcodes, CSV shape, or correction logic changes, document that change here before closing the task.
+- Before starting substantial work, review this `readme.md` again and use it as the first checklist for scope, constraints, and continuity.
+- For larger or multi-part tasks, prefer splitting the work into focused sub-tasks so parallel agents can handle independent parts with smaller context.
+- Use multi-agent delegation only when the task can be split cleanly without creating overlap or merge risk.
+- Keep each sub-task narrow and self-contained to reduce context-window pressure and improve review quality.
+- After sub-tasks finish, consolidate the result into one final implementation and update this README if the behavior or workflow changed.
 
 ## Current App Shape
 
