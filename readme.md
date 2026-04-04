@@ -29,6 +29,7 @@ The product direction is:
   - cart and checkout flow
   - payment QR flow
   - free gift logic
+  - fulfillment-later queue for unavailable pre-orders and in-stock send-later reservations
   - operator/tagging flow
   - sales storage and CSV export
   - dashboard
@@ -41,6 +42,12 @@ The product direction is:
 - Staff tap product cards to build the cart.
 - Product-card remaining stock should update immediately when staff add, remove, or change quantities in the current cart.
 - Payment methods include cash, bank transfer, and card.
+- If the cart contains only unavailable pre-order items, the payment picker switches to a 2-button mode:
+  - `Pay Now`
+  - `Pay Later`
+- In-stock products can also be sold through a `Send Later` path:
+  - stock is reserved immediately
+  - the order still captures shipping details for later fulfillment
 - Transfer payments can show PromptPay QR after order confirmation.
 - The `Review & Finish Sale` overlay is split into two desktop columns:
   - left: customer-facing receipt and receipt-share area
@@ -71,6 +78,7 @@ The product direction is:
 - The customer email field is always available.
 - That email can be collected even if the customer does not request a receipt email, for example for future marketing/contact use.
 - The `Send me an email receipt` checkbox is specifically for post-sale receipt sending.
+- If that checkbox is checked, customer email becomes required before the sale can be saved.
 - When the checkbox is checked, the app shows an in-app reminder that the receipt will arrive in `3-4 days`.
 - The sale record keeps both:
   - `receiptEmail`
@@ -105,6 +113,60 @@ The product direction is:
 - `Close Day & Export CSV` is passcode-protected and the dialog now uses only the passcode keypad flow without an extra cancel button.
 - After a saved bill is corrected, inventory carry-forward must be realigned across later event days so Day 2, Day 3, and Day 4 starting stock stay consistent with the corrected earlier day.
 - Sold-count calculations are now cached in-memory during runtime to reduce repeated inventory recomputation on every render.
+
+## Pre-Order Rules
+
+- A separate pre-order queue is available from the new memo emoji button placed beside the Inventory Flow emoji in the top bar.
+- Use the queue for both:
+  - unavailable-item `Pre-Order`
+  - in-stock `Send Later` reservations
+- Sold-out product cards should offer a direct `Pre-Order` action inside the normal card footprint so the card height does not grow.
+- In-stock product cards should offer a compact `Send Later` action inside the same product-card footprint.
+- Those quick fulfillment actions should now appear as compact emoji overlays pinned on the product photo so they do not push the text layout:
+  - `📝` for unavailable-item `Pre-Order`
+  - `📦` for in-stock `Send Later`
+- Quick fulfillment-later actions now add a labeled line into the live cart instead of forcing staff to open the queue panel first.
+- Product-card stock should use the shortest readable badge:
+  - exact count only for normal and low-stock states
+  - `Sold out` and `Closed` for no-stock or closed-day states
+- Cart fulfillment-later lines should:
+  - stay the same size as normal cart lines
+  - keep the same discount editing controls as normal cart lines
+  - show a compact business label: `Pre-Order` or `Send Later`
+  - avoid extra explanatory helper sentences inside the cart row
+- Unavailable-item pre-orders:
+  - never reserve or deduct live inventory
+  - default to `Paid with current sale`
+  - can still be switched between `Paid with current sale` and `Pay later`
+- In-stock `Send Later` lines:
+  - reserve stock immediately once the sale is saved
+  - default to and stay `Paid with current sale`
+- Mixed carts can contain live stock items, `Pre-Order` items, and `Send Later` items in the same checkout.
+- If the cart contains only pre-order items:
+  - `Pay Now` keeps the checkout flow and lets staff choose the real payment method in `Review & Finish Sale`
+  - `Pay Later` saves the pre-order demand without creating an immediate paid sale record
+- Each pre-order entry should capture:
+  - event day
+  - product
+  - quantity
+  - customer name
+  - phone
+  - email (optional)
+  - line ID (optional)
+  - receive location
+  - payment status
+  - note
+  - status
+- Customer name, phone, and receive location are required before saving any pre-order.
+- In `Review & Finish Sale`, those same customer/shipping fields should appear only when the checkout contains one or more fulfillment-later lines.
+- Customer name, phone, email, line ID, and receive location entered in `Review & Finish Sale` should auto-fill all linked `Pre-Order` and `Send Later` records from that checkout.
+- The queue should show sold-out and low-stock signals to help staff decide when pre-order capture is appropriate.
+- Pre-order records are stored locally on the device and can be exported as CSV for follow-up work after the event.
+- Pre-order status options are:
+  - `Open`
+  - `Contacted`
+  - `Confirmed`
+  - `Cancelled`
 
 ## Bill Correction Log Rules
 
@@ -178,6 +240,15 @@ The product direction is:
 - Current receipt-related CSV fields include:
   - `receiptEmailRequested`
   - `customerEmail`
+- Sales CSV and end-of-day CSV now also include:
+  - `isPreorder`
+  - `preorderPaymentStatus`
+  - `orderValue`
+  - `customerName`
+  - `customerPhone`
+  - `customerLineId`
+  - `customerReceiveLocation`
+- Pre-order CSV now includes split customer/shipping fields plus `linkedBillId` and pre-order payment status.
 - CSV exports from both the POS app and the admin tool should emit SKU values in spreadsheet-safe text form so leading zeros stay intact during sorting, syncing, and post-processing.
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
 - The admin receipt tool now protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
@@ -191,6 +262,36 @@ The product direction is:
 - Optimize for iPad landscape first, then desktop, then mobile.
 - Avoid decorative clutter.
 - Keep product cards compact and scan-friendly.
+- Product cards should be photo-first whenever a confirmed SKU image is available.
+- Product cards should stay short and scan-friendly:
+  - stock badge should stay pinned as a photo overlay
+  - quick fulfillment emoji should stay pinned as a photo overlay
+  - color-variant SKUs should show a small color emoji overlay on the photo
+  - the product name area underneath should stay full-width so longer names are easier to read
+  - the card should prefer a shorter compact height over decorative empty space
+- Visible selling UI should avoid non-essential category labels such as `Premium`, `Classic`, or `Accessory`; keep SKU visible and keep category only in underlying data/export where needed.
+- Product photos must stay embedded inside [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) as inline data so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
+- The current embedded image coverage is:
+  - `002A`
+  - `002B`
+  - `003`
+  - `004`
+  - `005`
+  - `006`
+  - `007`
+  - `010`
+  - `011`
+  - `012`
+  - `013`
+  - `014`
+- When new product photos become available for the remaining SKUs, add them by following the same pattern as the current embedded set:
+  - confirm the local image file matches the intended SKU before embedding
+  - keep the image stored in the `PRODUCT_IMAGE_DATA` map keyed by SKU
+  - preserve the same compact product-card layout, image aspect ratio, and price-row emoji actions
+  - keep missing-image SKUs on the existing placeholder fallback until their match is confirmed
+  - update this README image-coverage list after each newly embedded SKU so future sessions know what is already complete
+- SKUs without a confirmed local image should keep a stable `Photo coming soon` placeholder so the grid does not shift or break.
+- Product price should stay in the lower text area of the card, while stock and quick fulfillment controls stay as overlays on the photo area so they do not move the text block.
 - Internal inventory and developer screens should reuse the same compact sticker-name display style as the product cards, including color symbols for the sticker variants.
 - Internal dashboard totals should flag discount exceptions in red as `(x)` after the money amount.
   - The value should be the extra discount money given above the default discount guideline, shown in compact number-only form such as `(120)` or `(1,360)`.
