@@ -217,6 +217,7 @@ The product direction is:
   - `extraDiscountItemCount`
   - `extraDiscountAmount`
 - Normal sale CSV and end-of-day CSV should include those extra-discount fields for later internal review.
+- Card payments apply a 3% surcharge on top of the cart total. The surcharge is computed in `cartTotals()`, shown as a `Card Surcharge (3%)` row in the cart summary and receipt slip, and stored in the sale record as `cardSurcharge`.
 - The default SKU prices in the POS should follow `product/product list-event price.xlsx`.
 - Use the spreadsheet `RSP (ราคาขาย)` column as each SKU's base price in the cart and sale record.
 - Use the spreadsheet `Discount` column as each SKU's default per-item event discount.
@@ -272,18 +273,9 @@ The product direction is:
 - Visible selling UI should avoid non-essential category labels such as `Premium`, `Classic`, or `Accessory`; keep SKU visible and keep category only in underlying data/export where needed.
 - Product photos must stay embedded inside [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) as inline data so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
 - The current embedded image coverage is:
-  - `002A`
-  - `002B`
-  - `003`
-  - `004`
-  - `005`
-  - `006`
-  - `007`
-  - `010`
-  - `011`
-  - `012`
-  - `013`
-  - `014`
+  - `002A`, `002B`, `003`, `004`, `005`, `006`, `007`, `010`, `011`, `012`, `013`, `014`
+  - `015`, `016`, `017`, `018`, `019`, `020`, `021`, `022`, `023`, `024`, `025`
+  - All SKUs now have embedded images. `019`/`020` share the Pencil Tie image; `021`/`022` share the Ribbon Bow image.
 - When new product photos become available for the remaining SKUs, add them by following the same pattern as the current embedded set:
   - confirm the local image file matches the intended SKU before embedding
   - keep the image stored in the `PRODUCT_IMAGE_DATA` map keyed by SKU
