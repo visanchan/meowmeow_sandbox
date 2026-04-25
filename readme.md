@@ -1,8 +1,28 @@
 # MeowMeow Event POS
 
-This project is a browser-based event POS for the Meowseum booth. The main selling app lives in [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html), and the post-sale visual receipt helper lives in [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html).
+Browser-based event POS for the Meowseum booth. The main selling app is [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html); the post-sale visual receipt helper is [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html).
 
-The product direction is:
+## Table of Contents
+
+- [Overview](#overview)
+- [Files](#files)
+- [Working Rules for Future Sessions](#working-rules-for-future-sessions)
+- [Architecture & Constraints](#architecture--constraints)
+- [Operator Selling Flow](#operator-selling-flow)
+- [Free Gift Rules](#free-gift-rules)
+- [Fulfillment Later (Pre-Order & Send Later)](#fulfillment-later-pre-order--send-later)
+- [Inventory](#inventory)
+- [Correction Center](#correction-center)
+- [Receipts & Branding](#receipts--branding)
+- [Data, Storage & CSV](#data-storage--csv)
+- [Layout & Visual Rules](#layout--visual-rules)
+- [Passcodes](#passcodes)
+- [Recently Changed](#recently-changed)
+- [How To Continue Next Time](#how-to-continue-next-time)
+
+## Overview
+
+This is a single-file browser POS used at pet-expo booths over a 4-day event. The product direction is:
 
 - make booth selling fast for staff
 - keep the UI compact and readable on iPad landscape
@@ -10,8 +30,20 @@ The product direction is:
 - protect inventory and internal controls from the normal selling flow
 - keep receipt follow-up practical for post-sale admin work
 
-## Working Rule
+Target users are booth staff (fast checkout), booth managers (inventory and corrections), and post-sale admin (receipt follow-up).
 
+## Files
+
+- [meowmeow_pos_event.html](meowmeow_pos_event.html): full POS app
+- [meowmeow_receipt_admin.html](meowmeow_receipt_admin.html): admin receipt and follow-up workflow from exported day CSV files
+- [readme.md](readme.md): continuation notes for future sessions
+- [TASKS.md](TASKS.md): shared task board for the two-agent workflow (claim/release per batch)
+- [CLAUDE.md](CLAUDE.md): protocol for Claude sessions
+- [codex.md](codex.md): protocol for Codex sessions (rename to `AGENTS.md` for auto-load)
+
+## Working Rules for Future Sessions
+
+- This project is co-developed by two AI agents. Before any code change, also read [TASKS.md](TASKS.md) and the agent protocol file for your tool ([CLAUDE.md](CLAUDE.md) or [codex.md](codex.md)). Never edit a file owned by another agent's in-progress batch.
 - Before making any code change, read this `readme.md` first.
 - After finishing any change, update this `readme.md` so it stays aligned with the current product direction and implementation.
 - Treat this file as the shared continuity guide for future developers and future sessions.
@@ -22,9 +54,12 @@ The product direction is:
 - Keep each sub-task narrow and self-contained to reduce context-window pressure and improve review quality.
 - After sub-tasks finish, consolidate the result into one final implementation and update this README if the behavior or workflow changed.
 
-## Current App Shape
+## Architecture & Constraints
 
-- [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) contains:
+- Single-file vanilla HTML + CSS + JavaScript. No framework, no build step, no CDN dependencies.
+- All product photos are embedded as base64 data URIs in the `PRODUCT_IMAGE_DATA` map so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
+- All persistence is local: `localStorage` only. No backend sync. CSV export is the primary backup/handoff path.
+- `meowmeow_pos_event.html` contains:
   - product catalog
   - cart and checkout flow
   - payment QR flow
@@ -35,20 +70,17 @@ The product direction is:
   - dashboard
   - developer stock and allocation tools
   - Correction Center for exceptional saved-bill fixes and inventory corrections
-- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html) is a local admin helper that imports exported day CSV files, rebuilds the branded visual receipt, and supports manual post-sale email workflow.
+- `meowmeow_receipt_admin.html` is a local admin helper that imports exported day CSV files, rebuilds the branded visual receipt, and supports manual post-sale email workflow.
 
-## Key Behavior
+## Operator Selling Flow
 
 - Staff tap product cards to build the cart.
 - Product-card remaining stock should update immediately when staff add, remove, or change quantities in the current cart.
 - Payment methods include cash, bank transfer, and card.
+- Card payments apply a 3% surcharge on top of the cart total. The surcharge is computed in `cartTotals()`, shown as a `Card Surcharge (3%)` row in the cart summary and receipt slip, and stored in the sale record as `cardSurcharge`.
 - If the cart contains only unavailable pre-order items, the payment picker switches to a 2-button mode:
   - `Pay Now`
   - `Pay Later`
-- In-stock products can also be sold through a `Send Later` path:
-  - warehouse stock is checked before the item can enter the cart
-  - the order captures shipping details for later fulfillment
-  - saved checkout records reserve committed warehouse stock through the Send Later queue
 - Transfer payments can show PromptPay QR after order confirmation.
 - The `Review & Finish Sale` overlay is split into two desktop columns:
   - left: customer-facing receipt and receipt-share area
@@ -74,67 +106,18 @@ The product direction is:
 - The scarf row has its own `+` and `-` controls.
 - The scarf emoji acts as a toggle for the gift line.
 
-## Receipt Share Rules
+## Fulfillment Later (Pre-Order & Send Later)
 
-- The customer email field is always available.
-- That email can be collected even if the customer does not request a receipt email, for example for future marketing/contact use.
-- The `Send me an email receipt` checkbox is specifically for post-sale receipt sending.
-- If that checkbox is checked, customer email becomes required before the sale can be saved.
-- When the checkbox is checked, the app shows an in-app reminder that the receipt will arrive in `3-4 days`.
-- The sale record keeps both:
-  - `receiptEmail`
-  - `receiptEmailRequested`
-- CSV exports include both the customer email and the explicit receipt-request flag so admin can filter only customers who asked for the emailed receipt.
-
-## Receipt Branding
-
-- The visual receipt now uses a stacked wordmark:
-  - `THE`
-  - `Meow`
-  - `SEUM`
-- The receipt also includes:
-  - `PHIPHETTHAPHAN`
-  - `Meowseum | Modern Friends`
-- Footer copy is:
-  - `Thank you for supporting Phiphetthaphan.`
-  - `Thank you for letting us be part of your pet’s daily joy.`
-  - `For inquiries, please contact phiphetthaphan@gmail.com`
-- The POS receipt preview and admin receipt page should stay visually aligned.
-
-## Inventory Rules
-
-- Staff should not edit inventory from the normal selling flow.
-- Inventory editing belongs in passcode-protected Developer Tools.
-- Developer Tools now has one unified `Stock & Allocation Setup` page instead of separate Daily Stock and Allocation Setup tabs.
-- The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
-- Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
-- Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
-- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
-- Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
-- After the first saved sale exists, normal Stock & Allocation Setup locks `Global`, `Online`, and `Event Start` so opening inventory cannot be casually changed mid-selling.
-- After sales begin, staff can still edit `Added Today`, `Sample`, and `Low Alert`; controlled fixes to locked fields belong in `Correction Center > Inventory Correction`.
-- Public inventory flow is read-only.
-- Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
-- Low-stock alerts remain editable in developer mode.
-- End-of-day export and stock carry-forward should keep working without requiring staff to understand the internal data model.
-- Adding an item to cart must re-check stock against both saved sales and the quantities already reserved in the current unsaved cart.
-- Product cards and cart `+` actions should stop adding units once the cart has already reserved the last remaining stock for that SKU.
-- `Close Day & Export CSV` is passcode-protected and the dialog now uses only the passcode keypad flow without an extra cancel button.
-- After a saved bill is corrected, inventory carry-forward must be realigned across later event days so Day 2, Day 3, and Day 4 starting stock stay consistent with the corrected earlier day.
-- Sold-count calculations are now cached in-memory during runtime to reduce repeated inventory recomputation on every render.
-
-## Pre-Order Rules
-
-- A separate pre-order queue is available from the new memo emoji button placed beside the Inventory Flow emoji in the top bar.
+- A separate pre-order queue is available from the memo emoji button placed beside the Inventory Flow emoji in the top bar.
 - Use the queue for both:
   - unavailable-item `Pre-Order`
   - in-stock `Send Later` reservations
 - Sold-out product cards should offer a direct `Pre-Order` action inside the normal card footprint so the card height does not grow.
 - In-stock product cards should offer a compact `Send Later` action inside the same product-card footprint.
-- Those quick fulfillment actions should now appear as compact emoji overlays pinned on the product photo so they do not push the text layout:
+- Quick fulfillment actions appear as compact emoji overlays pinned on the product photo so they do not push the text layout:
   - `📝` for unavailable-item `Pre-Order`
   - `📦` for in-stock `Send Later`
-- Quick fulfillment-later actions now add a labeled line into the live cart instead of forcing staff to open the queue panel first.
+- Quick fulfillment-later actions add a labeled line into the live cart instead of forcing staff to open the queue panel first.
 - Product-card stock should use the shortest readable badge:
   - exact count only for normal and low-stock states
   - `Sold out` and `Closed` for no-stock or closed-day states
@@ -182,8 +165,29 @@ The product direction is:
   - `Contacted`
   - `Confirmed`
   - `Cancelled`
+## Inventory
 
-## Correction Center Rules
+- Staff should not edit inventory from the normal selling flow.
+- Inventory editing belongs in passcode-protected Developer Tools.
+- Developer Tools has one unified `Stock & Allocation Setup` page (no separate Daily Stock and Allocation Setup tabs).
+- The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
+- Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
+- Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
+- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
+- Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
+- After the first saved sale exists, normal Stock & Allocation Setup locks `Global`, `Online`, and `Event Start` so opening inventory cannot be casually changed mid-selling.
+- After sales begin, staff can still edit `Added Today`, `Sample`, and `Low Alert`; controlled fixes to locked fields belong in `Correction Center > Inventory Correction`.
+- Public inventory flow is read-only.
+- Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
+- Low-stock alerts remain editable in developer mode.
+- End-of-day export and stock carry-forward should keep working without requiring staff to understand the internal data model.
+- Adding an item to cart must re-check stock against both saved sales and the quantities already reserved in the current unsaved cart.
+- Product cards and cart `+` actions should stop adding units once the cart has already reserved the last remaining stock for that SKU.
+- `Close Day & Export CSV` is passcode-protected and the dialog uses only the passcode keypad flow without an extra cancel button.
+- After a saved bill is corrected, inventory carry-forward must be realigned across later event days so Day 2, Day 3, and Day 4 starting stock stay consistent with the corrected earlier day.
+- Sold-count calculations are cached in-memory during runtime to reduce repeated inventory recomputation on every render.
+
+## Correction Center
 
 - The Correction Center is an exception workflow, not a normal selling workflow.
 - Access stays behind passcode `888`.
@@ -226,12 +230,45 @@ The product direction is:
 - Inventory corrections are separate from normal Add Today records, although they may appear near stock history for review.
 - Inventory Correction audit display should show each saved correction once, even when the same correction is stored in more than one local audit structure for traceability.
 
-## Data and Export Notes
+## Receipts & Branding
+
+- The visual receipt uses a stacked wordmark:
+  - `THE`
+  - `Meow`
+  - `SEUM`
+- The receipt also includes:
+  - `PHIPHETTHAPHAN`
+  - `Meowseum | Modern Friends`
+- Footer copy is:
+  - `Thank you for supporting Phiphetthaphan.`
+  - `Thank you for letting us be part of your pet's daily joy.`
+  - `For inquiries, please contact phiphetthaphan@gmail.com`
+- The POS receipt preview and admin receipt page should stay visually aligned.
+- The customer email field is always available.
+- That email can be collected even if the customer does not request a receipt email, for example for future marketing/contact use.
+- The `Send me an email receipt` checkbox is specifically for post-sale receipt sending.
+- If that checkbox is checked, customer email becomes required before the sale can be saved.
+- When the checkbox is checked, the app shows an in-app reminder that the receipt will arrive in `3-4 days`.
+- The sale record keeps both:
+  - `receiptEmail`
+  - `receiptEmailRequested`
+- CSV exports include both the customer email and the explicit receipt-request flag so admin can filter only customers who asked for the emailed receipt.
+
+## Data, Storage & CSV
+
+### localStorage keys
+
+- `meowseum_event_sales_v1` — all saved sales with full transaction history
+- `meowseum_event_inventory_v1` — per-day inventory snapshots
+- `meowseum_global_inventory_v1` — global allocation and audit logs
+- `meowseum_event_preorders_v1` — pre-order and send-later queue
+
+### Rules
 
 - Sales are stored in `localStorage`.
 - Old sales should continue loading safely even when newer fields are added.
 - CSV export is part of the operating workflow and should stay stable.
-- CSV text fields now harden against spreadsheet formula injection:
+- CSV text fields harden against spreadsheet formula injection:
   - user-entered text such as emails, tags, bill text, and correction notes must be neutralized if they begin with spreadsheet formula trigger characters
   - SKU fields should keep spreadsheet-safe formula-style export only for preserving leading zeros
 - If a salesperson gives a per-item discount above the spreadsheet guideline, the sale should record that exception with:
@@ -239,7 +276,6 @@ The product direction is:
   - `extraDiscountItemCount`
   - `extraDiscountAmount`
 - Normal sale CSV and end-of-day CSV should include those extra-discount fields for later internal review.
-- Card payments apply a 3% surcharge on top of the cart total. The surcharge is computed in `cartTotals()`, shown as a `Card Surcharge (3%)` row in the cart summary and receipt slip, and stored in the sale record as `cardSurcharge`.
 - The default SKU prices in the POS should follow `product/product list-event price.xlsx`.
 - Use the spreadsheet `RSP (ราคาขาย)` column as each SKU's base price in the cart and sale record.
 - Use the spreadsheet `Discount` column as each SKU's default per-item event discount.
@@ -258,12 +294,10 @@ The product direction is:
 - If the discount input is focused, tapping `Default` must still work reliably on touch devices and should not be interrupted by a cart rerender during input blur.
 - Keep the discount input and `Default` button as clear 40px+ touch targets so they are easier to hit on iPad landscape.
 - This is still a local browser app, so passcodes and local-storage data protect normal booth workflow only.
-- They are not a true security boundary against someone with direct device access and browser developer tools.
-- Passcodes are now grouped in a single config block in the POS source so future changes do not scatter internal access rules.
 - Current receipt-related CSV fields include:
   - `receiptEmailRequested`
   - `customerEmail`
-- Sales CSV and end-of-day CSV now also include:
+- Sales CSV and end-of-day CSV also include:
   - `isPreorder`
   - `preorderPaymentStatus`
   - `orderValue`
@@ -271,16 +305,16 @@ The product direction is:
   - `customerPhone`
   - `customerLineId`
   - `customerReceiveLocation`
-- Pre-order CSV now includes split customer/shipping fields plus `linkedBillId` and pre-order payment status.
+- Pre-order CSV includes split customer/shipping fields plus `linkedBillId` and pre-order payment status.
 - CSV exports from both the POS app and the admin tool should emit SKU values in spreadsheet-safe text form so leading zeros stay intact during sorting, syncing, and post-processing.
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
-- The admin receipt tool now protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
+- The admin receipt tool protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
 - Admin can only mark a receipt bill as sent when the edited customer email still matches a valid email format.
 - The admin receipt tool should persist queue state without storing large generated receipt image payloads in `localStorage`.
-- Developer Tools now include a manual `Clear Saved Customer Emails` action for privacy cleanup on shared devices.
+- Developer Tools include a manual `Clear Saved Customer Emails` action for privacy cleanup on shared devices.
 - The admin screen should keep reminding staff to reset the saved queue after follow-up work is finished on a shared device.
 
-## Layout Rules
+## Layout & Visual Rules
 
 - Optimize for iPad landscape first, then desktop, then mobile.
 - Avoid decorative clutter.
@@ -293,17 +327,17 @@ The product direction is:
   - the product name area underneath should stay full-width so longer names are easier to read
   - the card should prefer a shorter compact height over decorative empty space
 - Visible selling UI should avoid non-essential category labels such as `Premium`, `Classic`, or `Accessory`; keep SKU visible and keep category only in underlying data/export where needed.
-- Product photos must stay embedded inside [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html) as inline data so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
-- The current embedded image coverage is:
+- Product photos must stay embedded inside `meowmeow_pos_event.html` as inline data so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
+- Current embedded image coverage:
   - `002A`, `002B`, `003`, `004`, `005`, `006`, `007`, `010`, `011`, `012`, `013`, `014`
   - `015`, `016`, `017`, `018`, `019`, `020`, `021`, `022`, `023`, `024`, `025`
   - All SKUs now have embedded images. `019`/`020` share the Pencil Tie image; `021`/`022` share the Ribbon Bow image.
-- When new product photos become available for the remaining SKUs, add them by following the same pattern as the current embedded set:
+- When new product photos become available for the remaining SKUs, follow the same pattern as the current embedded set:
   - confirm the local image file matches the intended SKU before embedding
   - keep the image stored in the `PRODUCT_IMAGE_DATA` map keyed by SKU
   - preserve the same compact product-card layout, image aspect ratio, and price-row emoji actions
   - keep missing-image SKUs on the existing placeholder fallback until their match is confirmed
-  - update this README image-coverage list after each newly embedded SKU so future sessions know what is already complete
+  - update the image-coverage list in this section after each newly embedded SKU
 - SKUs without a confirmed local image should keep a stable `Photo coming soon` placeholder so the grid does not shift or break.
 - Product price should stay in the lower text area of the card, while stock and quick fulfillment controls stay as overlays on the photo area so they do not move the text block.
 - Internal inventory and developer screens should reuse the same compact sticker-name display style as the product cards, including color symbols for the sticker variants.
@@ -315,11 +349,35 @@ The product direction is:
 - Keep confirmation and reminder dialogs in-app and visually consistent.
 - When refining the receipt wordmark, preserve the stacked logo direction the user has been iterating on.
 
-## Files
+## Passcodes
 
-- [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html): full POS app
-- [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html): admin receipt and follow-up workflow from exported day CSV files
-- [readme.md](c:\Users\USER\Desktop\meowmeow_sandbox\readme.md): continuation notes for future sessions
+Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS source so future changes do not scatter internal access rules. They protect normal booth workflow only and are not a true security boundary against someone with direct device access and browser developer tools.
+
+- `345` — Stock & Allocation Setup (Developer Tools)
+- `987` — Internal Dashboard
+- `123` — Close Day & Export CSV
+- `888` — Correction Center
+
+## Recently Changed
+
+- **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
+- **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
+
+## Planned (Workflow Alignment & Inventory Consistency Round)
+
+These items are designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan.
+
+- Move operator selection to the start of the selling flow (sticky chip + amber banner; gate `addToCart`).
+- Run stock validation at add-time, not save-time; add an `aria-live` announce region near the cart header.
+- Clarify the payment-confirm gate: rename the Save button to `Confirm payment first` while unconfirmed for card/transfer.
+- Group customer details under a single `Ship to` heading in `Review & Finish Sale`.
+- Add an inline `Edit` affordance per receipt line that bounces back to cart mode without losing customer details.
+- Surface an inline red helper for invalid email instead of failing silently at save.
+- Idle-cart prompt at 10 minutes to free abandoned Send Later warehouse holds.
+- Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment).
+- Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0).
+- Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation.
+- Block advancing a `pay_later` Send Later record to `Confirmed` (or beyond) without a one-tap confirm dialog.
 
 ## How To Continue Next Time
 
