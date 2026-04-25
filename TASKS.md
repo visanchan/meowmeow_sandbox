@@ -30,10 +30,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch A — Operator Gate Trio
 - **Items:** #1 sticky operator chip + gate `addToCart`; #2 stock validation at add-time + `aria-live`; #3 payment-confirm gate label on Save button.
 - **Touches:** top selling-screen markup, `addToCart` / `updateQty`, `renderPayments`, Save button label inside `renderSuccess`.
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/a-operator-gate
+- **Claimed:** 2026-04-25 22:00
 - **BlockedBy:**
 - **Notes:** must not also edit success-overlay customer/email markup (Batch B owns that).
 
