@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk \"/'007':/{print length\\(\\\\$0\\)}\" \"c:/Users/USER/Desktop/meowmeow_sandbox/meowmeow_pos_event.html\")",
+      "Bash(awk \"/'013':/{print length\\(\\\\$0\\)}\" \"c:/Users/USER/Desktop/meowmeow_sandbox/meowmeow_pos_event.html\")"
+    ]
+  }
+}
