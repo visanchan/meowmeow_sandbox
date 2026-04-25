@@ -109,7 +109,10 @@ The product direction is:
 - The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
 - Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
-- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, sample stock, and committed Send Later quantity.
+- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
+- Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
+- After the first saved sale exists, normal Stock & Allocation Setup locks `Global`, `Online`, and `Event Start` so opening inventory cannot be casually changed mid-selling.
+- After sales begin, staff can still edit `Added Today`, `Sample`, and `Low Alert`; controlled fixes to locked fields belong in `Correction Center > Inventory Correction`.
 - Public inventory flow is read-only.
 - Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
 - Low-stock alerts remain editable in developer mode.
@@ -155,6 +158,8 @@ The product direction is:
   - `Pay Later` saves the pre-order demand without creating an immediate paid sale record
 - The Send Later Queue is monitor-only. Staff should not manually create Send Later records from that page.
 - Staff create Send Later orders only from product cards/cart/checkout so stock validation and payment details stay connected.
+- The queue has a passcode-protected `Clear Pending Send Later` button for cleanup after testing or mistaken pending records.
+- Clearing pending Send Later records removes only `Pending` Send Later queue entries from local storage and frees their committed warehouse quantity; it does not delete saved sales, packed/shipped/cancelled queue entries, or unavailable-item pre-order records.
 - Each pre-order or Send Later entry should capture:
   - event day
   - product
@@ -219,6 +224,7 @@ The product direction is:
 - Inventory Correction is for stock mistakes such as wrong starting stock, wrong added-today quantity, wrong sample quantity, wrong global/online allocation, or mistaken stock movement.
 - Inventory Correction must require a reason, show before vs after quantity, require review before save, prevent negative event or warehouse stock, and write an audit entry labeled `Inventory Correction`.
 - Inventory corrections are separate from normal Add Today records, although they may appear near stock history for review.
+- Inventory Correction audit display should show each saved correction once, even when the same correction is stored in more than one local audit structure for traceability.
 
 ## Data and Export Notes
 
