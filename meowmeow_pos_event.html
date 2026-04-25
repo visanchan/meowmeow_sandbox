@@ -528,7 +528,6 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
               </div>
               <div class="customer-field">
                 <label for="receiptEmailInput">Customer email</label>
-                <input id="receiptEmailInput" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="name@example.com">
               </div>
               <div class="customer-field">
                 <label for="customerLineIdInput">Line ID</label>
@@ -556,6 +555,7 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
           </div>
           <div class="email-field" style="margin-top:10px">
             <label for="receiptEmailInput">Customer email</label>
+            <input id="receiptEmailInput" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="name@example.com">
             <div class="email-validation-note" id="receiptEmailValidationNote">Use a valid email format so the receipt can be sent after the event.</div>
           </div>
           <div class="receipt-share-help">Customers can fill in their email here if they want marketing updates or future contact. Only checked receipt requests will be marked in the CSV for post-sale receipt follow-up.</div>
@@ -584,8 +584,8 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
             </div>
           </div>
         </div>
-        <div class="flow-card compact">
-          <div class="flow-card-head payment-method-review hidden" id="reviewPaymentMethodCard">
+        <div class="flow-card compact hidden" id="reviewPaymentMethodCard">
+          <div class="flow-card-head">
             <strong>Payment Method</strong>
             <div class="success-note">Choose the real payment method for this pre-order payment.</div>
             <div class="payment-method-review-grid" id="reviewPaymentMethodGrid"></div>
