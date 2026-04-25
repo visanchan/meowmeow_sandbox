@@ -30,12 +30,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch A — Operator Gate Trio
 - **Items:** #1 sticky operator chip + gate `addToCart`; #2 stock validation at add-time + `aria-live`; #3 payment-confirm gate label on Save button.
 - **Touches:** top selling-screen markup, `addToCart` / `updateQty`, `renderPayments`, Save button label inside `renderSuccess`.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/a-operator-gate
-- **Claimed:** 2026-04-25 22:00
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** must not also edit success-overlay customer/email markup (Batch B owns that).
+- **Notes:** Merged into `start` at 6895710 (2026-04-25). Unblocks Batch B.
 
 ### Batch B — Checkout Polish
 - **Items:** #4 `Ship to` heading grouping; #5 inline edit on receipt lines; #6 inline email validation message.
@@ -87,4 +87,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 
 (Move completed batches here with the merging commit SHA.)
 
-- _none yet_
+- **Batch A — Operator Gate Trio** — merged into `start` at `6895710` on 2026-04-25 by claude. Items #1, #2, #3 shipped.
