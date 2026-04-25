@@ -33,8 +33,8 @@ The product direction is:
   - operator/tagging flow
   - sales storage and CSV export
   - dashboard
-  - developer inventory tools
-  - bill correction log for exceptional saved-bill fixes
+  - developer stock and allocation tools
+  - Correction Center for exceptional saved-bill fixes and inventory corrections
 - [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html) is a local admin helper that imports exported day CSV files, rebuilds the branded visual receipt, and supports manual post-sale email workflow.
 
 ## Key Behavior
@@ -46,8 +46,9 @@ The product direction is:
   - `Pay Now`
   - `Pay Later`
 - In-stock products can also be sold through a `Send Later` path:
-  - stock is reserved immediately
-  - the order still captures shipping details for later fulfillment
+  - warehouse stock is checked before the item can enter the cart
+  - the order captures shipping details for later fulfillment
+  - saved checkout records reserve committed warehouse stock through the Send Later queue
 - Transfer payments can show PromptPay QR after order confirmation.
 - The `Review & Finish Sale` overlay is split into two desktop columns:
   - left: customer-facing receipt and receipt-share area
@@ -104,6 +105,11 @@ The product direction is:
 
 - Staff should not edit inventory from the normal selling flow.
 - Inventory editing belongs in passcode-protected Developer Tools.
+- Developer Tools now has one unified `Stock & Allocation Setup` page instead of separate Daily Stock and Allocation Setup tabs.
+- The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
+- Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
+- Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
+- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, sample stock, and committed Send Later quantity.
 - Public inventory flow is read-only.
 - Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
 - Low-stock alerts remain editable in developer mode.
@@ -139,13 +145,17 @@ The product direction is:
   - default to `Paid with current sale`
   - can still be switched between `Paid with current sale` and `Pay later`
 - In-stock `Send Later` lines:
-  - reserve stock immediately once the sale is saved
+  - use warehouse stock, not event booth stock
+  - cannot be added to cart if warehouse stock is not enough
+  - reserve committed warehouse stock once the sale is saved
   - default to and stay `Paid with current sale`
 - Mixed carts can contain live stock items, `Pre-Order` items, and `Send Later` items in the same checkout.
 - If the cart contains only pre-order items:
   - `Pay Now` keeps the checkout flow and lets staff choose the real payment method in `Review & Finish Sale`
   - `Pay Later` saves the pre-order demand without creating an immediate paid sale record
-- Each pre-order entry should capture:
+- The Send Later Queue is monitor-only. Staff should not manually create Send Later records from that page.
+- Staff create Send Later orders only from product cards/cart/checkout so stock validation and payment details stay connected.
+- Each pre-order or Send Later entry should capture:
   - event day
   - product
   - quantity
@@ -168,12 +178,15 @@ The product direction is:
   - `Confirmed`
   - `Cancelled`
 
-## Bill Correction Log Rules
+## Correction Center Rules
 
-- The saved-bill correction tool is an exception workflow, not a normal selling workflow.
+- The Correction Center is an exception workflow, not a normal selling workflow.
 - Access stays behind passcode `888`.
+- It has two sub-tabs:
+  - `Bill Correction`
+  - `Inventory Correction`
 - Staff first unlock the tool, then review a warning before editing.
-- The tool now follows a controlled flow:
+- Bill Correction follows a controlled flow:
   - select bill
   - edit allowed fields
   - review changes
@@ -203,6 +216,9 @@ The product direction is:
   - `after`
   - `inventoryImpact`
 - Normal CSV exports should keep only concise correction summary fields, not full correction blobs.
+- Inventory Correction is for stock mistakes such as wrong starting stock, wrong added-today quantity, wrong sample quantity, wrong global/online allocation, or mistaken stock movement.
+- Inventory Correction must require a reason, show before vs after quantity, require review before save, prevent negative event or warehouse stock, and write an audit entry labeled `Inventory Correction`.
+- Inventory corrections are separate from normal Add Today records, although they may appear near stock history for review.
 
 ## Data and Export Notes
 
