@@ -49,10 +49,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch C — Cart & Status Guards
 - **Items:** #7 idle-cart prompt at 10 minutes; #11 pay-later guard on preorder status advance.
 - **Touches:** new idle-timer module on `state.cart` activity, `confirmClearCart`, `updatePreorderStatus`.
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/c-cart-status-guards
+- **Claimed:** 2026-04-25 22:09
 - **BlockedBy:**
 - **Notes:** mostly disjoint from A/B; safe to do in parallel with B once A is merged. Strict mutual-exclusion on the HTML file still applies until partition confidence is proven.
 
