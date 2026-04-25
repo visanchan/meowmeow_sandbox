@@ -139,6 +139,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - reserve committed warehouse stock once the sale is saved
   - default to and stay `Paid with current sale`
 - Mixed carts can contain live stock items, `Pre-Order` items, and `Send Later` items in the same checkout.
+- If a cart is inactive for 10 minutes, the app prompts staff to keep or clear it so unsaved Send Later holds do not keep confusing warehouse availability during the session.
 - If the cart contains only pre-order items:
   - `Pay Now` keeps the checkout flow and lets staff choose the real payment method in `Review & Finish Sale`
   - `Pay Later` saves the pre-order demand without creating an immediate paid sale record
@@ -164,10 +165,12 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - The queue should show sold-out and low-stock signals to help staff decide when pre-order capture is appropriate.
 - Pre-order records are stored locally on the device and can be exported as CSV for follow-up work after the event.
 - Pre-order status options are:
-  - `Open`
-  - `Contacted`
-  - `Confirmed`
+  - `Pending`
+  - `Packed`
+  - `Shipped`
   - `Cancelled`
+- Pay-later fulfillment records require a one-tap override before staff can move them to `Packed` or `Shipped`.
+
 ## Inventory
 
 - Staff should not edit inventory from the normal selling flow.
@@ -367,6 +370,7 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
 - **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
 - **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
+- **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; pay-later fulfillment records require confirmation before moving to `Packed` or `Shipped`.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
@@ -375,8 +379,6 @@ Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.
 - Group customer details under a single `Ship to` heading in `Review & Finish Sale` (Batch B).
 - Add an inline `Edit` affordance per receipt line that bounces back to cart mode without losing customer details (Batch B).
 - Surface an inline red helper for invalid email instead of failing silently at save (Batch B).
-- Idle-cart prompt at 10 minutes to free abandoned Send Later warehouse holds (Batch C).
-- Block advancing a `pay_later` Send Later record to `Confirmed` (or beyond) without a one-tap confirm dialog (Batch C).
 - Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0) (Batch D).
 - Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment) (Batch E).
 - Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation (Batch E).
