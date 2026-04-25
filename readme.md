@@ -74,8 +74,11 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 
 ## Operator Selling Flow
 
+- An operator must be tap-selected on the cart-side operator chip row before items can be added to the cart. The selling screen shows an amber banner ("Tap an operator to start selling.") whenever no operator is set. The selected operator persists across sales and across page reloads via `localStorage` (`meowseum_event_selected_operator_v1`); it can be changed at any time from the chip row or from the same chips inside `Review & Finish Sale`.
 - Staff tap product cards to build the cart.
 - Product-card remaining stock should update immediately when staff add, remove, or change quantities in the current cart.
+- Stock is validated at add-time. Blocked adds (sold-out, not enough event stock, not enough warehouse stock for Send Later) surface as a non-blocking toast inside the cart panel; the toast also acts as a polite `aria-live` announcement and clears itself after a few seconds. The same validation re-runs at save-time as defense-in-depth.
+- For card or bank transfer sales, the `Save & New Sale` button reads `Confirm payment first` and uses a red-bordered blocked style until the `Payment confirmation` checkbox is ticked. Cash and pre-order pay-later sales save immediately. The `Payment confirmation` row also gains a red outline while it is the blocker.
 - Payment methods include cash, bank transfer, and card.
 - Card payments apply a 3% surcharge on top of the cart total. The surcharge is computed in `cartTotals()`, shown as a `Card Surcharge (3%)` row in the cart summary and receipt slip, and stored in the sale record as `cardSurcharge`.
 - If the cart contains only unavailable pre-order items, the payment picker switches to a 2-button mode:
@@ -262,6 +265,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - `meowseum_event_inventory_v1` — per-day inventory snapshots
 - `meowseum_global_inventory_v1` — global allocation and audit logs
 - `meowseum_event_preorders_v1` — pre-order and send-later queue
+- `meowseum_event_selected_operator_v1` — last-selected operator for the cart-side chip row
 
 ### Rules
 
@@ -362,22 +366,20 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
 - **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
+- **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
-These items are designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan.
+Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan and [TASKS.md](TASKS.md) for live status.
 
-- Move operator selection to the start of the selling flow (sticky chip + amber banner; gate `addToCart`).
-- Run stock validation at add-time, not save-time; add an `aria-live` announce region near the cart header.
-- Clarify the payment-confirm gate: rename the Save button to `Confirm payment first` while unconfirmed for card/transfer.
-- Group customer details under a single `Ship to` heading in `Review & Finish Sale`.
-- Add an inline `Edit` affordance per receipt line that bounces back to cart mode without losing customer details.
-- Surface an inline red helper for invalid email instead of failing silently at save.
-- Idle-cart prompt at 10 minutes to free abandoned Send Later warehouse holds.
-- Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment).
-- Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0).
-- Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation.
-- Block advancing a `pay_later` Send Later record to `Confirmed` (or beyond) without a one-tap confirm dialog.
+- Group customer details under a single `Ship to` heading in `Review & Finish Sale` (Batch B).
+- Add an inline `Edit` affordance per receipt line that bounces back to cart mode without losing customer details (Batch B).
+- Surface an inline red helper for invalid email instead of failing silently at save (Batch B).
+- Idle-cart prompt at 10 minutes to free abandoned Send Later warehouse holds (Batch C).
+- Block advancing a `pay_later` Send Later record to `Confirmed` (or beyond) without a one-tap confirm dialog (Batch C).
+- Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0) (Batch D).
+- Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment) (Batch E).
+- Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation (Batch E).
 
 ## How To Continue Next Time
 
