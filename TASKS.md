@@ -75,6 +75,16 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Claimed:**
 - **BlockedBy:** D (touches the same snapshot helpers).
 
+### Batch F — Staff Login & Tap-in Dedup
+- **Items:** replace operator chip with name+PIN login gate (Zamm=111, Ben=222, Kat=333, Staff=000); persist session in `localStorage`; add 🔒 Log out button in header (manual only); remove redundant "Operator tap-in" on review/finish-sale page since operator is known from login.
+- **Touches:** operator-chip header markup, `addToCart` operator gate, `renderSuccess` (Operator tap-in region), new login overlay + auth state, `localStorage` session key.
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/f-staff-login
+- **Claimed:** 2026-04-26 12:00
+- **BlockedBy:**
+- **Notes:** PINs hardcoded in client source (single-file app, accepted). No auto-logout on idle — manual only. Update `readme.md` Operator section in same batch.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
