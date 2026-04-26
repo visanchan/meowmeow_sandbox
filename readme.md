@@ -233,6 +233,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - `inventoryImpact`
 - Normal CSV exports should keep only concise correction summary fields, not full correction blobs.
 - Voids are auditable: the bill id, voided-at timestamp, voided-by operator (from the staff login session), reason, operating day, total, item count, and a full snapshot of the voided sale are written into a separate void audit log.
+- Bill Correction has a `Void Audit` section that lists recent voided bills (bill id, time, operator, day, total, item count, reason) without opening developer tools.
+- The void audit list is capped to the most recent 12 entries on screen; the `Export Void Audit CSV` button writes the full log with concise audit columns (`bill_id, voided_at, voided_by, operating_day, total_thb, item_count, reason`) and applies the same spreadsheet-injection guard used by sales CSV.
+- The void CSV must not include the full `saleSnapshot`; that snapshot stays in `localStorage` only.
 - Inventory Correction is for stock mistakes such as wrong starting stock, wrong added-today quantity, wrong sample quantity, wrong global/online allocation, or mistaken stock movement.
 - Inventory Correction must require a reason, show before vs after quantity, require review before save, prevent negative event or warehouse stock, and write an audit entry labeled `Inventory Correction`.
 - Inventory corrections are separate from normal Add Today records, although they may appear near stock history for review.
@@ -409,6 +412,7 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 - **Apr 2026 (Batch D — Sample Qty Per-Day Migration)** — Sample stock moved from a single global field to a per-event-day field; one-time migration copies the legacy global value into Day 1, with Days 2-4 starting at 0.
 - **Apr 2026 (Batch E — Render Memo + Correction Stock Impact)** — Cart-reserved quantities are computed once per `renderProducts` pass instead of once per visible SKU; the Bill Correction review now previews the per-SKU stock movement and the projected starting stock for each later event day.
 - **Apr 2026 (Batch H — Void Bill from Correction Center)** — Bill Correction now has a separate reason-required `Void Bill` path for wrongly saved bills; voiding removes the sale, saves an audit snapshot, and realigns inventory carry-forward.
+- **Apr 2026 (Batch L — Void Audit Review & Export)** — Bill Correction now displays a `Void Audit` list (bill id, time, operator, day, total, items, reason) and exports the full void audit log as a CSV with concise columns; full sale snapshots stay in localStorage only.
 
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
