@@ -49,12 +49,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch C — Cart & Status Guards
 - **Items:** #7 idle-cart prompt at 10 minutes; remove pay-later/pre-order status path so Send Later is paid at event.
 - **Touches:** new idle-timer module on `state.cart` activity, `confirmClearCart`, `updatePreorderStatus`.
-- **Owner:** codex
-- **Status:** in-progress
-- **Branch:** batch/c-cart-status-guards
-- **Claimed:** 2026-04-25 22:09
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** mostly disjoint from A/B; safe to do in parallel with B once A is merged. Strict mutual-exclusion on the HTML file still applies until partition confidence is proven.
+- **Notes:** Completed locally on `start` (2026-04-26): idle-cart guard remains, and pre-order/pay-later paths were removed so Send Later is paid at event.
 
 ### Batch D — Sample Qty Per-Day Migration
 - **Items:** #9 move `sampleQty` from `state.globalInventory` to `state.inventory[dayId]` with one-time migration.
