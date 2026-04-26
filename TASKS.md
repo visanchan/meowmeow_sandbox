@@ -129,10 +129,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - `stockSetupChangeList()` currently compares the input against stored `snap.addedToday`; Claude must adjust change detection so a positive top-up delta is recognized even when the stored total is different.
   - `stockSetupDraftIssue()` must validate warehouse/event stock using stored added stock plus the entered top-up delta, not only the delta by itself.
   - Review is recommended before merge because this affects live stock setup and staff understanding during the event.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/g-stock-setup-clarity
+- **Claimed:** 2026-04-26 14:30
 - **BlockedBy:**
 - **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
 
