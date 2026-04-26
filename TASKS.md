@@ -130,11 +130,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - `stockSetupDraftIssue()` must validate warehouse/event stock using stored added stock plus the entered top-up delta, not only the delta by itself.
   - Review is recommended before merge because this affects live stock setup and staff understanding during the event.
 - **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Status:** ready-for-merge
+- **Branch:** batch/g-stock-setup-clarity
+- **Claimed:** 2026-04-26 14:30
 - **BlockedBy:**
-- **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
+- **Notes:** Implementation complete on `batch/g-stock-setup-clarity` (2026-04-26). `Added Today` now renders as a `Top up now` delta input, applies deltas to stored added stock, and resets to `0` after confirm. Idle `No committed send later` / `Sold 0` helper text is hidden; nonzero committed/sold detail still appears. Codex smoke review passed: inline script parse and browser stock-setup acceptance check.
 
 ## Suggested order (least-conflict first)
 

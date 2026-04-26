@@ -170,6 +170,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
 - Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
+- In Stock & Allocation Setup, `Added Today` is a temporary `Top up now` input. Enter only the quantity being added in this moment; after confirm, the stored added-stock total increases and the input resets to `0`.
 - Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
 - Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
 - Sample stock is tracked per event day, so each day can record its own sample quantity without polluting the other days.
