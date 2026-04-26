@@ -47,7 +47,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** A (overlaps Save button label region in `renderSuccess`).
 
 ### Batch C — Cart & Status Guards
-- **Items:** #7 idle-cart prompt at 10 minutes; #11 pay-later guard on preorder status advance.
+- **Items:** #7 idle-cart prompt at 10 minutes; remove pay-later/pre-order status path so Send Later is paid at event.
 - **Touches:** new idle-timer module on `state.cart` activity, `confirmClearCart`, `updatePreorderStatus`.
 - **Owner:** codex
 - **Status:** in-progress

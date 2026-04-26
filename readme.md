@@ -10,7 +10,7 @@ Browser-based event POS for the Meowseum booth. The main selling app is [meowmeo
 - [Architecture & Constraints](#architecture--constraints)
 - [Operator Selling Flow](#operator-selling-flow)
 - [Free Gift Rules](#free-gift-rules)
-- [Fulfillment Later (Pre-Order & Send Later)](#fulfillment-later-pre-order--send-later)
+- [Fulfillment Later (Send Later)](#fulfillment-later-send-later)
 - [Inventory](#inventory)
 - [Correction Center](#correction-center)
 - [Receipts & Branding](#receipts--branding)
@@ -64,7 +64,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - cart and checkout flow
   - payment QR flow
   - free gift logic
-  - fulfillment-later queue for unavailable pre-orders and in-stock send-later reservations
+  - fulfillment-later queue for paid Send Later reservations
   - operator/tagging flow
   - sales storage and CSV export
   - dashboard
@@ -78,12 +78,10 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Staff tap product cards to build the cart.
 - Product-card remaining stock should update immediately when staff add, remove, or change quantities in the current cart.
 - Stock is validated at add-time. Blocked adds (sold-out, not enough event stock, not enough warehouse stock for Send Later) surface as a non-blocking toast inside the cart panel; the toast also acts as a polite `aria-live` announcement and clears itself after a few seconds. The same validation re-runs at save-time as defense-in-depth.
-- For card or bank transfer sales, the `Save & New Sale` button reads `Confirm payment first` and uses a red-bordered blocked style until the `Payment confirmation` checkbox is ticked. Cash and pre-order pay-later sales save immediately. The `Payment confirmation` row also gains a red outline while it is the blocker.
+- For card or bank transfer sales, the `Save & New Sale` button reads `Confirm payment first` and uses a red-bordered blocked style until the `Payment confirmation` checkbox is ticked. Cash sales save immediately. The `Payment confirmation` row also gains a red outline while it is the blocker.
 - Payment methods include cash, bank transfer, and card.
 - Card payments apply a 3% surcharge on top of the cart total. The surcharge is computed in `cartTotals()`, shown as a `Card Surcharge (3%)` row in the cart summary and receipt slip, and stored in the sale record as `cardSurcharge`.
-- If the cart contains only unavailable pre-order items, the payment picker switches to a 2-button mode:
-  - `Pay Now`
-  - `Pay Later`
+- Every saved transaction must use a real event payment method: cash, bank transfer, or card. Pay-later checkout is not available.
 - Transfer payments can show PromptPay QR after order confirmation.
 - The `Review & Finish Sale` overlay is split into two desktop columns:
   - left: customer-facing receipt and receipt-share area
@@ -109,17 +107,12 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - The scarf row has its own `+` and `-` controls.
 - The scarf emoji acts as a toggle for the gift line.
 
-## Fulfillment Later (Pre-Order & Send Later)
+## Fulfillment Later (Send Later)
 
-- A separate pre-order queue is available from the memo emoji button placed beside the Inventory Flow emoji in the top bar.
-- Use the queue for both:
-  - unavailable-item `Pre-Order`
-  - in-stock `Send Later` reservations
-- Sold-out product cards should offer a direct `Pre-Order` action inside the normal card footprint so the card height does not grow.
-- In-stock product cards should offer a compact `Send Later` action inside the same product-card footprint.
-- Quick fulfillment actions appear as compact emoji overlays pinned on the product photo so they do not push the text layout:
-  - `📝` for unavailable-item `Pre-Order`
-  - `📦` for in-stock `Send Later`
+- A separate Send Later queue is available from the truck emoji button placed beside the Inventory Flow emoji in the top bar.
+- Use the queue for paid `Send Later` reservations only.
+- Product cards offer a compact `Send Later` action inside the normal card footprint.
+- Quick fulfillment actions appear as compact emoji overlays pinned on the product photo so they do not push the text layout.
 - Quick fulfillment-later actions add a labeled line into the live cart instead of forcing staff to open the queue panel first.
 - Product-card stock should use the shortest readable badge:
   - exact count only for normal and low-stock states
@@ -127,27 +120,20 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Cart fulfillment-later lines should:
   - stay the same size as normal cart lines
   - keep the same discount editing controls as normal cart lines
-  - show a compact business label: `Pre-Order` or `Send Later`
+  - show a compact business label: `Send Later`
   - avoid extra explanatory helper sentences inside the cart row
-- Unavailable-item pre-orders:
-  - never reserve or deduct live inventory
-  - default to `Paid with current sale`
-  - can still be switched between `Paid with current sale` and `Pay later`
 - In-stock `Send Later` lines:
   - use warehouse stock, not event booth stock
   - cannot be added to cart if warehouse stock is not enough
   - reserve committed warehouse stock once the sale is saved
-  - default to and stay `Paid with current sale`
-- Mixed carts can contain live stock items, `Pre-Order` items, and `Send Later` items in the same checkout.
+  - default to and stay `Paid at event`
+- Mixed carts can contain live stock items and `Send Later` items in the same checkout.
 - If a cart is inactive for 10 minutes, the app prompts staff to keep or clear it so unsaved Send Later holds do not keep confusing warehouse availability during the session.
-- If the cart contains only pre-order items:
-  - `Pay Now` keeps the checkout flow and lets staff choose the real payment method in `Review & Finish Sale`
-  - `Pay Later` saves the pre-order demand without creating an immediate paid sale record
 - The Send Later Queue is monitor-only. Staff should not manually create Send Later records from that page.
 - Staff create Send Later orders only from product cards/cart/checkout so stock validation and payment details stay connected.
 - The queue has a passcode-protected `Clear Pending Send Later` button for cleanup after testing or mistaken pending records.
-- Clearing pending Send Later records removes only `Pending` Send Later queue entries from local storage and frees their committed warehouse quantity; it does not delete saved sales, packed/shipped/cancelled queue entries, or unavailable-item pre-order records.
-- Each pre-order or Send Later entry should capture:
+- Clearing pending Send Later records removes only `Pending` Send Later queue entries from local storage and frees their committed warehouse quantity; it does not delete saved sales or packed/shipped/cancelled queue entries.
+- Each Send Later entry should capture:
   - event day
   - product
   - quantity
@@ -159,17 +145,16 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - payment status
   - note
   - status
-- Customer name, phone, and receive location are required before saving any pre-order.
+- Customer name, phone, and receive location are required before saving any Send Later checkout.
 - In `Review & Finish Sale`, those same customer/shipping fields should appear only when the checkout contains one or more fulfillment-later lines.
-- Customer name, phone, email, line ID, and receive location entered in `Review & Finish Sale` should auto-fill all linked `Pre-Order` and `Send Later` records from that checkout.
-- The queue should show sold-out and low-stock signals to help staff decide when pre-order capture is appropriate.
-- Pre-order records are stored locally on the device and can be exported as CSV for follow-up work after the event.
-- Pre-order status options are:
+- Customer name, phone, email, line ID, and receive location entered in `Review & Finish Sale` should auto-fill all linked `Send Later` records from that checkout.
+- The queue should show sold-out and low-stock signals to help staff decide when Send Later is useful.
+- Send Later records are stored locally on the device and can be exported as CSV for follow-up work after the event.
+- Send Later status options are:
   - `Pending`
   - `Packed`
   - `Shipped`
   - `Cancelled`
-- Pay-later fulfillment records require a one-tap override before staff can move them to `Packed` or `Shipped`.
 
 ## Inventory
 
@@ -267,7 +252,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - `meowseum_event_sales_v1` — all saved sales with full transaction history
 - `meowseum_event_inventory_v1` — per-day inventory snapshots
 - `meowseum_global_inventory_v1` — global allocation and audit logs
-- `meowseum_event_preorders_v1` — pre-order and send-later queue
+- `meowseum_event_preorders_v1` — Send Later queue
 - `meowseum_event_selected_operator_v1` — last-selected operator for the cart-side chip row
 
 ### Rules
@@ -305,14 +290,14 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - `receiptEmailRequested`
   - `customerEmail`
 - Sales CSV and end-of-day CSV also include:
-  - `isPreorder`
-  - `preorderPaymentStatus`
+  - `isFulfillmentLater`
+  - `fulfillmentType`
   - `orderValue`
   - `customerName`
   - `customerPhone`
   - `customerLineId`
   - `customerReceiveLocation`
-- Pre-order CSV includes split customer/shipping fields plus `linkedBillId` and pre-order payment status.
+- Send Later CSV includes split customer/shipping fields plus `linkedBillId` and paid-at-event payment status.
 - CSV exports from both the POS app and the admin tool should emit SKU values in spreadsheet-safe text form so leading zeros stay intact during sorting, syncing, and post-processing.
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
 - The admin receipt tool protects browser performance by limiting oversized CSV imports and generating receipt PNGs on demand instead of pre-rendering every imported bill at once.
@@ -370,7 +355,7 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
 - **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
 - **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
-- **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; pay-later fulfillment records require confirmation before moving to `Packed` or `Shipped`.
+- **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; Send Later is paid at the event and no longer supports pay-later status.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
