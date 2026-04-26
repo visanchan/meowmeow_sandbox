@@ -213,6 +213,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Saving a correction updates the saved sale, and inventory follows automatically because sold stock is derived from saved sales.
 - Saving a correction must also realign later-day carried stock, not just the edited bill's own day.
 - The Bill Correction review stage previews the per-SKU stock movement and the projected starting stock for each later day so staff can see the carry-forward effect before confirming.
+- Wrongly saved bills can be removed only through the separate `Void Bill` action inside passcode-protected Bill Correction.
+- Voiding a bill requires a reason, removes the sale from saved sales, stores a void audit snapshot in local storage, and realigns later-day carried stock.
+- Voided bills are not restored automatically; recreating the sale is the reversal path.
 - Changing a corrected sale from one payment method to another must not silently auto-confirm a non-cash payment.
 - After correction:
   - cash should stay `confirmed`
@@ -268,6 +271,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - `meowseum_event_inventory_v1` — per-day inventory snapshots
 - `meowseum_global_inventory_v1` — global allocation and audit logs
 - `meowseum_event_preorders_v1` — Send Later queue
+- `meowseum_event_voided_sales_v1` — audit snapshots for bills removed through Correction Center voiding
 - `meowseum_event_selected_operator_v1` — name of the logged-in operator
 - `meowseum_event_operator_authed_v1` — `"1"` while a staff session is active; cleared on logout
 
@@ -375,6 +379,7 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026 (Batch B — Checkout Polish)** — Send Later customer details now group delivery/pickup fields under `Ship to`; receipt lines have inline `Edit` buttons that return to cart review without losing entered checkout details; customer email validation is shown inline and blocks save until fixed.
 - **Apr 2026 (Batch D — Sample Qty Per-Day Migration)** — Sample stock moved from a single global field to a per-event-day field; one-time migration copies the legacy global value into Day 1, with Days 2-4 starting at 0.
 - **Apr 2026 (Batch E — Render Memo + Correction Stock Impact)** — Cart-reserved quantities are computed once per `renderProducts` pass instead of once per visible SKU; the Bill Correction review now previews the per-SKU stock movement and the projected starting stock for each later event day.
+- **Apr 2026 (Batch H — Void Bill from Correction Center)** — Bill Correction now has a separate reason-required `Void Bill` path for wrongly saved bills; voiding removes the sale, saves an audit snapshot, and realigns inventory carry-forward.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 

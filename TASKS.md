@@ -94,12 +94,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch H — Void Bill from Correction Center
 - **Items:** add an explicit "Void / delete this bill" path in Bill Correction. Today, zeroing every line in `buildCorrectionDraft` triggers `"At least one bill item must remain on the sale."` and review is blocked, so there is no way to delete a wrongly-saved bill. Add a separate **Void Bill** button (with reason + confirm dialog, behind the existing correction passcode) that removes the sale from `state.sales`, realigns inventory carry-forward via `realignInventoryCarryForward(saleDay(sale))`, and writes a `void` entry into `correctionHistory` so the action is auditable. The "items must remain" guard still applies to *edit* corrections so accidental zero-outs during normal edits stay protected.
 - **Touches:** Bill Correction panel markup (new `Void Bill` button + confirm dialog), `buildCorrectionDraft` / `confirmCorrectionSave` (or a new `voidSale` flow that does not reuse the items-required guard), `state.sales` write path + `saveSales`, `realignInventoryCarryForward`, audit/history entry shape, and `readme.md` Correction Center section.
-- **Owner:** claude
-- **Status:** ready-for-review
+- **Owner:**
+- **Status:** ready-for-merge
 - **Branch:** batch/h-void-bill
 - **Claimed:** 2026-04-26 14:00
 - **BlockedBy:**
-- **Notes:** Implementation complete on `batch/h-void-bill` (2026-04-26). Void Bill button gated behind existing correction passcode; opens reason-required confirm dialog; on confirm, removes sale from `state.sales`, writes audit entry to a new top-level `state.voidedSales` log persisted under `meowseum_event_voided_sales_v1` (records billId, voidedAt, voidedBy=`state.selectedOperator`, reason, operatingDay, total, itemCount, full saleSnapshot), and calls `realignInventoryCarryForward(saleDay(sale))`. Edit-correction "items must remain" guard untouched. README Correction Center updated. Awaiting Codex review before merge — high risk because it mutates `state.sales` and inventory carry-forward.
+- **Notes:** Implementation complete on `batch/h-void-bill` (2026-04-26). Void Bill button gated behind existing correction passcode; opens reason-required confirm dialog; on confirm, removes sale from `state.sales`, writes audit entry to a new top-level `state.voidedSales` log persisted under `meowseum_event_voided_sales_v1` (records billId, voidedAt, voidedBy=`state.selectedOperator`, reason, operatingDay, total, itemCount, full saleSnapshot with `type: "void"` correctionHistory entry), and calls `realignInventoryCarryForward(saleDay(sale))`. Edit-correction "items must remain" guard untouched. README Correction Center updated. Codex smoke review passed 2026-04-26: inline script parse and browser load both passed; manual multi-day void/carry-forward check still recommended before event use.
 
 ### Batch G — Stock & Allocation Setup clarity
 - **Business objective:** Make stock top-ups during the event easier and less error-prone for staff/managers using the live Stock & Allocation Setup page.
@@ -133,7 +133,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:** H while Batch H is `in-progress` because both implementation batches edit `meowmeow_pos_event.html`.
+- **BlockedBy:** H until Batch H is merged or released because both implementation batches edit `meowmeow_pos_event.html`.
 - **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
 
 ## Suggested order (least-conflict first)
