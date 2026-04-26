@@ -183,6 +183,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - `Close Day & Export CSV` is passcode-protected and the dialog uses only the passcode keypad flow without an extra cancel button.
 - After a saved bill is corrected, inventory carry-forward must be realigned across later event days so Day 2, Day 3, and Day 4 starting stock stay consistent with the corrected earlier day.
 - Sold-count calculations are cached in-memory during runtime to reduce repeated inventory recomputation on every render.
+- Cart-reserved quantities are computed once per `renderProducts` pass and reused across all product cards, so the cart is walked once per render instead of once per visible SKU.
 
 ## Correction Center
 
@@ -209,6 +210,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Item quantities must not exceed the real inventory available for that bill's operating day.
 - Saving a correction updates the saved sale, and inventory follows automatically because sold stock is derived from saved sales.
 - Saving a correction must also realign later-day carried stock, not just the edited bill's own day.
+- The Bill Correction review stage previews the per-SKU stock movement and the projected starting stock for each later day so staff can see the carry-forward effect before confirming.
 - Changing a corrected sale from one payment method to another must not silently auto-confirm a non-cash payment.
 - After correction:
   - cash should stay `confirmed`
@@ -366,13 +368,13 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; Send Later is paid at the event and no longer supports pay-later status.
 - **Apr 2026 (Batch B — Checkout Polish)** — Send Later customer details now group delivery/pickup fields under `Ship to`; receipt lines have inline `Edit` buttons that return to cart review without losing entered checkout details; customer email validation is shown inline and blocks save until fixed.
 - **Apr 2026 (Batch D — Sample Qty Per-Day Migration)** — Sample stock moved from a single global field to a per-event-day field; one-time migration copies the legacy global value into Day 1, with Days 2-4 starting at 0.
+- **Apr 2026 (Batch E — Render Memo + Correction Stock Impact)** — Cart-reserved quantities are computed once per `renderProducts` pass instead of once per visible SKU; the Bill Correction review now previews the per-SKU stock movement and the projected starting stock for each later event day.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
 Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan and [TASKS.md](TASKS.md) for live status.
 
-- Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment) (Batch E).
-- Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation (Batch E).
+- (Round complete — see Recent Changes for shipped batches.)
 
 ## How To Continue Next Time
 
