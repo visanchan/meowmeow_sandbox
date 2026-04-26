@@ -2,6 +2,8 @@
 
 Source of truth for work-in-progress. Both Claude and Codex must read this file **before** editing any project file, and update it **immediately after** claiming, completing, or releasing a batch.
 
+> **Two-agent protocol PAUSED as of 2026-04-26** — Claude is the sole executor on this project until the user explicitly re-enables the two-agent protocol. Codex should stand down on new batches. The Protocol section below remains the long-term rule and resumes the moment the pause is lifted.
+
 ## Protocol (read before editing)
 
 0. **Integration branch is `main`.** All batch branches start from `main` and merge back into `main`. The legacy `start` branch is retired (its history is fully merged into `main` as of 2026-04-26).
