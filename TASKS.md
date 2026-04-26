@@ -370,7 +370,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** Q
 - **Notes:** User specifically called out `Clear Emails` as still using browser alert and asked for smoother aligned confirmations.
 
-### Batch T - Smoke Coverage for PIN-Gated Workflows
+### Batch T — Smoke Coverage for PIN-Gated Workflows
 - **Business objective:** Catch regressions in the PIN-gated entry points before they reach a live event.
 - **Expected benefit:** Less risk that future symbol, encoding, dialog, or refactor work silently breaks operator login, Dashboard, Inventory, or Correction access.
 - **Implementation difficulty:** low.
@@ -393,12 +393,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Dashboard, Inventory, and Correction lock scenarios each test wrong PIN and correct PIN paths.
   - README smoke-test section mentions PIN-gated workflow coverage.
 - **Risks/assumptions:** The smoke test will repeat PIN values already present in the production HTML. This is no new disclosure, but future reviewers should remember these are local operational passcodes, not strong secrets.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
-- **BlockedBy:** Q
-- **Notes:** Codex approves the coverage idea with Inventory included. Recommended after Batch Q because Q changes reset/passcode behavior and may affect smoke-test setup patterns.
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/t-pin-smoke-coverage
+- **Claimed:** 2026-04-27 02:50
+- **BlockedBy:**
+- **Notes:** Q merged at `5a50bd6`, so blocker cleared. Codex approves the coverage idea with Inventory included.
 
 ## Suggested order (least-conflict first)
 
