@@ -374,6 +374,12 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 
 Run this checklist on the event device before booth selling starts. Use test data first, then clear it before real sales.
 
+- Optional automated first pass: run `tests/smoke_event_pos.js` with the Codex Node/Playwright runtime before manual checks. In this workspace, the command is:
+
+```powershell
+$env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules'; $env:PLAYWRIGHT_BROWSER_PATH='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'; & 'C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tests\smoke_event_pos.js'
+```
+
 - Staff login: log in as each expected staff role and confirm product taps are blocked after logout.
 - Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
 - Card/transfer sale: confirm `Save & New Sale` stays blocked until payment confirmation is checked.
