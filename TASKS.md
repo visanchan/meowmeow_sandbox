@@ -181,11 +181,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Running `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** Void audit should be visible only after the existing Correction Center passcode unlock; no separate passcode is needed.
 - **Owner:**
-- **Status:** ready-for-claude
+- **Status:** done
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
-- **Notes:** This is the next highest-value control improvement because Batch H created the audit trail but managers still need an easy way to inspect/export it.
+- **Notes:** Merged into `main` on 2026-04-26 after Codex review. Adds a `Void Audit` card inside Bill Correction that lists the most recent 12 voided bills (bill id, time, operator, day, total, item count, reason) with empty/overflow states, plus an `Export Void Audit CSV` button that exports concise audit columns (`bill_id, voided_at, voided_by, operating_day, total_thb, item_count, reason`) using spreadsheet-injection guards; the full `saleSnapshot` stays out of the CSV. Codex fixed the bill-id CSV export to use protected text, extended the smoke check for that guard, and verified `tests/smoke_event_pos.js` passes.
 
 ### Batch M — Safer Test Data Reset Cleanup
 - **Business objective:** Make pre-event cleanup safer and clearer so test sales, test voids, and test queue records do not pollute event reporting.
@@ -211,7 +211,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:** L if Claude starts Batch L first, because both batches touch Correction Center/void audit rendering.
+- **BlockedBy:**
 - **Notes:** Best implemented after Batch L if the void audit section is added first; otherwise update the dependency if Claude chooses to do reset cleanup before audit display.
 
 ## Suggested order (least-conflict first)

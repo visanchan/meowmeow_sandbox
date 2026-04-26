@@ -103,6 +103,10 @@ async function main() {
     const voided = JSON.parse(
       localStorage.getItem("meowseum_event_voided_sales_v1") || "[]"
     );
+    renderVoidAuditList();
+    const voidAuditText = voidAuditList.textContent;
+    const voidAuditCsv = voidAuditToCsv();
+    const voidAuditCsvLines = voidAuditCsv.split(/\r\n/);
     const voidResult = {
       day2BeforeVoid,
       day2AfterVoid: state.inventory.days.day2.startingStock[sku],
@@ -111,6 +115,14 @@ async function main() {
       voidReason: voided[0]?.reason,
       voidedBy: voided[0]?.voidedBy,
       voidHistoryType: voided[0]?.saleSnapshot?.correctionHistory?.at(-1)?.type,
+      auditRowShowsBillId: voidAuditText.includes("SMOKE-VOID-1"),
+      auditRowShowsReason: voidAuditText.includes("Automated local smoke test"),
+      auditRowShowsBy: voidAuditText.includes("By Zamm"),
+      exportBtnEnabled: !exportVoidAuditBtn.disabled,
+      csvHeader: voidAuditCsvLines[0],
+      csvRowCount: voidAuditCsvLines.length - 1,
+      csvPlainBillId: voidAuditCsvLines[1]?.startsWith("SMOKE-VOID-1,"),
+      csvOmitsSnapshot: !voidAuditCsv.includes("saleSnapshot"),
     };
 
     state.sales = [];
@@ -215,6 +227,18 @@ async function main() {
     "Void audit details are incomplete",
     result
   );
+  assert(result.auditRowShowsBillId, "Void audit row missing bill id", result);
+  assert(result.auditRowShowsReason, "Void audit row missing reason", result);
+  assert(result.auditRowShowsBy, "Void audit row missing operator", result);
+  assert(result.exportBtnEnabled, "Export Void Audit button stayed disabled with audit data", result);
+  assert(
+    result.csvHeader === "bill_id,voided_at,voided_by,operating_day,total_thb,item_count,reason",
+    "Void audit CSV header is unexpected",
+    result
+  );
+  assert(result.csvRowCount === 1, "Void audit CSV row count mismatch", result);
+  assert(result.csvPlainBillId, "Void audit CSV bill id should export as protected text, not an Excel formula cell", result);
+  assert(result.csvOmitsSnapshot, "Void audit CSV must not include saleSnapshot", result);
   assert(result.initialTopUpInput === "0", "Top-up input did not start at 0", result);
   assert(result.noIdleNoise, "Idle stock setup helper text is noisy", result);
   assert(result.hasTopUpLabel, "Top-up visual label is missing", result);
