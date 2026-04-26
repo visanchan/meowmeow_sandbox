@@ -60,10 +60,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch D — Sample Qty Per-Day Migration
 - **Items:** #9 move `sampleQty` from `state.globalInventory` to `state.inventory[dayId]` with one-time migration.
 - **Touches:** load/save of global inventory, `getProductInventorySnapshot`, `getCartAwareInventorySnapshot`, Stock & Allocation Setup UI, migration code in `loadGlobalInventory` / `loadInventory`.
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/d-sample-qty-per-day
+- **Claimed:** 2026-04-26 12:30
 - **BlockedBy:**
 - **Notes:** large data-model change. Verify `localStorage` migration with both empty and populated existing data. Update `readme.md` Inventory section as part of this batch.
 
