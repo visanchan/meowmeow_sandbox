@@ -95,23 +95,45 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Items:** add an explicit "Void / delete this bill" path in Bill Correction. Today, zeroing every line in `buildCorrectionDraft` triggers `"At least one bill item must remain on the sale."` and review is blocked, so there is no way to delete a wrongly-saved bill. Add a separate **Void Bill** button (with reason + confirm dialog, behind the existing correction passcode) that removes the sale from `state.sales`, realigns inventory carry-forward via `realignInventoryCarryForward(saleDay(sale))`, and writes a `void` entry into `correctionHistory` so the action is auditable. The "items must remain" guard still applies to *edit* corrections so accidental zero-outs during normal edits stay protected.
 - **Touches:** Bill Correction panel markup (new `Void Bill` button + confirm dialog), `buildCorrectionDraft` / `confirmCorrectionSave` (or a new `voidSale` flow that does not reuse the items-required guard), `state.sales` write path + `saveSales`, `realignInventoryCarryForward`, audit/history entry shape, and `readme.md` Correction Center section.
 - **Owner:** claude
-- **Status:** in-progress
+- **Status:** ready-for-review
 - **Branch:** batch/h-void-bill
 - **Claimed:** 2026-04-26 14:00
 - **BlockedBy:**
-- **Notes:** Reported 2026-04-26 — staff hit the "At least one bill item must remain" message when trying to delete a bill by zeroing all lines. Voiding must be reversible only via re-creating the sale; record `voidedAt`, `voidedBy` (logged-in operator), and `reason` so an auditor can see why a bill was removed. Verify carry-forward across all later days after the void.
+- **Notes:** Implementation complete on `batch/h-void-bill` (2026-04-26). Void Bill button gated behind existing correction passcode; opens reason-required confirm dialog; on confirm, removes sale from `state.sales`, writes audit entry to a new top-level `state.voidedSales` log persisted under `meowseum_event_voided_sales_v1` (records billId, voidedAt, voidedBy=`state.selectedOperator`, reason, operatingDay, total, itemCount, full saleSnapshot), and calls `realignInventoryCarryForward(saleDay(sale))`. Edit-correction "items must remain" guard untouched. README Correction Center updated. Awaiting Codex review before merge — high risk because it mutates `state.sales` and inventory carry-forward.
 
 ### Batch G — Stock & Allocation Setup clarity
+- **Business objective:** Make stock top-ups during the event easier and less error-prone for staff/managers using the live Stock & Allocation Setup page.
+- **Expected benefit:** Faster top-up entry, less confusion between stored stock totals and "add now" quantity, cleaner audit logs, and fewer accidental warehouse/event stock mistakes.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Keep the existing table and local-storage model, but improve the semantics and visual treatment of `Added Today`. This avoids a bigger inventory redesign while solving the confusing staff workflow.
 - **Items:**
   1. Re-evaluate the subtext under Warehouse and Remaining Event in `renderInventoryManagement`. Decide whether "No committed send later" and "Sold N" lines are useful information or visual noise — propose either removing them, hiding them when the value is 0/idle, or moving them into a tooltip / on-hover detail.
   2. Change `Added Today` semantics so it behaves as a **delta to apply**, not a stored running total: when staff press `Confirm Stock Setup`, the entered Added Today value is added into the day's running event stock (so Remaining Event reflects it), and the Added Today input resets to 0 in the UI for the next top-up. The audit log entry should still record the delta (this is roughly what `applyStockSetupDraft` does today via `addLog`, but the input box does not visually reset).
   3. Make the Added Today cell visually distinct from the other (stored-total) cells so staff understand it is a transient "amount to add now" field — different background/border, a "+" prefix, a hint label like "Top up now", or similar.
 - **Touches:** `renderInventoryManagement` table markup (subtext under Warehouse/Remaining Event, Added Today cell styling), `applyStockSetupDraft` (post-save reset of Added Today field), `stockSetupSnapshot` if needed, the inventory CSS in `<style>`, and `readme.md` Inventory section.
+- **Do not change:** public Inventory Flow totals, existing sample-stock semantics, existing locked-field rules after sales begin, Send Later reservation math, or CSV export shape.
+- **Recommended implementation notes:**
+  - Treat the visible `Added Today` input as a top-up delta. On confirm, add that delta to `dayRecord.addedStock[sku]` instead of replacing the stored total with the input value.
+  - After a successful confirm, rerender the setup table with `Added Today` inputs showing `0`, while stored `dayRecord.addedStock[sku]` remains increased and Remaining Event reflects the new total.
+  - Keep `stockSetupSnapshot(sku).addedToday` as the stored accumulated added stock if other views depend on it; use a separate render value for the delta input instead of changing the meaning globally.
+  - Hide noisy subtext when idle: show committed Send Later only when `snap.committed > 0`; show Sold only when `snap.sold > 0`. Keep the strong Warehouse and Remaining Event numbers visible at all times.
+- **Acceptance checks:**
+  - Empty state: with no sales/committed Send Later, Warehouse and Remaining Event rows do not show noisy `No committed send later` / `Sold 0` lines.
+  - Mid-event state: if a SKU has committed Send Later or sold units, those details are still visible near the relevant stock number.
+  - Enter `Added Today = 5`, confirm setup, and verify Remaining Event increases by 5 while the Added Today input resets to 0.
+  - Enter another `Added Today = 3`, confirm setup, and verify stored added stock becomes prior added total + 3, not just 3.
+  - Verify `addLog` records each top-up delta separately with SKU, quantity, day, timestamp, and stock setup reason.
+  - Verify global/online/event-start fields remain locked after a saved sale, while Added Today, Sample, and Low Alert still behave correctly.
+  - Update README Inventory notes to explain Added Today as a "top up now" field that resets after confirm.
+- **Risks/assumptions:**
+  - `stockSetupChangeList()` currently compares the input against stored `snap.addedToday`; Claude must adjust change detection so a positive top-up delta is recognized even when the stored total is different.
+  - `stockSetupDraftIssue()` must validate warehouse/event stock using stored added stock plus the entered top-up delta, not only the delta by itself.
+  - Review is recommended before merge because this affects live stock setup and staff understanding during the event.
 - **Owner:**
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:**
+- **BlockedBy:** H while Batch H is `in-progress` because both implementation batches edit `meowmeow_pos_event.html`.
 - **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
 
 ## Suggested order (least-conflict first)
