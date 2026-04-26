@@ -264,6 +264,34 @@ async function main() {
     renderInventoryManagement();
     const midEventText = inventoryControlList.textContent;
 
+    // Reset passcode gate scenario: confirm dialog blocks until 888 is entered.
+    requestResetSavedSales();
+    const gateInitial = {
+      overlayOpen: els.confirmResetSalesOverlay.classList.contains("open"),
+      confirmDisabled: els.confirmResetSalesBtn.disabled,
+      errorEmpty: !els.resetPasscodeError.textContent,
+    };
+    handleResetPasscodeInput("9");
+    handleResetPasscodeInput("9");
+    handleResetPasscodeInput("9");
+    const gateWrong = {
+      confirmStillDisabled: els.confirmResetSalesBtn.disabled,
+      errorShown: !!els.resetPasscodeError.textContent,
+      pinClearedAfterReject: state.resetPin === "",
+    };
+    handleResetPasscodeInput("8");
+    handleResetPasscodeInput("8");
+    handleResetPasscodeInput("8");
+    const gateCorrect = {
+      confirmEnabled: !els.confirmResetSalesBtn.disabled,
+      errorClearedAfterAccept: !els.resetPasscodeError.textContent,
+    };
+    closeResetSalesConfirmDialog();
+    const gateAfterClose = {
+      pinReset: state.resetPin === "",
+      overlayClosed: !els.confirmResetSalesOverlay.classList.contains("open"),
+    };
+
     // Reset Data scenario: confirm reset clears sales + void audit + inventory but keeps Send Later queue.
     state.voidedSales = [
       {
@@ -317,6 +345,10 @@ async function main() {
       resetClearedVoidStorage: beforeReset.voidedStorageBefore !== null && afterReset.voidedStorageAfter === null,
       resetClearedAddedStock: beforeReset.addedStock > 0 && afterReset.addedStock === 0,
       resetKeptPreorders: afterReset.preorderCount === beforeReset.preorderCount && afterReset.preorderCount > 0,
+      resetGateInitialClosed: gateInitial.overlayOpen && gateInitial.confirmDisabled && gateInitial.errorEmpty,
+      resetGateRejectsWrong: gateWrong.confirmStillDisabled && gateWrong.errorShown && gateWrong.pinClearedAfterReject,
+      resetGateAcceptsCorrect: gateCorrect.confirmEnabled && gateCorrect.errorClearedAfterAccept,
+      resetGateClosedClearsPin: gateAfterClose.pinReset && gateAfterClose.overlayClosed,
     };
   });
 
@@ -368,6 +400,10 @@ async function main() {
   assert(result.resetClearedVoidStorage, "Reset Data did not remove void audit storage key", result);
   assert(result.resetClearedAddedStock, "Reset Data did not reset per-day inventory", result);
   assert(result.resetKeptPreorders, "Reset Data must keep Send Later queue intact", result);
+  assert(result.resetGateInitialClosed, "Reset confirm overlay must open with confirm button disabled and no error", result);
+  assert(result.resetGateRejectsWrong, "Wrong reset passcode must keep confirm disabled, show in-app error, and clear PIN", result);
+  assert(result.resetGateAcceptsCorrect, "Correct reset passcode must enable confirm button and clear error", result);
+  assert(result.resetGateClosedClearsPin, "Closing reset overlay must clear PIN and hide overlay", result);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);

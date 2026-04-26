@@ -285,7 +285,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/p-restore-utf8-symbols` 2026-04-27. Rebuilt `meowmeow_pos_event.html` from `6ed423e` (Batch M, last commit with intact UTF-8) by splicing in the Batch N compressed `PRODUCT_IMAGE_DATA` block and re-applying the Batch O inventory-baseline edits (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, `defaultEventStartingStock`, updated `createDefaultInventory` / `createDefaultGlobalInventory`). File written as UTF-8 (with the same BOM the file has carried since Batch M) via Node `Buffer.from(text,"utf8")`. Non-ASCII byte count restored from 44 to 325 (matches `6ed423e`). `tests/smoke_event_pos.js` passes. Headed-Edge visual check confirms `฿`, 🧣 free-gift button, ⚠️/📧/📤 dashboard tools, `•` separators, and `—` em dashes render correctly on the selling screen and dashboard tab.
 
-### Batch Q - Destructive Reset Passcode & Severity
+### Batch Q — Destructive Reset Passcode & Severity
 - **Business objective:** Make `Reset Data` clearly more dangerous than normal admin actions and prevent accidental pre-event/live-event data loss.
 - **Expected benefit:** Lower risk of staff clearing sales, inventory setup, void audit logs, and allocation data by mistake; clearer control for managers.
 - **Implementation difficulty:** medium.
@@ -307,11 +307,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** Passcode `888` is intentionally simple and local; this is an operational guard, not strong security.
 - **Owner:**
-- **Status:** ready-for-claude
+- **Status:** done
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
-- **Notes:** User requested reset to look more severe and require passcode `888`.
+- **Notes:** Completed on `batch/q-reset-passcode-severity` 2026-04-27. Reset Data button is now `🚨` with `.action-btn.severe` styling (deeper crimson, darker border, inset highlight) versus the lighter `⚠️` Corrections button. The confirm overlay uses `.confirm-card.severe` (hazard banner, 3px border, red header, 🚨 in title), embeds a 3-digit passcode keypad mirroring the dashboard PIN pattern, and the `Erase Everything` confirm button starts disabled and only enables once `state.resetPin === ACCESS_CONTROL.resetPasscode` (`888`). Wrong passcodes clear the entry and show an in-app error (no browser `alert`). Closing or cancelling the dialog clears the passcode state. README Pre-Event Data Hygiene rewritten to document the new flow. Smoke test extended with 4 new gate assertions (initial-disabled, wrong-rejects, correct-enables, close-clears) all passing.
 
 ### Batch R - Manual Event Start Count
 - **Business objective:** Keep the workbook as the stock planning baseline while forcing staff to count and enter actual event-start stock before selling.
@@ -437,3 +437,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch L — Void Audit Review & Export** — merged into `main` at `aba934c` on 2026-04-26. Adds a `Void Audit` list and concise CSV export inside Bill Correction; refreshes live on void/cross-tab; smoke test extended.
 - **Batch M — Safer Test Data Reset Cleanup** — shipped to `main` on 2026-04-26 under single-agent mode. Explicit reset confirm copy, void audit cleared with reset, Correction Center re-renders after reset, smoke test extended.
 - **Batch P — Restore UTF-8 Symbols After Inventory Baseline** — merged into `main` at `33bd06f` on 2026-04-27 by claude after Codex review (safe to merge, BOM/note mismatch corrected). Rebuilt the POS HTML from Batch M's intact-symbol baseline, re-spliced Batch N's compressed images and Batch O's inventory baseline, and wrote as UTF-8 with the file's pre-existing BOM. Smoke test and visual selling-screen check pass.
+- **Batch Q — Destructive Reset Passcode & Severity** — completed on `batch/q-reset-passcode-severity` on 2026-04-27 by claude. Reset Data button restyled to `🚨` `.action-btn.severe`; reset overlay restyled to `.confirm-card.severe` with hazard banner; 3-digit passcode keypad gates the destructive button, which starts disabled and only enables after entering `888`. Wrong passcode shows in-app error and clears entry; cancel/close clears state. Smoke test extended with 4 gate assertions; README Pre-Event Data Hygiene rewritten.
