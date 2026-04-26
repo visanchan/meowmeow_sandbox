@@ -4,11 +4,12 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 
 ## Protocol (read before editing)
 
+0. **Integration branch is `main`.** All batch branches start from `main` and merge back into `main`. The legacy `start` branch is retired (its history is fully merged into `main` as of 2026-04-26).
 1. **One agent per batch.** A batch is "claimed" the moment its `Owner` field is set. Do not edit any file a batch touches if another agent owns the batch.
 2. **One batch in flight per agent.** Finish or release before claiming another.
 3. **Claim by editing this file:** set `Owner: claude` or `Owner: codex`, set `Status: in-progress`, set `Branch: <branch-name>`, set `Claimed: <YYYY-MM-DD HH:MM>`. Commit this update before touching any other file.
-4. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/a-operator-gate`). Never push directly to `main`.
-5. **Merge serially.** Open a PR. Merge to `main` only after the other agent confirms no in-flight work conflicts. After merge, set `Status: done` and clear `Owner`/`Branch`.
+4. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/a-operator-gate`). Never push directly to `main`. Branch from latest `main`.
+5. **Merge serially.** Open a PR into `main`. Merge only after the other agent confirms no in-flight work conflicts. After merge, set `Status: done` and clear `Owner`/`Branch`.
 6. **Stale claim recovery.** If `Claimed` is older than 24h with no commits on the branch, the other agent may set `Status: stale` and re-claim, but must announce it in the next session.
 7. **Conflict prevention rules:**
    - Batches that touch the same code region are marked `BlockedBy: <batch-letter>`. Do not start a blocked batch until its blocker is `done`.

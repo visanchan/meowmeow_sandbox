@@ -15,7 +15,7 @@ This project is co-developed by **Codex** and **Claude**. To avoid clobbering ea
 - **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the entire app. Treat it as **mutually exclusive**: only one agent edits it at a time, even on different batches, until partition confidence is proven.
 - **Claim before editing.** Update [TASKS.md](TASKS.md) — set `Owner: codex`, `Status: in-progress`, `Branch: batch/<letter>-<slug>`, `Claimed: <YYYY-MM-DD HH:MM>`. Commit that update first, then start work.
 - **One batch at a time.** Finish or release before claiming another.
-- **Branch per batch.** Never push directly to `main`. Open a PR. Merge only after the user confirms (or after Claude confirms no in-flight conflict, if the user delegates that check).
+- **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`. Merge only after the user confirms (or after Claude confirms no in-flight conflict, if the user delegates that check). The legacy `start` branch is retired as of 2026-04-26 — fully merged into `main`.
 - **Release on done.** After merge, set `Status: done`, clear `Owner`/`Branch`, move the entry into the **Done** section with the merge SHA.
 - **Honor blockers.** If a batch is `BlockedBy: <letter>`, do not start it until the blocker is `done`.
 - **No drive-by edits.** Do not edit code unrelated to the claimed batch, even if you spot improvements. Note them as a new batch in [TASKS.md](TASKS.md) and surface them to the user.
