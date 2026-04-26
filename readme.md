@@ -39,17 +39,19 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - [readme.md](readme.md): continuation notes for future sessions
 - [TASKS.md](TASKS.md): shared task board for the two-agent workflow (claim/release per batch)
 - [CLAUDE.md](CLAUDE.md): protocol for Claude sessions
-- [codex.md](codex.md): protocol for Codex sessions (rename to `AGENTS.md` for auto-load)
+- [codex.md](codex.md): protocol for Codex sessions
+- [AGENTS.md](AGENTS.md): auto-load pointer for Codex sessions
 
 ## Working Rules for Future Sessions
 
-- This project is co-developed by two AI agents. Before any code change, also read [TASKS.md](TASKS.md) and the agent protocol file for your tool ([CLAUDE.md](CLAUDE.md) or [codex.md](codex.md)). Never edit a file owned by another agent's in-progress batch.
+- This project is co-developed by two AI agents. Codex is the default planner/reviewer/workflow analyst; Claude is the default implementation executor for approved batches. Before any code change, also read [TASKS.md](TASKS.md) and the agent protocol file for your tool ([CLAUDE.md](CLAUDE.md) or [codex.md](codex.md)). Never edit a file owned by another agent's in-progress batch.
 - Before making any code change, read this `readme.md` first.
 - After finishing any change, update this `readme.md` so it stays aligned with the current product direction and implementation.
 - Treat this file as the shared continuity guide for future developers and future sessions.
 - If behavior, workflow, UI direction, passcodes, CSV shape, or correction logic changes, document that change here before closing the task.
 - Before starting substantial work, review this `readme.md` again and use it as the first checklist for scope, constraints, and continuity.
 - For larger or multi-part tasks, prefer splitting the work into focused sub-tasks so parallel agents can handle independent parts with smaller context.
+- Use Codex planning to split and review work before Claude implementation when the task has workflow risk, inventory risk, correction risk, or unclear scope.
 - Use multi-agent delegation only when the task can be split cleanly without creating overlap or merge risk.
 - Keep each sub-task narrow and self-contained to reduce context-window pressure and improve review quality.
 - After sub-tasks finish, consolidate the result into one final implementation and update this README if the behavior or workflow changed.

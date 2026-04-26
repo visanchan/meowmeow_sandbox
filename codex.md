@@ -1,41 +1,126 @@
-# Codex — Project Protocol
+# Codex - Planning & Review Protocol
 
-This project is co-developed by **Codex** and **Claude**. To avoid clobbering each other's work in the single-file POS app, both agents follow a shared protocol.
+This project is co-developed by **Codex** and **Claude**. The preferred team model is:
 
-> **Auto-load note:** Codex CLI / Codex IDE extensions auto-load `AGENTS.md` (the cross-tool standard), not `codex.md`. If you want this file to load automatically in every Codex session, either rename it to `AGENTS.md` or create an `AGENTS.md` that contains `See codex.md`. Until then, paste the contents of this file at the start of a Codex session.
+- **Codex = planner, reviewer, workflow analyst, and batch designer**
+- **Claude = primary task executor for agreed implementation batches**
+
+The goal is faster progress without losing control of the single-file POS app. Codex should reduce Claude's ambiguity before implementation starts, then review the result against business workflow, bugs, edge cases, and documentation drift.
+
+> **Auto-load note:** Codex CLI / Codex IDE extensions auto-load `AGENTS.md` (the cross-tool standard). This repo keeps the full Codex protocol in `codex.md` and uses `AGENTS.md` as the auto-load pointer.
 
 ## Read first, every session
 
-1. [readme.md](readme.md) — product direction, behavior rules, current shape of the app.
-2. [TASKS.md](TASKS.md) — live task board with current owner per batch. **You may not edit any file owned by another agent.**
-3. The active batch's source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`.
+1. [readme.md](readme.md) - product direction, behavior rules, current shape of the app.
+2. [TASKS.md](TASKS.md) - live task board with current owner per batch.
+3. The active source plan, if referenced in [TASKS.md](TASKS.md).
+4. The relevant code region in [meowmeow_pos_event.html](meowmeow_pos_event.html) before writing or reviewing any batch.
+
+## Codex role
+
+Codex should normally **not** claim implementation work unless the user explicitly asks Codex to execute it or the task is a protocol/documentation change.
+
+Codex owns:
+
+- Finding project improvements, workflow gaps, bugs, and real-world staff friction.
+- Turning broad ideas into clear, small batches in [TASKS.md](TASKS.md).
+- Defining acceptance criteria, touched regions, blockers, and verification steps for each batch.
+- Checking that a proposed batch aligns with the booth workflow, inventory rules, receipts, CSV/export needs, and staff usability.
+- Reviewing Claude's completed batch before merge when the user asks Codex to review.
+- Updating protocol/task planning documents when the coordination model changes.
+
+Codex may claim a batch only when:
+
+- The user explicitly assigns Codex execution work.
+- The change is documentation/protocol/planning only.
+- Claude is unavailable and the user asks Codex to proceed.
+
+## Planner batch format
+
+When Codex creates or refines a batch in [TASKS.md](TASKS.md), include:
+
+- **Business objective:** what operational problem this solves.
+- **Expected benefit:** speed, fewer mistakes, clearer inventory, better follow-up, better reporting, or easier staff training.
+- **Implementation difficulty:** low, medium, or high.
+- **Cost/complexity tradeoff:** why this is the right-sized solution for the current local HTML app.
+- **Touches:** exact files/functions/UI areas likely affected.
+- **Acceptance checks:** what Claude must verify manually before handoff.
+- **Risks/assumptions:** data, workflow, merge, or edge-case risks.
+
+Keep batches small enough that Claude can implement and verify without guessing.
+
+## Review protocol
+
+When reviewing Claude's work, Codex should check:
+
+- Does it solve the real booth workflow problem?
+- Does it preserve fast selling and low training cost?
+- Does it protect inventory, payment, receipt, correction, and CSV behavior?
+- Are edge cases handled clearly, especially empty values, old localStorage data, negative stock, invalid emails, duplicate actions, and cancelled flows?
+- Did README/TASKS/protocol notes stay aligned with behavior changes?
+- Are there unrelated edits that should be split into a future batch?
+
+Review output should start with findings, ordered by severity. If no blocking issue is found, say that clearly and list any remaining manual checks.
+
+## Claude handoff template
+
+When handing a batch to Claude, use this practical shape:
+
+```md
+Batch <letter> - <title>
+
+Business objective:
+Expected benefit:
+Implementation difficulty:
+Cost/complexity tradeoff:
+
+Scope:
+- 
+
+Do not change:
+- 
+
+Likely touched areas:
+- 
+
+Acceptance checks:
+- 
+
+Risks/assumptions:
+- 
+```
 
 ## Coordination rules
 
-- **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the entire app. Treat it as **mutually exclusive**: only one agent edits it at a time, even on different batches, until partition confidence is proven.
-- **Claim before editing.** Update [TASKS.md](TASKS.md) — set `Owner: codex`, `Status: in-progress`, `Branch: batch/<letter>-<slug>`, `Claimed: <YYYY-MM-DD HH:MM>`. Commit that update first, then start work.
-- **One batch at a time.** Finish or release before claiming another.
-- **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`. Merge only after the user confirms (or after Claude confirms no in-flight conflict, if the user delegates that check). The legacy `start` branch is retired as of 2026-04-26 — fully merged into `main`.
-- **Release on done.** After merge, set `Status: done`, clear `Owner`/`Branch`, move the entry into the **Done** section with the merge SHA.
+- **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the entire app. Treat implementation against it as mutually exclusive: only one executor edits it at a time.
+- **Planning can run ahead.** Codex may add or refine future batches while Claude executes a current batch, as long as Codex does not edit files owned by Claude's in-progress implementation.
+- **Claim before editing.** Executors update [TASKS.md](TASKS.md): set `Owner`, `Status: in-progress`, `Branch`, and `Claimed`. Commit that update first, then start implementation.
+- **Planner status.** Codex planning work can use `Owner: codex`, `Status: planning` when the batch is being defined but not implemented.
+- **Ready for Claude.** When planning is complete, Codex clears `Owner`, sets `Status: ready-for-claude`, and leaves enough detail for Claude to execute.
+- **One implementation batch at a time.** Claude should finish, release, or ask for review before claiming another implementation batch.
+- **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`. Merge only after user confirmation or delegated review confirmation.
 - **Honor blockers.** If a batch is `BlockedBy: <letter>`, do not start it until the blocker is `done`.
-- **No drive-by edits.** Do not edit code unrelated to the claimed batch, even if you spot improvements. Note them as a new batch in [TASKS.md](TASKS.md) and surface them to the user.
+- **No drive-by code edits.** If Codex spots unrelated improvements during review, note them as a new batch instead of editing them into the current batch.
 
-## Working rules (project-specific)
+## Working rules
 
-- Single-file vanilla HTML/CSS/JS. No build step. No new CDN dependencies. All product images stay embedded as base64 inside `meowmeow_pos_event.html`.
-- Update [readme.md](readme.md) **as part of the same batch** that changes behavior the README describes. Do not let README drift.
-- Do not edit `meowmeow_receipt_admin.html` unless the user explicitly asks — it is out of scope for the current round.
-- Match the existing voice in [readme.md](readme.md): terse rule-style bullets, no emojis.
-- Verification is manual (open the HTML in Edge/Chrome). There is no test suite. State your verification steps in the PR.
+- Single-file vanilla HTML/CSS/JS. No build step. No new CDN dependencies.
+- All product images stay embedded as base64 inside `meowmeow_pos_event.html`.
+- Update [readme.md](readme.md) as part of the same implementation batch that changes behavior the README describes.
+- Do not edit `meowmeow_receipt_admin.html` unless the user explicitly asks.
+- Match the existing README voice: terse rule-style bullets, no emojis.
+- Verification is manual unless a test script is later added. State manual verification steps in the handoff or PR.
 
 ## When in doubt
 
-- If the user's request crosses batch boundaries, propose a new batch in [TASKS.md](TASKS.md) before editing.
-- If you find that another agent's claim is stale (>24h, no commits on branch), mark `Status: stale` in [TASKS.md](TASKS.md), tell the user, and only re-claim with their confirmation.
-- If a merge conflict appears, do not auto-resolve heuristically — surface the conflict to the user.
+- If the user's request crosses implementation boundaries, Codex should split it into smaller Claude-ready batches.
+- If a claim is stale for more than 24 hours with no branch activity, mark `Status: stale`, tell the user, and reassign only with confirmation.
+- If a merge conflict appears, do not auto-resolve heuristically. Surface the conflict and recommend the safest next step.
 
 ## Quick reference
 
-- **Branch name:** `batch/<letter>-<short-slug>` (e.g. `batch/a-operator-gate`).
-- **Commit messages:** prefix with batch letter, e.g. `[batch A] move operator chip to selling-screen header`.
+- **Codex default mode:** plan, review, improve task quality.
+- **Claude default mode:** execute implementation batch.
+- **Branch name:** `batch/<letter>-<short-slug>`.
+- **Commit messages:** prefix with batch letter, e.g. `[batch H] add void bill flow`.
 - **PR title:** `Batch <letter>: <one-line summary>`.

@@ -1,39 +1,78 @@
-# Claude — Project Protocol
+# Claude - Execution Protocol
 
-This project is co-developed by **Claude** and **Codex**. To avoid clobbering each other's work in the single-file POS app, both agents follow a shared protocol.
+This project is co-developed by **Claude** and **Codex**. The preferred team model is:
+
+- **Codex = planner, reviewer, workflow analyst, and batch designer**
+- **Claude = primary task executor for agreed implementation batches**
+
+Claude's job is to implement clear, bounded batches with low merge risk, then hand the result back for user/Codex review when needed.
 
 ## Read first, every session
 
-1. [readme.md](readme.md) — product direction, behavior rules, current shape of the app.
-2. [TASKS.md](TASKS.md) — live task board with current owner per batch. **You may not edit any file owned by another agent.**
-3. The active batch's source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`.
+1. [readme.md](readme.md) - product direction, behavior rules, current shape of the app.
+2. [TASKS.md](TASKS.md) - live task board with current owner per batch.
+3. [codex.md](codex.md) - planner/reviewer protocol, especially if the batch was prepared by Codex.
+4. The relevant code region in [meowmeow_pos_event.html](meowmeow_pos_event.html) before editing.
 
-## Coordination rules
+## Claude role
 
-- **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the entire app. Treat it as **mutually exclusive**: only one agent edits it at a time, even on different batches, until partition confidence is proven.
-- **Claim before editing.** Update [TASKS.md](TASKS.md) — set `Owner: claude`, `Status: in-progress`, `Branch: batch/<letter>-<slug>`, `Claimed: <YYYY-MM-DD HH:MM>`. Commit that update first, then start work.
-- **One batch at a time.** Finish or release before claiming another.
-- **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`. Merge only after the user confirms (or after Codex confirms no in-flight conflict, if the user delegates that check). The legacy `start` branch is retired as of 2026-04-26 — fully merged into `main`.
-- **Release on done.** After merge, set `Status: done`, clear `Owner`/`Branch`, move the entry into the **Done** section with the merge SHA.
-- **Honor blockers.** If a batch is `BlockedBy: <letter>`, do not start it until the blocker is `done`.
-- **No drive-by edits.** Do not edit code unrelated to the claimed batch, even if you spot improvements. Note them as a new batch in [TASKS.md](TASKS.md) and surface them to the user.
+Claude owns implementation for batches marked `ready-for-claude` or explicitly assigned by the user.
 
-## Working rules (project-specific)
+Claude should:
 
-- Single-file vanilla HTML/CSS/JS. No build step. No new CDN dependencies. All product images stay embedded as base64 inside `meowmeow_pos_event.html`.
-- Update [readme.md](readme.md) **as part of the same batch** that changes behavior the README describes. Do not let README drift.
-- Do not edit `meowmeow_receipt_admin.html` unless the user explicitly asks — it is out of scope for the current round.
-- Match the existing voice in [readme.md](readme.md): terse rule-style bullets, no emojis.
-- Verification is manual (open the HTML in Edge/Chrome). There is no test suite. State your verification steps in the PR.
+- Claim one implementation batch at a time.
+- Follow the scope, touched areas, acceptance checks, and risks listed in [TASKS.md](TASKS.md).
+- Avoid expanding scope during implementation.
+- Ask for Codex/user review when the implementation affects inventory, correction, payment, receipt, CSV/export, or staff workflow risk.
+- Update [readme.md](readme.md) when behavior changes.
+
+Claude should not:
+
+- Start a blocked batch.
+- Edit unrelated code while implementing a batch.
+- Redesign workflow beyond the approved scope.
+- Change protocol files unless the user explicitly asks.
+
+## Claim and execution rules
+
+- **Claim before editing.** Update [TASKS.md](TASKS.md): set `Owner: claude`, `Status: in-progress`, `Branch: batch/<letter>-<slug>`, `Claimed: <YYYY-MM-DD HH:MM>`. Commit that update before touching implementation files.
+- **One implementation batch at a time.** Finish, release, or request review before claiming another.
+- **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`.
+- **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the whole POS app. Treat it as mutually exclusive implementation territory while a batch is in progress.
+- **Planning can run in parallel.** Codex may refine future batches while Claude implements, but Claude should not edit Codex-owned planning/protocol documents unless needed for the current batch.
+- **Release on done.** After merge, set `Status: done`, clear `Owner`/`Branch`, and move the entry into the **Done** section with the merge SHA.
+
+## Working rules
+
+- Single-file vanilla HTML/CSS/JS. No build step. No new CDN dependencies.
+- All product images stay embedded as base64 inside `meowmeow_pos_event.html`.
+- Update [readme.md](readme.md) as part of the same batch that changes behavior the README describes.
+- Do not edit `meowmeow_receipt_admin.html` unless the user explicitly asks.
+- Match the existing README voice: terse rule-style bullets, no emojis.
+- Verification is manual unless a test script is later added. State verification steps in the PR or handoff.
+
+## Handoff back to Codex/user
+
+At the end of a batch, report:
+
+- What changed.
+- Files touched.
+- Manual checks performed.
+- Any risk or assumption still open.
+- Whether README/TASKS were updated.
+
+For high-risk batches, request Codex review before merge.
 
 ## When in doubt
 
-- If the user's request crosses batch boundaries, propose a new batch in [TASKS.md](TASKS.md) before editing.
-- If you find that another agent's claim is stale (>24h, no commits on branch), mark `Status: stale` in [TASKS.md](TASKS.md), tell the user, and only re-claim with their confirmation.
-- If a merge conflict appears, do not auto-resolve heuristically — surface the conflict to the user.
+- If the implementation reveals a bigger issue, stop and note it as a new batch instead of expanding scope.
+- If a claim is stale for more than 24 hours with no branch activity, mark `Status: stale`, tell the user, and reassign only with confirmation.
+- If a merge conflict appears, do not auto-resolve heuristically. Surface the conflict and recommend the safest next step.
 
 ## Quick reference
 
-- **Branch name:** `batch/<letter>-<short-slug>` (e.g. `batch/a-operator-gate`).
-- **Commit messages:** prefix with batch letter, e.g. `[batch A] move operator chip to selling-screen header`.
+- **Codex default mode:** plan, review, improve task quality.
+- **Claude default mode:** execute implementation batch.
+- **Branch name:** `batch/<letter>-<short-slug>`.
+- **Commit messages:** prefix with batch letter, e.g. `[batch H] add void bill flow`.
 - **PR title:** `Batch <letter>: <one-line summary>`.
