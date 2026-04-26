@@ -2,7 +2,7 @@
 
 Source of truth for work-in-progress. Both Claude and Codex must read this file **before** editing any project file, and update it **immediately after** claiming, completing, or releasing a batch.
 
-> **Two-agent protocol PAUSED as of 2026-04-26** — Claude is the sole executor on this project until the user explicitly re-enables the two-agent protocol. Codex should stand down on new batches. The Protocol section below remains the long-term rule and resumes the moment the pause is lifted.
+> **Two-agent protocol RESUMED as of 2026-04-26** — Claude (executor) and Codex (planner/reviewer) are both active again. Follow the claim/release rules in the Protocol section below.
 
 ## Protocol (read before editing)
 
