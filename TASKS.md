@@ -71,11 +71,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch E — Render Memoization + Correction Stock Impact
 - **Items:** #10 per-render-pass memoization for sold-count map; #8 stock-impact preview in correction review.
 - **Touches:** `renderProducts` (per-pass cache context), `getCartAwareInventorySnapshot` signature, correction review markup (lines ~1067-1186).
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/e-render-memo-correction-stock
-- **Claimed:** 2026-04-26 13:00
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
+- **Notes:** Merged into `main` at e35aabc (2026-04-26). Per-pass `cartReservedMap` and Bill Correction day re-alignment preview shipped.
 
 ### Batch F — Staff Login & Tap-in Dedup
 - **Items:** replace operator chip with name+PIN login gate (Zamm=111, Ben=222, Kat=333, Staff=000); persist session in `localStorage`; add 🔒 Log out button in header (manual only); remove redundant "Operator tap-in" on review/finish-sale page since operator is known from login.
@@ -105,3 +106,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch C — Cart & Status Guards** — completed on `start` at `2cce88b` on 2026-04-26. Items #7 and pay-later removal shipped.
 - **Batch F — Staff Login & Tap-in Dedup** — completed on `start` at `f674cdb` on 2026-04-26 by claude. Staff PIN login, persistent session, manual logout, redundant operator tap-in removed.
 - **Batch D — Sample Qty Per-Day Migration** — merged into `start` at `28ffc31` on 2026-04-26 by claude. Per-day `sampleQty` shipped with one-time migration; unblocks Batch E.
+- **Batch E — Render Memoization + Correction Stock Impact** — merged into `main` at `e35aabc` on 2026-04-26 by claude. Per-pass `cartReservedMap` reduces cart walks in `renderProducts`; Bill Correction review previews per-day starting-stock re-alignment.
