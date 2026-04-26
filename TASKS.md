@@ -40,10 +40,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch B — Checkout Polish
 - **Items:** #4 `Ship to` heading grouping; #5 inline edit on receipt lines; #6 inline email validation message.
 - **Touches:** `renderSuccess` overlay markup, `finalizeSale` email-validation path, `state.pendingSale` round-trip.
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/b-checkout-polish
+- **Claimed:** 2026-04-26 12:02
 - **BlockedBy:** A (overlaps Save button label region in `renderSuccess`).
 
 ### Batch C — Cart & Status Guards
