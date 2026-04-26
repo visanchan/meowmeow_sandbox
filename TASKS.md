@@ -60,12 +60,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch D — Sample Qty Per-Day Migration
 - **Items:** #9 move `sampleQty` from `state.globalInventory` to `state.inventory[dayId]` with one-time migration.
 - **Touches:** load/save of global inventory, `getProductInventorySnapshot`, `getCartAwareInventorySnapshot`, Stock & Allocation Setup UI, migration code in `loadGlobalInventory` / `loadInventory`.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/d-sample-qty-per-day
-- **Claimed:** 2026-04-26 12:30
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** large data-model change. Verify `localStorage` migration with both empty and populated existing data. Update `readme.md` Inventory section as part of this batch.
+- **Notes:** Completed on `start` at 6e23815 (2026-04-26). Per-day `sampleQty` with one-time migration from legacy `globalInventory.sampleQty` into Day 1; Days 2-4 default to 0. Unblocks Batch E.
 
 ### Batch E — Render Memoization + Correction Stock Impact
 - **Items:** #10 per-render-pass memoization for sold-count map; #8 stock-impact preview in correction review.
@@ -103,3 +103,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch A — Operator Gate Trio** — merged into `start` at `6895710` on 2026-04-25 by claude. Items #1, #2, #3 shipped.
 - **Batch C — Cart & Status Guards** — completed on `start` at `2cce88b` on 2026-04-26. Items #7 and pay-later removal shipped.
 - **Batch F — Staff Login & Tap-in Dedup** — completed on `start` at `f674cdb` on 2026-04-26 by claude. Staff PIN login, persistent session, manual logout, redundant operator tap-in removed.
+- **Batch D — Sample Qty Per-Day Migration** — merged into `start` at `28ffc31` on 2026-04-26 by claude. Per-day `sampleQty` shipped with one-time migration; unblocks Batch E.
