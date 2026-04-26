@@ -170,6 +170,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
 - Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
 - Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
+- Sample stock is tracked per event day, so each day can record its own sample quantity without polluting the other days.
+- On first load after upgrade, the prior global sample quantity is migrated into Day 1's sample stock; Days 2-4 start at zero.
 - After the first saved sale exists, normal Stock & Allocation Setup locks `Global`, `Online`, and `Event Start` so opening inventory cannot be casually changed mid-selling.
 - After sales begin, staff can still edit `Added Today`, `Sample`, and `Low Alert`; controlled fixes to locked fields belong in `Correction Center > Inventory Correction`.
 - Public inventory flow is read-only.
@@ -363,12 +365,12 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
 - **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; Send Later is paid at the event and no longer supports pay-later status.
 - **Apr 2026 (Batch B — Checkout Polish)** — Send Later customer details now group delivery/pickup fields under `Ship to`; receipt lines have inline `Edit` buttons that return to cart review without losing entered checkout details; customer email validation is shown inline and blocks save until fixed.
+- **Apr 2026 (Batch D — Sample Qty Per-Day Migration)** — Sample stock moved from a single global field to a per-event-day field; one-time migration copies the legacy global value into Day 1, with Days 2-4 starting at 0.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
 Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan and [TASKS.md](TASKS.md) for live status.
 
-- Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0) (Batch D).
 - Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment) (Batch E).
 - Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation (Batch E).
 
