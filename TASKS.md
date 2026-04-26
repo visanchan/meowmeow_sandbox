@@ -257,7 +257,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed by Codex on `batch/o-default-inventory-baseline` on 2026-04-27. New/reset inventory now uses the prepared workbook baseline: global and online values from `inventory/inventory_default.xlsx`, with Day 1 Event Start derived as Global minus Online. Local smoke test passed.
 
-### Batch P - Restore UTF-8 Symbols After Inventory Baseline
+### Batch P — Restore UTF-8 Symbols After Inventory Baseline
 - **Business objective:** Restore corrupted symbols, emoji, Thai baht marks, and UI icons so the POS is readable and professional for staff on event day.
 - **Expected benefit:** Staff can clearly read prices, product color markers, cart/free-gift messages, tool buttons, and correction/dashboard labels without confusing `?` placeholders.
 - **Implementation difficulty:** medium.
@@ -278,10 +278,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Run `tests/smoke_event_pos.js` and confirm it passes.
   - Open the POS visually and compare the selling screen against the pre-corruption screenshot.
 - **Risks/assumptions:** The corruption was likely introduced by writing the HTML with the system default encoding during Batch O. Claude must use a UTF-8-safe edit path.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/p-restore-utf8-symbols
+- **Claimed:** 2026-04-27 (resumed two-agent protocol)
 - **BlockedBy:**
 - **Notes:** Do not treat Batch O as fully safe for event use until Batch P is completed and visually checked.
 
