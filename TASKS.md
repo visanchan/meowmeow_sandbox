@@ -313,7 +313,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/q-reset-passcode-severity` 2026-04-27. Reset Data button is now `🚨` with `.action-btn.severe` styling (deeper crimson, darker border, inset highlight) versus the lighter `⚠️` Corrections button. The confirm overlay uses `.confirm-card.severe` (hazard banner, 3px border, red header, 🚨 in title), embeds a 3-digit passcode keypad mirroring the dashboard PIN pattern, and the `Erase Everything` confirm button starts disabled and only enables once `state.resetPin === ACCESS_CONTROL.resetPasscode` (`888`). Wrong passcodes clear the entry and show an in-app error (no browser `alert`). Closing or cancelling the dialog clears the passcode state. README Pre-Event Data Hygiene rewritten to document the new flow. Smoke test extended with 4 new gate assertions (initial-disabled, wrong-rejects, correct-enables, close-clears) all passing.
 
-### Batch R - Manual Event Start Count
+### Batch R — Manual Event Start Count
 - **Business objective:** Keep the workbook as the stock planning baseline while forcing staff to count and enter actual event-start stock before selling.
 - **Expected benefit:** Less risk of opening the event with unverified stock numbers; staff still benefit from prepared `Global` and `Online` defaults but must confirm booth stock physically.
 - **Implementation difficulty:** medium.
@@ -335,12 +335,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Selling cannot silently proceed with misleading uncounted stock.
   - `tests/smoke_event_pos.js` still passes or is updated for the new required-count behavior.
 - **Risks/assumptions:** Existing code clamps missing stock to `0`, so Claude must avoid representing "empty/unconfirmed" in a way that silently looks like confirmed zero stock.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
-- **BlockedBy:** Q
-- **Notes:** User requested Event Start in Stock & Allocation Setup to wait for staff count at start day.
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/r-manual-event-start-count
+- **Claimed:** 2026-04-27 03:10
+- **BlockedBy:**
+- **Notes:** Q merged at `5a50bd6`, blocker cleared. User requested Event Start in Stock & Allocation Setup to wait for staff count at start day.
 
 ### Batch S - Replace Remaining Browser Alerts With In-App Dialogs
 - **Business objective:** Make admin confirmations and errors feel smooth and consistent on iPad/Edge instead of using disruptive browser `alert`, `confirm`, and `prompt` boxes.
