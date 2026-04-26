@@ -74,7 +74,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 
 ## Operator Selling Flow
 
-- An operator must be tap-selected on the cart-side operator chip row before items can be added to the cart. The selling screen shows an amber banner ("Tap an operator to start selling.") whenever no operator is set. The selected operator persists across sales and across page reloads via `localStorage` (`meowseum_event_selected_operator_v1`); it can be changed at any time from the chip row or from the same chips inside `Review & Finish Sale`.
+- Staff log in before using the app. On first load (or after logout) a blocking login overlay asks the staff to pick a name and enter a 3-digit PIN. Built-in PINs: Zamm `111`, Ben `222`, Kat `333`, Staff `000`. PINs are hardcoded in the single-file source — accepted limitation for this client-only POS.
+- The logged-in operator persists across sales and page reloads via `localStorage` (`meowseum_event_selected_operator_v1` + `meowseum_event_operator_authed_v1`). The session does not auto-expire; staff log out manually with the 🔒 Log out button shown on the cart-side operator row.
+- Until staff are logged in, `addToCart` and Send Later both refuse to add items (and re-open the login overlay).
 - Staff tap product cards to build the cart.
 - Product-card remaining stock should update immediately when staff add, remove, or change quantities in the current cart.
 - Stock is validated at add-time. Blocked adds (sold-out, not enough event stock, not enough warehouse stock for Send Later) surface as a non-blocking toast inside the cart panel; the toast also acts as a polite `aria-live` announcement and clears itself after a few seconds. The same validation re-runs at save-time as defense-in-depth.
@@ -85,7 +87,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Transfer payments can show PromptPay QR after order confirmation.
 - The `Review & Finish Sale` overlay is split into two desktop columns:
   - left: customer-facing receipt and receipt-share area
-  - right: salesperson controls such as QR, payment confirmation, operator tap-in, tags, and finish
+  - right: salesperson controls such as QR, payment confirmation, tags, and finish (the operator is taken from the login session — no per-sale operator tap-in)
 - Both columns scroll independently on desktop and collapse back to a normal single-column flow on smaller screens.
 
 ## Free Gift Rules
@@ -253,7 +255,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - `meowseum_event_inventory_v1` — per-day inventory snapshots
 - `meowseum_global_inventory_v1` — global allocation and audit logs
 - `meowseum_event_preorders_v1` — Send Later queue
-- `meowseum_event_selected_operator_v1` — last-selected operator for the cart-side chip row
+- `meowseum_event_selected_operator_v1` — name of the logged-in operator
+- `meowseum_event_operator_authed_v1` — `"1"` while a staff session is active; cleared on logout
 
 ### Rules
 
