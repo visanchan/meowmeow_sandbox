@@ -152,12 +152,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Script uses an isolated browser context and clears only that temporary context's `localStorage`.
   - README explains this is a first-pass check, not a replacement for the manual event checklist.
 - **Risks/assumptions:** The script expects Playwright and Edge/Chromium to be available through the existing Codex runtime environment.
-- **Owner:** codex
-- **Status:** in-progress
-- **Branch:** batch/k-local-smoke-test
-- **Claimed:** 2026-04-26 15:00
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Documentation/testing batch only; safe to run before manual event checklist.
+- **Notes:** Completed on `batch/k-local-smoke-test` (2026-04-26). Added `tests/smoke_event_pos.js`, documented the run command in README, and verified it passes with the cached Codex Node/Playwright runtime.
 
 ## Suggested order (least-conflict first)
 
@@ -184,3 +184,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch G — Stock & Allocation Setup clarity** — merged into `main` at `1923f0c` on 2026-04-26. Added Today now works as a top-up delta input, resets after confirm, and hides idle stock helper noise.
 - **Batch I — Event-Day Verification Checklist** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now lists the high-risk pre-event manual checks and expected business result for each.
 - **Batch J — Pre-Event Data Hygiene Pass** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now documents safe cleanup paths for test sales, pending Send Later records, saved customer emails, and CSV backup expectations.
+- **Batch K — Local Smoke Test Script** — completed on `batch/k-local-smoke-test` on 2026-04-26. Adds a repeatable Playwright smoke check for page load, void/carry-forward, and stock top-up reset behavior.

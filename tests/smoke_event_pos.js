@@ -1,0 +1,236 @@
+const path = require("path");
+const { chromium } = require("playwright");
+
+const appPath = path.resolve(__dirname, "..", "meowmeow_pos_event.html");
+const browserPath =
+  process.env.PLAYWRIGHT_BROWSER_PATH ||
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+
+function assert(condition, message, details = null) {
+  if (!condition) {
+    const suffix = details ? `\n${JSON.stringify(details, null, 2)}` : "";
+    throw new Error(`${message}${suffix}`);
+  }
+}
+
+async function main() {
+  const browser = await chromium.launch({
+    executablePath: browserPath,
+    headless: true,
+  });
+  const page = await browser.newPage();
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto(`file:///${appPath.replace(/\\/g, "/")}`);
+  await page.waitForSelector("#productGrid", { timeout: 5000 });
+
+  const result = await page.evaluate(() => {
+    function inputFor(sku, field) {
+      return Array.from(
+        inventoryControlList.querySelectorAll("[data-stock-input-sku]")
+      ).find(
+        (input) =>
+          input.dataset.stockInputSku === sku &&
+          input.dataset.stockInputField === field
+      );
+    }
+
+    function previewFor(sku, kind) {
+      const selector =
+        kind === "event" ? "[data-event-preview]" : "[data-warehouse-preview]";
+      return Array.from(inventoryControlList.querySelectorAll(selector)).find(
+        (node) =>
+          (kind === "event"
+            ? node.dataset.eventPreview
+            : node.dataset.warehousePreview) === sku
+      );
+    }
+
+    localStorage.clear();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.preorders = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+
+    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 10;
+    state.inventory.days.day1.addedStock[sku] = 0;
+    state.inventory.days.day1.sampleQty[sku] = 0;
+
+    const sale = {
+      id: "SMOKE-VOID-1",
+      billId: "SMOKE-VOID-1",
+      datetime: new Date().toISOString(),
+      timestamp: Date.now(),
+      operatingDay: "day1",
+      payment: "cash",
+      paymentStatus: "confirmed",
+      paymentConfirmed: true,
+      operator: "Zamm",
+      items: [
+        {
+          sku,
+          name: "Smoke SKU",
+          category: "Smoke",
+          qty: 2,
+          basePrice: 100,
+          discountPerItem: 0,
+          discounted: false,
+          finalUnitPrice: 100,
+          lineSubtotal: 200,
+          discountAmount: 0,
+          lineDiscount: 0,
+          lineTotal: 200,
+        },
+      ],
+      subtotal: 200,
+      discount: 0,
+      total: 200,
+      correctionHistory: [],
+    };
+
+    state.sales = [sale];
+    state.salesRevision += 1;
+    realignInventoryCarryForward("day1");
+    const day2BeforeVoid = state.inventory.days.day2.startingStock[sku];
+    state.selectedOperator = "Zamm";
+    state.pendingVoidSale = sale;
+    confirmVoidBillReasonInput.value = "Automated local smoke test";
+    confirmVoidSale();
+    const voided = JSON.parse(
+      localStorage.getItem("meowseum_event_voided_sales_v1") || "[]"
+    );
+    const voidResult = {
+      day2BeforeVoid,
+      day2AfterVoid: state.inventory.days.day2.startingStock[sku],
+      salesAfterVoid: state.sales.length,
+      voidedCount: voided.length,
+      voidReason: voided[0]?.reason,
+      voidedBy: voided[0]?.voidedBy,
+      voidHistoryType: voided[0]?.saleSnapshot?.correctionHistory?.at(-1)?.type,
+    };
+
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.preorders = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 10;
+    state.inventory.days.day1.addedStock[sku] = 0;
+    state.inventory.days.day1.sampleQty[sku] = 0;
+    renderInventoryManagement();
+
+    const emptyTableText = inventoryControlList.textContent;
+    const firstTopUpInput = inputFor(sku, "addedToday");
+    const initialTopUpInput = firstTopUpInput.value;
+    firstTopUpInput.value = "5";
+    firstTopUpInput.dispatchEvent(new Event("input", { bubbles: true }));
+    const previewAfterFive = previewFor(sku, "event").textContent.trim();
+    saveGlobalInventorySetup();
+    confirmInventoryAdd();
+    const storedAfterFive = state.inventory.days.day1.addedStock[sku];
+    const inputAfterFive = inputFor(sku, "addedToday").value;
+
+    inputFor(sku, "addedToday").value = "3";
+    saveGlobalInventorySetup();
+    confirmInventoryAdd();
+    const storedAfterEight = state.inventory.days.day1.addedStock[sku];
+    const inputAfterThree = inputFor(sku, "addedToday").value;
+
+    state.sales = [
+      {
+        id: "SMOKE-SOLD-1",
+        billId: "SMOKE-SOLD-1",
+        operatingDay: "day1",
+        datetime: new Date().toISOString(),
+        timestamp: Date.now(),
+        payment: "cash",
+        paymentStatus: "confirmed",
+        operator: "Zamm",
+        subtotal: 200,
+        discount: 0,
+        total: 200,
+        items: [
+          {
+            sku,
+            name: "Smoke SKU",
+            category: "Smoke",
+            qty: 2,
+            basePrice: 100,
+            lineTotal: 200,
+          },
+        ],
+      },
+    ];
+    invalidateSalesDerivedData();
+    state.preorders = [
+      {
+        id: "SMOKE-PRE-1",
+        sku,
+        qty: 4,
+        status: "pending",
+        fulfillmentType: "reserved_send_later",
+        operatingDay: "day1",
+        productName: "Smoke SKU",
+        customerName: "Smoke",
+        phone: "1",
+        receiveLocation: "Smoke",
+        paymentStatus: "paid_now",
+      },
+    ];
+    renderInventoryManagement();
+    const midEventText = inventoryControlList.textContent;
+
+    return {
+      sku,
+      ...voidResult,
+      initialTopUpInput,
+      noIdleNoise:
+        !emptyTableText.includes("No committed send later") &&
+        !emptyTableText.includes("Sold 0"),
+      hasTopUpLabel: emptyTableText.includes("Top up now"),
+      previewAfterFive,
+      storedAfterFive,
+      inputAfterFive,
+      storedAfterEight,
+      inputAfterThree,
+      showsSold: midEventText.includes("Sold 2"),
+      showsCommitted: midEventText.includes("4 committed"),
+    };
+  });
+
+  assert(pageErrors.length === 0, "Page errors were reported", pageErrors);
+  assert(result.day2BeforeVoid === 8, "Void setup did not reduce Day 2 stock", result);
+  assert(result.day2AfterVoid === 10, "Void did not restore Day 2 stock", result);
+  assert(result.salesAfterVoid === 0, "Voided sale was not removed", result);
+  assert(result.voidedCount === 1, "Void audit was not stored", result);
+  assert(
+    result.voidReason === "Automated local smoke test" &&
+      result.voidedBy === "Zamm" &&
+      result.voidHistoryType === "void",
+    "Void audit details are incomplete",
+    result
+  );
+  assert(result.initialTopUpInput === "0", "Top-up input did not start at 0", result);
+  assert(result.noIdleNoise, "Idle stock setup helper text is noisy", result);
+  assert(result.hasTopUpLabel, "Top-up visual label is missing", result);
+  assert(result.previewAfterFive === "15", "Top-up preview did not include delta", result);
+  assert(result.storedAfterFive === 5, "First top-up was not stored", result);
+  assert(result.inputAfterFive === "0", "Top-up input did not reset after first save", result);
+  assert(result.storedAfterEight === 8, "Second top-up did not accumulate", result);
+  assert(result.inputAfterThree === "0", "Top-up input did not reset after second save", result);
+  assert(result.showsSold, "Nonzero sold detail is hidden", result);
+  assert(result.showsCommitted, "Nonzero committed detail is hidden", result);
+
+  await browser.close();
+  console.log(`local smoke passed for ${path.basename(appPath)}`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
