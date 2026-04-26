@@ -178,10 +178,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Exported void CSV includes concise audit columns and protects text fields against spreadsheet formula injection.
   - Running `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** Void audit should be visible only after the existing Correction Center passcode unlock; no separate passcode is needed.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/l-void-audit
+- **Claimed:** 2026-04-26 21:00
 - **BlockedBy:**
 - **Notes:** This is the next highest-value control improvement because Batch H created the audit trail but managers still need an easy way to inspect/export it.
 
@@ -209,7 +209,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:** L if Claude starts Batch L first, because both batches touch Correction Center/void audit rendering.
+- **BlockedBy:** L (in-progress on batch/l-void-audit) — both batches touch Correction Center/void audit rendering.
 - **Notes:** Best implemented after Batch L if the void audit section is added first; otherwise update the dependency if Claude chooses to do reset cleanup before audit display.
 
 ## Suggested order (least-conflict first)
