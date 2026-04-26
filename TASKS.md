@@ -88,6 +88,16 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `start` at f674cdb (2026-04-26): staff login overlay with PIN gate, persistent session, 🔒 Log out in header, and Operator tap-in removed from review/finish-sale page.
 
+### Batch H — Void Bill from Correction Center
+- **Items:** add an explicit "Void / delete this bill" path in Bill Correction. Today, zeroing every line in `buildCorrectionDraft` triggers `"At least one bill item must remain on the sale."` and review is blocked, so there is no way to delete a wrongly-saved bill. Add a separate **Void Bill** button (with reason + confirm dialog, behind the existing correction passcode) that removes the sale from `state.sales`, realigns inventory carry-forward via `realignInventoryCarryForward(saleDay(sale))`, and writes a `void` entry into `correctionHistory` so the action is auditable. The "items must remain" guard still applies to *edit* corrections so accidental zero-outs during normal edits stay protected.
+- **Touches:** Bill Correction panel markup (new `Void Bill` button + confirm dialog), `buildCorrectionDraft` / `confirmCorrectionSave` (or a new `voidSale` flow that does not reuse the items-required guard), `state.sales` write path + `saveSales`, `realignInventoryCarryForward`, audit/history entry shape, and `readme.md` Correction Center section.
+- **Owner:**
+- **Status:** ready
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** Reported 2026-04-26 — staff hit the "At least one bill item must remain" message when trying to delete a bill by zeroing all lines. Voiding must be reversible only via re-creating the sale; record `voidedAt`, `voidedBy` (logged-in operator), and `reason` so an auditor can see why a bill was removed. Verify carry-forward across all later days after the void.
+
 ### Batch G — Stock & Allocation Setup clarity
 - **Items:**
   1. Re-evaluate the subtext under Warehouse and Remaining Event in `renderInventoryManagement`. Decide whether "No committed send later" and "Sold N" lines are useful information or visual noise — propose either removing them, hiding them when the value is 0/idle, or moving them into a tooltip / on-hover detail.
@@ -109,6 +119,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 4. **D** — single owner; pause everything else.
 5. **E** (after D merged).
 6. **G** — Stock & Allocation Setup UI clarity (independent of A-F; touches `renderInventoryManagement`).
+7. **H** — Void Bill from Correction Center (independent of A-G; touches Bill Correction panel + `state.sales` write path).
 
 ## Done
 
