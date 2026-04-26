@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit *)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const html=fs.readFileSync\\('c:/Users/USER/Desktop/meowmeow_sandbox/meowmeow_pos_event.html','utf8'\\);const m=html.match\\(/<script>\\([\\\\s\\\\S]*\\)<\\\\/script>\\\\s*<\\\\/body>/\\);if\\(!m\\){console.log\\('no script tag'\\);process.exit\\(1\\);}try{new Function\\(m[1]\\);console.log\\('JS parse OK, length',m[1].length\\);}catch\\(e\\){console.error\\('PARSE ERROR:',e.message\\);process.exit\\(1\\);}\")",
+      "Bash(where.exe node *)",
+      "Bash(where.exe deno *)",
+      "Bash(powershell -NoProfile -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object Source\")"
+    ]
+  }
+}
