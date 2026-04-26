@@ -216,6 +216,30 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Shipped on `main` 2026-04-26 under single-agent mode. Reset confirmation now lists exactly what is cleared (saved sales, void audit, per-day inventory, allocation) and what stays (Send Later queue, login session, saved emails); `resetSavedSales` clears `state.voidedSales` + `meowseum_event_voided_sales_v1`, calls `refreshInventoryUi`, and re-renders Correction Center bill list / void audit if open. README Pre-Event Data Hygiene rewritten and a Recently Changed entry added. Smoke test extended with a reset scenario verifying void-audit clear + Send Later preservation.
 
+### Batch N â€” Compress Embedded Product Images
+- **Business objective:** Reduce the offline POS HTML file size so it is faster to copy, open, and load on event devices while keeping the single-file offline workflow.
+- **Expected benefit:** Smaller deployment file, quicker browser load, and less storage/memory pressure on iPad/Edge without changing staff workflow.
+- **Implementation difficulty:** low.
+- **Cost/complexity tradeoff:** Resize and recompress the existing embedded base64 images in place instead of introducing a separate asset folder or build step.
+- **Items:**
+  1. Resize embedded `PRODUCT_IMAGE_DATA` images to product-card-friendly dimensions, targeting a maximum width of 600 px.
+  2. Recompress converted images with thumbnail-quality JPEG settings suitable for small cards.
+  3. Update README notes so future agents know embedded photos should stay compressed before being pasted into the HTML.
+- **Touches:** `meowmeow_pos_event.html` product image data block, `readme.md`, `TASKS.md`.
+- **Do not change:** product catalog SKUs/names/prices, app behavior, storage keys, CSV formats, or the single-file offline app structure.
+- **Acceptance checks:**
+  - POS inline script still parses.
+  - Local smoke test still passes.
+  - HTML file size is materially smaller than before compression.
+  - Product image data remains embedded in `meowmeow_pos_event.html`.
+- **Risks/assumptions:** Compression may slightly reduce image sharpness, but product cards only need thumbnail-quality images.
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/n-compress-embedded-images
+- **Claimed:** 2026-04-27 00:56
+- **BlockedBy:**
+- **Notes:** User explicitly assigned Codex to execute this optimization.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
