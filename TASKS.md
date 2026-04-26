@@ -285,7 +285,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/p-restore-utf8-symbols` 2026-04-27. Rebuilt `meowmeow_pos_event.html` from `6ed423e` (Batch M, last commit with intact UTF-8) by splicing in the Batch N compressed `PRODUCT_IMAGE_DATA` block and re-applying the Batch O inventory-baseline edits (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, `defaultEventStartingStock`, updated `createDefaultInventory` / `createDefaultGlobalInventory`). File written as UTF-8 (with the same BOM the file has carried since Batch M) via Node `Buffer.from(text,"utf8")`. Non-ASCII byte count restored from 44 to 325 (matches `6ed423e`). `tests/smoke_event_pos.js` passes. Headed-Edge visual check confirms `฿`, 🧣 free-gift button, ⚠️/📧/📤 dashboard tools, `•` separators, and `—` em dashes render correctly on the selling screen and dashboard tab.
 
-### Batch Q - Destructive Reset Passcode & Severity
+### Batch Q — Destructive Reset Passcode & Severity
 - **Business objective:** Make `Reset Data` clearly more dangerous than normal admin actions and prevent accidental pre-event/live-event data loss.
 - **Expected benefit:** Lower risk of staff clearing sales, inventory setup, void audit logs, and allocation data by mistake; clearer control for managers.
 - **Implementation difficulty:** medium.
@@ -306,10 +306,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Correct passcode clears the same data as today and refreshes dashboard, product grid, Inventory Flow, and Correction Center.
   - `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** Passcode `888` is intentionally simple and local; this is an operational guard, not strong security.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/q-reset-passcode-severity
+- **Claimed:** 2026-04-27 02:10
 - **BlockedBy:**
 - **Notes:** User requested reset to look more severe and require passcode `888`.
 
