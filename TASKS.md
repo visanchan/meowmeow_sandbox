@@ -212,7 +212,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
-- **Notes:** Best implemented after Batch L if the void audit section is added first; otherwise update the dependency if Claude chooses to do reset cleanup before audit display.
+- **Notes:** Batch L is merged, so this is now the next ready Claude implementation batch. Keep the reset cleanup scoped to pre-event/test hygiene and avoid changing Send Later cleanup semantics.
 
 ## Suggested order (least-conflict first)
 
