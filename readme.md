@@ -343,6 +343,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - the card should prefer a shorter compact height over decorative empty space
 - Visible selling UI should avoid non-essential category labels such as `Premium`, `Classic`, or `Accessory`; keep SKU visible and keep category only in underlying data/export where needed.
 - Product photos must stay embedded inside `meowmeow_pos_event.html` as inline data so the file can be moved to iPad and opened offline in Edge without a separate asset folder.
+- Embedded product photos should be resized and compressed before pasting into the HTML. Product-card images should normally be no wider than 600 px, with JPEG thumbnail quality preferred unless transparency is truly required.
+- Do not paste full-resolution source photos into `PRODUCT_IMAGE_DATA`; keep full-size originals outside the POS file if they are needed for future editing.
 - Current embedded image coverage:
   - `002A`, `002B`, `003`, `004`, `005`, `006`, `007`, `010`, `011`, `012`, `013`, `014`
   - `015`, `016`, `017`, `018`, `019`, `020`, `021`, `022`, `023`, `024`, `025`
