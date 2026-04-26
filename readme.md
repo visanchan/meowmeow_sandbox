@@ -400,13 +400,14 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 
 ## Pre-Event Data Hygiene
 
-- Before real selling, export anything worth keeping, then use the Developer Tools `⚠️ Reset Data` button to clear test data on this device.
-- `⚠️ Reset Data` confirmation dialog is the source of truth: it lists what gets cleared (saved sales, void audit log, per-day inventory, global/online/event allocation) and what stays (Send Later queue, operator login, saved customer emails). Each kept item has its own dedicated cleanup control.
+- Before real selling, export anything worth keeping, then use the Developer Tools `🚨 Reset Data` button to clear test data on this device.
+- `🚨 Reset Data` opens a severe-styled confirmation dialog with a hazard banner and a 3-digit reset passcode keypad. Enter the reset passcode (`888`) before the `Erase Everything` button becomes enabled. Wrong passcodes show an in-app error and keep the action blocked.
+- The reset confirmation dialog is the source of truth for what is touched: it lists what gets cleared (saved sales, void audit log, per-day inventory, global/online/event allocation) and what stays (Send Later queue, operator login, saved customer emails). Each kept item has its own dedicated cleanup control.
 - Use `Clear Pending Send Later` to remove test Send Later records; packed, shipped, cancelled records, and saved sales are not deleted by this cleanup.
 - Use `Clear Saved Customer Emails` on shared devices after receipt follow-up work or before handing the device to another team.
 - Export day CSV files before clearing or resetting data. This app is local-only, so CSV is the practical backup.
 - Do not clear data during live selling unless a manager confirms the current device is only holding test data.
-- `⚠️ Reset Data` is a destructive developer/admin action. It does not log who reset, so it should be used before live selling, not during.
+- `🚨 Reset Data` is a destructive developer/admin action. It does not log who reset, so it should be used before live selling, not during.
 
 ## Recently Changed
 
@@ -422,6 +423,7 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 - **Apr 2026 (Batch M — Safer Test Data Reset Cleanup)** — `⚠️ Reset Data` confirmation now lists exactly what is cleared (saved sales, void audit, per-day inventory, allocation) and what stays (Send Later queue, login session, saved emails); reset also clears `meowseum_event_voided_sales_v1` and refreshes Correction Center if open.
 
 - **Apr 2026 (Batch P — Restore UTF-8 Symbols After Inventory Baseline)** — Repaired baht (`฿`), emoji (🎁/🚚/🔒/⚠️/📧/📤/✅/🧣/🐱/⭐/💰/📦/🔁), color markers (🔵/🟡/🟤/⚫/⚪), bullets (`•`), em dashes (`—`), and arrows (`→`) that were lost when Batch O wrote the file with system-default encoding. Batch O inventory baseline (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, Day 1 `Event Start = Global - Online`) and Batch N compressed product images are preserved.
+- **Apr 2026 (Batch Q — Destructive Reset Passcode & Severity)** — `Reset Data` is now visually severe (🚨 icon, hazard banner, deeper crimson button) and gated behind a 3-digit reset passcode (`888`). The confirm button stays disabled until the correct passcode is entered; wrong passcodes show an in-app error and clear the entry. Cancelling the dialog or closing the app resets the passcode state. The smoke test now covers the gate.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 
