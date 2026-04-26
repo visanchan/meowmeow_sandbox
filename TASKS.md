@@ -257,6 +257,34 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed by Codex on `batch/o-default-inventory-baseline` on 2026-04-27. New/reset inventory now uses the prepared workbook baseline: global and online values from `inventory/inventory_default.xlsx`, with Day 1 Event Start derived as Global minus Online. Local smoke test passed.
 
+### Batch P - Restore UTF-8 Symbols After Inventory Baseline
+- **Business objective:** Restore corrupted symbols, emoji, Thai baht marks, and UI icons so the POS is readable and professional for staff on event day.
+- **Expected benefit:** Staff can clearly read prices, product color markers, cart/free-gift messages, tool buttons, and correction/dashboard labels without confusing `?` placeholders.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Repair the damaged text in the single HTML app and keep Batch O's inventory default logic, instead of redesigning the UI or adding icon libraries.
+- **Items:**
+  1. Use commit `57e9b31` as the clean reference for `meowmeow_pos_event.html` symbols and emoji because that version had compressed images before the encoding damage.
+  2. Restore corrupted characters in `meowmeow_pos_event.html`, especially `฿`, gift/truck/lock/tool/dashboard icons, product color markers, tag labels, reset/clear/export labels, and receipt/status text.
+  3. Preserve Batch O default inventory logic exactly: `DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, and Day 1 `Event Start = Global - Online`.
+  4. Save edited text as UTF-8. Do not use PowerShell `Encoding.Default` or any system-default encoding write path.
+  5. Inspect `readme.md` and `TASKS.md` for visible mojibake related to the app-facing docs, but prioritize the POS UI file.
+- **Touches:** `meowmeow_pos_event.html`, optionally `readme.md` and `TASKS.md` if mojibake is corrected in documentation.
+- **Do not change:** inventory baseline values from Batch O, product prices, product SKUs, sales/void/correction behavior, CSV formats, localStorage keys, or embedded product images.
+- **Acceptance checks:**
+  - Product card prices show `฿`, not `?`.
+  - Free scarf, Send Later/truck, logout/lock, dashboard, correction, reset, clear, and export symbols display correctly.
+  - Product names/color markers no longer show corrupted `?` where emoji or intended symbols should appear.
+  - `DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, and `defaultEventStartingStock` still exist and match `inventory/inventory_default.xlsx`.
+  - Run `tests/smoke_event_pos.js` and confirm it passes.
+  - Open the POS visually and compare the selling screen against the pre-corruption screenshot.
+- **Risks/assumptions:** The corruption was likely introduced by writing the HTML with the system default encoding during Batch O. Claude must use a UTF-8-safe edit path.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** Do not treat Batch O as fully safe for event use until Batch P is completed and visually checked.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -268,6 +296,8 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 7. **H** — Void Bill from Correction Center (Claude execution; Codex review recommended because it affects saved sales, inventory carry-forward, and audit history).
 8. **L** — Void Audit Review & Export.
 9. **M** — Safer Test Data Reset Cleanup.
+
+10. **P** - Restore UTF-8 symbols after Batch O before any event-device deployment.
 
 ## Done
 
