@@ -95,11 +95,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Items:** add an explicit "Void / delete this bill" path in Bill Correction. Today, zeroing every line in `buildCorrectionDraft` triggers `"At least one bill item must remain on the sale."` and review is blocked, so there is no way to delete a wrongly-saved bill. Add a separate **Void Bill** button (with reason + confirm dialog, behind the existing correction passcode) that removes the sale from `state.sales`, realigns inventory carry-forward via `realignInventoryCarryForward(saleDay(sale))`, and writes a `void` entry into `correctionHistory` so the action is auditable. The "items must remain" guard still applies to *edit* corrections so accidental zero-outs during normal edits stay protected.
 - **Touches:** Bill Correction panel markup (new `Void Bill` button + confirm dialog), `buildCorrectionDraft` / `confirmCorrectionSave` (or a new `voidSale` flow that does not reuse the items-required guard), `state.sales` write path + `saveSales`, `realignInventoryCarryForward`, audit/history entry shape, and `readme.md` Correction Center section.
 - **Owner:**
-- **Status:** ready-for-merge
-- **Branch:** batch/h-void-bill
-- **Claimed:** 2026-04-26 14:00
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Implementation complete on `batch/h-void-bill` (2026-04-26). Void Bill button gated behind existing correction passcode; opens reason-required confirm dialog; on confirm, removes sale from `state.sales`, writes audit entry to a new top-level `state.voidedSales` log persisted under `meowseum_event_voided_sales_v1` (records billId, voidedAt, voidedBy=`state.selectedOperator`, reason, operatingDay, total, itemCount, full saleSnapshot with `type: "void"` correctionHistory entry), and calls `realignInventoryCarryForward(saleDay(sale))`. Edit-correction "items must remain" guard untouched. README Correction Center updated. Codex smoke review passed 2026-04-26: inline script parse and browser load both passed; manual multi-day void/carry-forward check still recommended before event use.
+- **Notes:** Merged into `main` at `b45838b` on 2026-04-26. Void Bill button gated behind existing correction passcode; opens reason-required confirm dialog; on confirm, removes sale from `state.sales`, writes audit entry to `meowseum_event_voided_sales_v1`, and calls `realignInventoryCarryForward(saleDay(sale))`. Edit-correction "items must remain" guard untouched. Codex smoke review passed 2026-04-26: inline script parse, browser load, and automated Day 1 void/carry-forward check passed.
 
 ### Batch G — Stock & Allocation Setup clarity
 - **Business objective:** Make stock top-ups during the event easier and less error-prone for staff/managers using the live Stock & Allocation Setup page.
@@ -133,7 +133,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:** H until Batch H is merged or released because both implementation batches edit `meowmeow_pos_event.html`.
+- **BlockedBy:**
 - **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
 
 ## Suggested order (least-conflict first)
@@ -157,3 +157,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch F — Staff Login & Tap-in Dedup** — completed on `start` at `f674cdb` on 2026-04-26 by claude. Staff PIN login, persistent session, manual logout, redundant operator tap-in removed.
 - **Batch D — Sample Qty Per-Day Migration** — merged into `start` at `28ffc31` on 2026-04-26 by claude. Per-day `sampleQty` shipped with one-time migration; unblocks Batch E.
 - **Batch E — Render Memoization + Correction Stock Impact** — merged into `main` at `e35aabc` on 2026-04-26 by claude. Per-pass `cartReservedMap` reduces cart walks in `renderProducts`; Bill Correction review previews per-day starting-stock re-alignment.
+- **Batch H — Void Bill from Correction Center** — merged into `main` at `b45838b` on 2026-04-26. Reason-required bill void flow shipped with audit snapshots and inventory carry-forward realignment.
