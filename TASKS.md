@@ -370,7 +370,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** Q
 - **Notes:** User specifically called out `Clear Emails` as still using browser alert and asked for smoother aligned confirmations.
 
-### Batch T - Smoke Coverage for PIN-Gated Workflows
+### Batch T — Smoke Coverage for PIN-Gated Workflows
 - **Business objective:** Catch regressions in the PIN-gated entry points before they reach a live event.
 - **Expected benefit:** Less risk that future symbol, encoding, dialog, or refactor work silently breaks operator login, Dashboard, Inventory, or Correction access.
 - **Implementation difficulty:** low.
@@ -394,11 +394,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - README smoke-test section mentions PIN-gated workflow coverage.
 - **Risks/assumptions:** The smoke test will repeat PIN values already present in the production HTML. This is no new disclosure, but future reviewers should remember these are local operational passcodes, not strong secrets.
 - **Owner:**
-- **Status:** ready-for-claude
+- **Status:** done
 - **Branch:**
 - **Claimed:**
-- **BlockedBy:** Q
-- **Notes:** Codex approves the coverage idea with Inventory included. Recommended after Batch Q because Q changes reset/passcode behavior and may affect smoke-test setup patterns.
+- **BlockedBy:**
+- **Notes:** Completed on `batch/t-pin-smoke-coverage` 2026-04-27. Smoke test now drives login (auto-open + wrong/right Zamm PIN), Dashboard lock (wrong/right shared PIN), Inventory lock (wrong/right shared PIN, opened via `developerAccessBtn`), and Correction lock (wrong/right correction PIN, opened via the inventory-panel-nested `correctionAccessBtn` which also exercises the "I Understand" confirm dialog). 12 new assertions cover overlay-open/closed, panel-hidden, error text, PIN cleared, and panel-rendered states. Spec called for `฿` in the dashboard total but the dashboard uses `Intl.NumberFormat` with `THB ` prefix — assertion adjusted to match real app behavior. README smoke-test note updated.
 
 ## Suggested order (least-conflict first)
 
@@ -438,3 +438,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch M — Safer Test Data Reset Cleanup** — shipped to `main` on 2026-04-26 under single-agent mode. Explicit reset confirm copy, void audit cleared with reset, Correction Center re-renders after reset, smoke test extended.
 - **Batch P — Restore UTF-8 Symbols After Inventory Baseline** — merged into `main` at `33bd06f` on 2026-04-27 by claude after Codex review (safe to merge, BOM/note mismatch corrected). Rebuilt the POS HTML from Batch M's intact-symbol baseline, re-spliced Batch N's compressed images and Batch O's inventory baseline, and wrote as UTF-8 with the file's pre-existing BOM. Smoke test and visual selling-screen check pass.
 - **Batch Q — Destructive Reset Passcode & Severity** — merged into `main` at `5a50bd6` on 2026-04-27 by claude (Codex push-review). Reset Data button restyled to `🚨` `.action-btn.severe`; reset overlay restyled to `.confirm-card.severe` with hazard banner; 3-digit passcode keypad gates the destructive button, which starts disabled and only enables after entering `888`. Wrong passcode shows in-app error and clears entry; cancel/close clears state. Smoke test extended with 4 gate assertions; README Pre-Event Data Hygiene rewritten. Unblocks R, S, T.
+- **Batch T — Smoke Coverage for PIN-Gated Workflows** — completed on `batch/t-pin-smoke-coverage` on 2026-04-27 by claude. Smoke test now drives login overlay + Dashboard/Inventory/Correction lock screens through wrong-PIN and right-PIN paths (12 new assertions). Test-only batch; no app behavior changed.

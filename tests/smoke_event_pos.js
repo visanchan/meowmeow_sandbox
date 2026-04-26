@@ -25,6 +25,114 @@ async function main() {
   await page.goto(`file:///${appPath.replace(/\\/g, "/")}`);
   await page.waitForSelector("#productGrid", { timeout: 5000 });
 
+  // PIN-gated workflow coverage. Runs against a fresh init before the rest of
+  // the smoke test wipes localStorage and bypasses locks via direct calls.
+  // Confirms login + Dashboard + Inventory + Correction lock screens reject
+  // wrong PINs and accept the documented passcodes.
+  const pinFlows = {};
+
+  // Login: overlay auto-opens when no operator is persisted.
+  pinFlows.loginAutoOpen = await page.evaluate(() =>
+    loginOverlay.classList.contains("open")
+  );
+  await page.click('#loginNameGrid button[data-login-name="Zamm"]');
+  for (const digit of "999") {
+    await page.click(`#loginNumpad button[data-login-key="${digit}"]`);
+  }
+  pinFlows.loginRejectsWrong = await page.evaluate(() => ({
+    stillOpen: loginOverlay.classList.contains("open"),
+    errorShown: !!state.loginPinErrorText,
+    pinCleared: state.loginPin === "",
+  }));
+  for (const digit of "111") {
+    await page.click(`#loginNumpad button[data-login-key="${digit}"]`);
+  }
+  await page.waitForFunction(() => !loginOverlay.classList.contains("open"));
+  pinFlows.loginAcceptsCorrect = await page.evaluate(() => ({
+    closed: !loginOverlay.classList.contains("open"),
+    selected: state.selectedOperator,
+  }));
+
+  // Dashboard lock.
+  await page.click("#dashboardAccessBtn");
+  await page.waitForSelector("#dashboardLockScreen:not(.hidden)");
+  for (const digit of "999") {
+    await page.click(`#dashboardNumpad button[data-pin-key="${digit}"]`);
+  }
+  pinFlows.dashboardRejectsWrong = await page.evaluate(() => ({
+    locked: !dashboardLockScreen.classList.contains("hidden"),
+    panelHidden: dashboardPanel.classList.contains("hidden"),
+    errorShown: dashboardPinError.textContent === "Incorrect passcode",
+    pinCleared: state.dashboardPin === "",
+  }));
+  const sharedPasscode = await page.evaluate(
+    () => ACCESS_CONTROL.sharedInternalPasscode
+  );
+  for (const digit of sharedPasscode) {
+    await page.click(`#dashboardNumpad button[data-pin-key="${digit}"]`);
+  }
+  await page.waitForSelector("#dashboardPanel:not(.hidden)");
+  pinFlows.dashboardAcceptsCorrect = await page.evaluate(() => ({
+    locked: !dashboardLockScreen.classList.contains("hidden"),
+    panelHidden: dashboardPanel.classList.contains("hidden"),
+    totalText: dashboardTotalSales.textContent,
+  }));
+  await page.evaluate(() => closeDashboard());
+
+  // Inventory lock (reuses sharedInternalPasscode).
+  await page.click("#developerAccessBtn");
+  await page.waitForSelector("#inventoryLockScreen:not(.hidden)");
+  for (const digit of "999") {
+    await page.click(`#inventoryNumpad button[data-inventory-pin-key="${digit}"]`);
+  }
+  pinFlows.inventoryRejectsWrong = await page.evaluate(() => ({
+    locked: !inventoryLockScreen.classList.contains("hidden"),
+    panelHidden: inventoryPanel.classList.contains("hidden"),
+    errorShown: inventoryPinError.textContent === "Incorrect passcode",
+    pinCleared: state.inventoryPin === "",
+  }));
+  for (const digit of sharedPasscode) {
+    await page.click(`#inventoryNumpad button[data-inventory-pin-key="${digit}"]`);
+  }
+  await page.waitForSelector("#inventoryPanel:not(.hidden)");
+  pinFlows.inventoryAcceptsCorrect = await page.evaluate(() => ({
+    locked: !inventoryLockScreen.classList.contains("hidden"),
+    panelHidden: inventoryPanel.classList.contains("hidden"),
+    setupVisible: !!document.getElementById("inventoryControlList"),
+  }));
+
+  // Correction lock (nested inside inventory panel; uses correctionPasscode).
+  await page.click("#correctionAccessBtn");
+  await page.waitForSelector("#correctionLockScreen:not(.hidden)");
+  for (const digit of "999") {
+    await page.click(`#correctionNumpad button[data-correction-pin-key="${digit}"]`);
+  }
+  pinFlows.correctionRejectsWrong = await page.evaluate(() => ({
+    locked: !correctionLockScreen.classList.contains("hidden"),
+    panelHidden: correctionPanel.classList.contains("hidden"),
+    errorShown: correctionPinError.textContent === "Incorrect passcode",
+    pinCleared: state.correctionPin === "",
+  }));
+  const correctionPasscode = await page.evaluate(
+    () => ACCESS_CONTROL.correctionPasscode
+  );
+  for (const digit of correctionPasscode) {
+    await page.click(`#correctionNumpad button[data-correction-pin-key="${digit}"]`);
+  }
+  // Correct PIN opens an "I Understand" confirm dialog before unlocking.
+  await page.waitForSelector("#confirmCorrectionAccessOverlay.open");
+  await page.click("#confirmCorrectionAccessBtn");
+  await page.waitForSelector("#correctionPanel:not(.hidden)");
+  pinFlows.correctionAcceptsCorrect = await page.evaluate(() => ({
+    locked: !correctionLockScreen.classList.contains("hidden"),
+    panelHidden: correctionPanel.classList.contains("hidden"),
+    voidAuditRendered: !!document.getElementById("voidAuditList"),
+  }));
+  await page.evaluate(() => {
+    closeCorrectionTool();
+    closeInventory();
+  });
+
   await page.evaluate(() => {
     localStorage.clear();
     state.sales = [];
@@ -404,6 +512,66 @@ async function main() {
   assert(result.resetGateRejectsWrong, "Wrong reset passcode must keep confirm disabled, show in-app error, and clear PIN", result);
   assert(result.resetGateAcceptsCorrect, "Correct reset passcode must enable confirm button and clear error", result);
   assert(result.resetGateClosedClearsPin, "Closing reset overlay must clear PIN and hide overlay", result);
+
+  // PIN-gated workflow assertions.
+  assert(pinFlows.loginAutoOpen, "Login overlay must auto-open on fresh init when no operator is persisted", pinFlows);
+  assert(
+    pinFlows.loginRejectsWrong.stillOpen &&
+      pinFlows.loginRejectsWrong.errorShown &&
+      pinFlows.loginRejectsWrong.pinCleared,
+    "Wrong operator PIN must keep login overlay open, show an error, and clear the entered PIN",
+    pinFlows.loginRejectsWrong
+  );
+  assert(
+    pinFlows.loginAcceptsCorrect.closed && pinFlows.loginAcceptsCorrect.selected === "Zamm",
+    "Correct operator PIN must close login overlay and persist the selected operator",
+    pinFlows.loginAcceptsCorrect
+  );
+  assert(
+    pinFlows.dashboardRejectsWrong.locked &&
+      pinFlows.dashboardRejectsWrong.panelHidden &&
+      pinFlows.dashboardRejectsWrong.errorShown &&
+      pinFlows.dashboardRejectsWrong.pinCleared,
+    "Wrong dashboard PIN must keep lock screen visible, hide panel, show error, and clear PIN",
+    pinFlows.dashboardRejectsWrong
+  );
+  assert(
+    !pinFlows.dashboardAcceptsCorrect.locked &&
+      !pinFlows.dashboardAcceptsCorrect.panelHidden &&
+      pinFlows.dashboardAcceptsCorrect.totalText.includes("THB"),
+    "Correct dashboard PIN must reveal the panel and render a THB currency total",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
+    pinFlows.inventoryRejectsWrong.locked &&
+      pinFlows.inventoryRejectsWrong.panelHidden &&
+      pinFlows.inventoryRejectsWrong.errorShown &&
+      pinFlows.inventoryRejectsWrong.pinCleared,
+    "Wrong inventory PIN must keep lock screen visible, hide panel, show error, and clear PIN",
+    pinFlows.inventoryRejectsWrong
+  );
+  assert(
+    !pinFlows.inventoryAcceptsCorrect.locked &&
+      !pinFlows.inventoryAcceptsCorrect.panelHidden &&
+      pinFlows.inventoryAcceptsCorrect.setupVisible,
+    "Correct inventory PIN must reveal the inventory panel with stock setup list",
+    pinFlows.inventoryAcceptsCorrect
+  );
+  assert(
+    pinFlows.correctionRejectsWrong.locked &&
+      pinFlows.correctionRejectsWrong.panelHidden &&
+      pinFlows.correctionRejectsWrong.errorShown &&
+      pinFlows.correctionRejectsWrong.pinCleared,
+    "Wrong correction PIN must keep lock screen visible, hide panel, show error, and clear PIN",
+    pinFlows.correctionRejectsWrong
+  );
+  assert(
+    !pinFlows.correctionAcceptsCorrect.locked &&
+      !pinFlows.correctionAcceptsCorrect.panelHidden &&
+      pinFlows.correctionAcceptsCorrect.voidAuditRendered,
+    "Correct correction PIN must reveal the correction panel with void audit list",
+    pinFlows.correctionAcceptsCorrect
+  );
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
