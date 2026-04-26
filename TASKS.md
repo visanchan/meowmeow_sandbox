@@ -88,6 +88,19 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `start` at f674cdb (2026-04-26): staff login overlay with PIN gate, persistent session, 🔒 Log out in header, and Operator tap-in removed from review/finish-sale page.
 
+### Batch G — Stock & Allocation Setup clarity
+- **Items:**
+  1. Re-evaluate the subtext under Warehouse and Remaining Event in `renderInventoryManagement`. Decide whether "No committed send later" and "Sold N" lines are useful information or visual noise — propose either removing them, hiding them when the value is 0/idle, or moving them into a tooltip / on-hover detail.
+  2. Change `Added Today` semantics so it behaves as a **delta to apply**, not a stored running total: when staff press `Confirm Stock Setup`, the entered Added Today value is added into the day's running event stock (so Remaining Event reflects it), and the Added Today input resets to 0 in the UI for the next top-up. The audit log entry should still record the delta (this is roughly what `applyStockSetupDraft` does today via `addLog`, but the input box does not visually reset).
+  3. Make the Added Today cell visually distinct from the other (stored-total) cells so staff understand it is a transient "amount to add now" field — different background/border, a "+" prefix, a hint label like "Top up now", or similar.
+- **Touches:** `renderInventoryManagement` table markup (subtext under Warehouse/Remaining Event, Added Today cell styling), `applyStockSetupDraft` (post-save reset of Added Today field), `stockSetupSnapshot` if needed, the inventory CSS in `<style>`, and `readme.md` Inventory section.
+- **Owner:**
+- **Status:** ready
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** Touches the live Stock & Allocation Setup UI that staff use during the event. Verify with both empty (zero everything) and mid-event (mixed sold + committed) states. Be careful: the existing `addLog` already records deltas for Added Today via `applyStockSetupDraft`; the change here is mainly UI-side (reset the input post-confirm + visual treatment), and a small tweak to make sure the "stored" model stays internally consistent.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -95,6 +108,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 3. **B** (after A merged).
 4. **D** — single owner; pause everything else.
 5. **E** (after D merged).
+6. **G** — Stock & Allocation Setup UI clarity (independent of A-F; touches `renderInventoryManagement`).
 
 ## Done
 
