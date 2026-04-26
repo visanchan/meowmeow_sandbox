@@ -25,6 +25,72 @@ async function main() {
   await page.goto(`file:///${appPath.replace(/\\/g, "/")}`);
   await page.waitForSelector("#productGrid", { timeout: 5000 });
 
+  await page.evaluate(() => {
+    localStorage.clear();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.voidedSales = [];
+    state.preorders = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 10;
+    state.sales = [
+      {
+        id: "SMOKE-UI-VOID-1",
+        billId: "SMOKE-UI-VOID-1",
+        datetime: new Date().toISOString(),
+        timestamp: Date.now(),
+        operatingDay: "day1",
+        payment: "cash",
+        paymentStatus: "confirmed",
+        paymentConfirmed: true,
+        operator: "Zamm",
+        items: [
+          {
+            sku,
+            name: "Smoke UI SKU",
+            category: "Smoke",
+            qty: 2,
+            basePrice: 100,
+            discountPerItem: 0,
+            discounted: false,
+            finalUnitPrice: 100,
+            lineSubtotal: 200,
+            discountAmount: 0,
+            lineDiscount: 0,
+            lineTotal: 200,
+          },
+        ],
+        subtotal: 200,
+        discount: 0,
+        total: 200,
+        correctionHistory: [],
+      },
+    ];
+    state.salesRevision += 1;
+    realignInventoryCarryForward("day1");
+    openCorrectionTool();
+    unlockCorrectionTool();
+  });
+  await page.waitForSelector('[data-correction-bill="SMOKE-UI-VOID-1"]');
+  await page.click('[data-correction-bill="SMOKE-UI-VOID-1"]');
+  await page.click("#correctionVoidBillBtn");
+  await page.fill("#confirmVoidBillReasonInput", "Automated UI void smoke test");
+  await page.click("#confirmVoidBillBtn");
+  const uiVoidResult = await page.evaluate(() => {
+    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    return {
+      overlayOpen: confirmVoidBillOverlay.classList.contains("open"),
+      salesAfterVoid: state.sales.length,
+      voidedCount: state.voidedSales.length,
+      voidReason: state.voidedSales[0]?.reason,
+      day2AfterVoid: state.inventory.days.day2.startingStock[sku],
+      status: correctionStatusText.textContent,
+    };
+  });
+
   const result = await page.evaluate(() => {
     function inputFor(sku, field) {
       return Array.from(
@@ -50,6 +116,7 @@ async function main() {
     localStorage.clear();
     state.sales = [];
     invalidateSalesDerivedData();
+    state.voidedSales = [];
     state.preorders = [];
     state.inventory = createDefaultInventory();
     state.globalInventory = createDefaultGlobalInventory();
@@ -216,6 +283,15 @@ async function main() {
   });
 
   assert(pageErrors.length === 0, "Page errors were reported", pageErrors);
+  assert(!uiVoidResult.overlayOpen, "Void confirmation dialog stayed open after UI click", uiVoidResult);
+  assert(uiVoidResult.salesAfterVoid === 0, "UI Void Bill click did not remove the sale", uiVoidResult);
+  assert(uiVoidResult.voidedCount === 1, "UI Void Bill click did not store audit entry", uiVoidResult);
+  assert(
+    uiVoidResult.voidReason === "Automated UI void smoke test",
+    "UI Void Bill click stored the wrong reason",
+    uiVoidResult
+  );
+  assert(uiVoidResult.day2AfterVoid === 10, "UI Void Bill click did not realign carry-forward", uiVoidResult);
   assert(result.day2BeforeVoid === 8, "Void setup did not reduce Day 2 stock", result);
   assert(result.day2AfterVoid === 10, "Void did not restore Day 2 stock", result);
   assert(result.salesAfterVoid === 0, "Voided sale was not removed", result);
