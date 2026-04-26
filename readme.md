@@ -387,6 +387,8 @@ Run this checklist on the event device before booth selling starts. Use test dat
 $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules'; $env:PLAYWRIGHT_BROWSER_PATH='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'; & 'C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tests\smoke_event_pos.js'
 ```
 
+The smoke test now covers PIN-gated workflows (operator login, Dashboard, Inventory, Correction lock screens) in addition to void/carry-forward, stock top-up reset, and the destructive Reset Data gate.
+
 - Staff login: log in as each expected staff role and confirm product taps are blocked after logout.
 - Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
 - Card/transfer sale: confirm `Save & New Sale` stays blocked until payment confirmation is checked.
@@ -424,6 +426,7 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 
 - **Apr 2026 (Batch P — Restore UTF-8 Symbols After Inventory Baseline)** — Repaired baht (`฿`), emoji (🎁/🚚/🔒/⚠️/📧/📤/✅/🧣/🐱/⭐/💰/📦/🔁), color markers (🔵/🟡/🟤/⚫/⚪), bullets (`•`), em dashes (`—`), and arrows (`→`) that were lost when Batch O wrote the file with system-default encoding. Batch O inventory baseline (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, Day 1 `Event Start = Global - Online`) and Batch N compressed product images are preserved.
 - **Apr 2026 (Batch Q — Destructive Reset Passcode & Severity)** — `Reset Data` is now visually severe (🚨 icon, hazard banner, deeper crimson button) and gated behind a 3-digit reset passcode (`888`). The confirm button stays disabled until the correct passcode is entered; wrong passcodes show an in-app error and clear the entry. Cancelling the dialog or closing the app resets the passcode state. The smoke test now covers the gate.
+- **Apr 2026 (Batch T — Smoke Coverage for PIN-Gated Workflows)** — Test-only batch. The smoke test now drives the operator login overlay, Dashboard lock, Inventory lock, and Correction lock through both wrong-PIN and correct-PIN paths, asserting overlay state, error text, and PIN clearing. No app behavior changed.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 
