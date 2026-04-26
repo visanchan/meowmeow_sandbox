@@ -210,11 +210,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Running `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** Reset Data is already a destructive developer/admin action; clearing void audit there is acceptable for test cleanup but must be clearly documented.
 - **Owner:**
-- **Status:** ready-for-claude
+- **Status:** done
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
-- **Notes:** Batch L is merged, so this is now the next ready Claude implementation batch. Keep the reset cleanup scoped to pre-event/test hygiene and avoid changing Send Later cleanup semantics.
+- **Notes:** Shipped on `main` 2026-04-26 under single-agent mode. Reset confirmation now lists exactly what is cleared (saved sales, void audit, per-day inventory, allocation) and what stays (Send Later queue, login session, saved emails); `resetSavedSales` clears `state.voidedSales` + `meowseum_event_voided_sales_v1`, calls `refreshInventoryUi`, and re-renders Correction Center bill list / void audit if open. README Pre-Event Data Hygiene rewritten and a Recently Changed entry added. Smoke test extended with a reset scenario verifying void-audit clear + Send Later preservation.
 
 ## Suggested order (least-conflict first)
 
@@ -244,3 +244,5 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch I — Event-Day Verification Checklist** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now lists the high-risk pre-event manual checks and expected business result for each.
 - **Batch J — Pre-Event Data Hygiene Pass** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now documents safe cleanup paths for test sales, pending Send Later records, saved customer emails, and CSV backup expectations.
 - **Batch K — Local Smoke Test Script** — completed on `batch/k-local-smoke-test` on 2026-04-26. Adds a repeatable Playwright smoke check for page load, void/carry-forward, and stock top-up reset behavior.
+- **Batch L — Void Audit Review & Export** — merged into `main` at `aba934c` on 2026-04-26. Adds a `Void Audit` list and concise CSV export inside Bill Correction; refreshes live on void/cross-tab; smoke test extended.
+- **Batch M — Safer Test Data Reset Cleanup** — shipped to `main` on 2026-04-26 under single-agent mode. Explicit reset confirm copy, void audit cleared with reset, Correction Center re-renders after reset, smoke test extended.

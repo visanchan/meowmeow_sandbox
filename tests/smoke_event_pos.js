@@ -264,6 +264,39 @@ async function main() {
     renderInventoryManagement();
     const midEventText = inventoryControlList.textContent;
 
+    // Reset Data scenario: confirm reset clears sales + void audit + inventory but keeps Send Later queue.
+    state.voidedSales = [
+      {
+        billId: "SMOKE-VOID-RESET",
+        voidedAt: new Date().toISOString(),
+        voidedBy: "Zamm",
+        reason: "Reset cleanup test",
+        operatingDay: "day1",
+        total: 100,
+        itemCount: 1,
+        saleSnapshot: { billId: "SMOKE-VOID-RESET" },
+      },
+    ];
+    saveVoidedSales();
+    state.inventory.days.day1.addedStock[sku] = 99;
+    saveInventory();
+    saveSales();
+    const beforeReset = {
+      salesCount: state.sales.length,
+      voidedCount: state.voidedSales.length,
+      preorderCount: state.preorders.length,
+      addedStock: state.inventory.days.day1.addedStock[sku],
+      voidedStorageBefore: localStorage.getItem("meowseum_event_voided_sales_v1"),
+    };
+    resetSavedSales();
+    const afterReset = {
+      salesCount: state.sales.length,
+      voidedCount: state.voidedSales.length,
+      preorderCount: state.preorders.length,
+      addedStock: state.inventory.days.day1.addedStock[sku],
+      voidedStorageAfter: localStorage.getItem("meowseum_event_voided_sales_v1"),
+    };
+
     return {
       sku,
       ...voidResult,
@@ -279,6 +312,11 @@ async function main() {
       inputAfterThree,
       showsSold: midEventText.includes("Sold 2"),
       showsCommitted: midEventText.includes("4 committed"),
+      resetClearedSales: beforeReset.salesCount > 0 && afterReset.salesCount === 0,
+      resetClearedVoidAudit: beforeReset.voidedCount > 0 && afterReset.voidedCount === 0,
+      resetClearedVoidStorage: beforeReset.voidedStorageBefore !== null && afterReset.voidedStorageAfter === null,
+      resetClearedAddedStock: beforeReset.addedStock > 0 && afterReset.addedStock === 0,
+      resetKeptPreorders: afterReset.preorderCount === beforeReset.preorderCount && afterReset.preorderCount > 0,
     };
   });
 
@@ -325,6 +363,11 @@ async function main() {
   assert(result.inputAfterThree === "0", "Top-up input did not reset after second save", result);
   assert(result.showsSold, "Nonzero sold detail is hidden", result);
   assert(result.showsCommitted, "Nonzero committed detail is hidden", result);
+  assert(result.resetClearedSales, "Reset Data did not clear saved sales", result);
+  assert(result.resetClearedVoidAudit, "Reset Data did not clear void audit log", result);
+  assert(result.resetClearedVoidStorage, "Reset Data did not remove void audit storage key", result);
+  assert(result.resetClearedAddedStock, "Reset Data did not reset per-day inventory", result);
+  assert(result.resetKeptPreorders, "Reset Data must keep Send Later queue intact", result);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);

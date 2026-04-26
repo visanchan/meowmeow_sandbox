@@ -396,11 +396,13 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 
 ## Pre-Event Data Hygiene
 
-- Before real selling, use Developer Tools to clear saved test sales and reset inventory only after exporting anything worth keeping.
+- Before real selling, export anything worth keeping, then use the Developer Tools `⚠️ Reset Data` button to clear test data on this device.
+- `⚠️ Reset Data` confirmation dialog is the source of truth: it lists what gets cleared (saved sales, void audit log, per-day inventory, global/online/event allocation) and what stays (Send Later queue, operator login, saved customer emails). Each kept item has its own dedicated cleanup control.
 - Use `Clear Pending Send Later` to remove test Send Later records; packed, shipped, cancelled records, and saved sales are not deleted by this cleanup.
 - Use `Clear Saved Customer Emails` on shared devices after receipt follow-up work or before handing the device to another team.
 - Export day CSV files before clearing or resetting data. This app is local-only, so CSV is the practical backup.
 - Do not clear data during live selling unless a manager confirms the current device is only holding test data.
+- `⚠️ Reset Data` is a destructive developer/admin action. It does not log who reset, so it should be used before live selling, not during.
 
 ## Recently Changed
 
@@ -413,6 +415,7 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 - **Apr 2026 (Batch E — Render Memo + Correction Stock Impact)** — Cart-reserved quantities are computed once per `renderProducts` pass instead of once per visible SKU; the Bill Correction review now previews the per-SKU stock movement and the projected starting stock for each later event day.
 - **Apr 2026 (Batch H — Void Bill from Correction Center)** — Bill Correction now has a separate reason-required `Void Bill` path for wrongly saved bills; voiding removes the sale, saves an audit snapshot, and realigns inventory carry-forward.
 - **Apr 2026 (Batch L — Void Audit Review & Export)** — Bill Correction now displays a `Void Audit` list (bill id, time, operator, day, total, items, reason) and exports the full void audit log as a CSV with concise columns; full sale snapshots stay in localStorage only.
+- **Apr 2026 (Batch M — Safer Test Data Reset Cleanup)** — `⚠️ Reset Data` confirmation now lists exactly what is cleared (saved sales, void audit, per-day inventory, allocation) and what stays (Send Later queue, login session, saved emails); reset also clears `meowseum_event_voided_sales_v1` and refreshes Correction Center if open.
 
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
