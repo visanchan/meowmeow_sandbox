@@ -71,11 +71,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch E — Render Memoization + Correction Stock Impact
 - **Items:** #10 per-render-pass memoization for sold-count map; #8 stock-impact preview in correction review.
 - **Touches:** `renderProducts` (per-pass cache context), `getCartAwareInventorySnapshot` signature, correction review markup (lines ~1067-1186).
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
-- **BlockedBy:** D (touches the same snapshot helpers).
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/e-render-memo-correction-stock
+- **Claimed:** 2026-04-26 13:00
+- **BlockedBy:**
 
 ### Batch F — Staff Login & Tap-in Dedup
 - **Items:** replace operator chip with name+PIN login gate (Zamm=111, Ben=222, Kat=333, Staff=000); persist session in `localStorage`; add 🔒 Log out button in header (manual only); remove redundant "Operator tap-in" on review/finish-sale page since operator is known from login.
