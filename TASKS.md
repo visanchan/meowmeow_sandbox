@@ -7,17 +7,19 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 0. **Integration branch is `main`.** All batch branches start from `main` and merge back into `main`. The legacy `start` branch is retired (its history is fully merged into `main` as of 2026-04-26).
 1. **Default team roles.** Codex is the planner/reviewer/workflow analyst. Claude is the primary implementation executor.
 2. **Planning can run ahead.** Codex may create, refine, split, and review future batches while Claude executes the current implementation batch, as long as Codex does not edit files owned by Claude's in-progress batch.
-3. **Implementation remains exclusive.** A batch is "claimed" for implementation the moment its `Owner` field is set with `Status: in-progress`. Do not edit any implementation file a claimed batch touches if another agent owns that batch.
-4. **One implementation batch in flight.** Because `meowmeow_pos_event.html` is a single-file app, only one executor should edit it at a time. Finish, release, or request review before starting another implementation batch.
-5. **Claim implementation by editing this file:** set `Owner: claude` unless the user explicitly assigns Codex execution, set `Status: in-progress`, set `Branch: <branch-name>`, set `Claimed: <YYYY-MM-DD HH:MM>`. Commit this update before touching any implementation file.
-6. **Planning status.** Codex may use `Owner: codex`, `Status: planning` for batches being designed. When planning is complete, Codex clears `Owner`, sets `Status: ready-for-claude`, and leaves acceptance checks for Claude.
-7. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/h-void-bill`). Never push directly to `main`. Branch from latest `main`.
-8. **Merge serially.** Open a PR into `main`. Merge only after the user confirms or after delegated Codex review confirms no blocking issue. After merge, set `Status: done` and clear `Owner`/`Branch`.
-9. **Stale claim recovery.** If `Claimed` is older than 24h with no commits on the branch, the other agent may set `Status: stale` and re-claim, but must announce it in the next session.
-10. **Conflict prevention rules:**
+3. **Parallel lanes.** Claude keeps the active implementation checkout. Codex may use a separate planning worktree to prepare future batches, review checklists, protocol updates, and low-risk documentation planning while Claude is coding.
+4. **Implementation remains exclusive.** A batch is "claimed" for implementation the moment its `Owner` field is set with `Status: in-progress`. Do not edit any implementation file a claimed batch touches if another agent owns that batch.
+5. **One implementation batch in flight.** Because `meowmeow_pos_event.html` is a single-file app, only one executor should edit it at a time. Finish, release, or request review before starting another implementation batch.
+6. **Claim implementation by editing this file:** set `Owner: claude` unless the user explicitly assigns Codex execution, set `Status: in-progress`, set `Branch: <branch-name>`, set `Claimed: <YYYY-MM-DD HH:MM>`. Commit this update before touching any implementation file.
+7. **Planning status.** Codex may use `Owner: codex`, `Status: planning` for batches being designed. When planning is complete, Codex clears `Owner`, sets `Status: ready-for-claude`, and leaves acceptance checks for Claude.
+8. **Sync planning before implementation.** Before Claude claims the next implementation batch, merge or copy Codex's planning updates into this board so Claude sees the latest blockers, acceptance checks, and suggested order.
+9. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/h-void-bill`). Never push directly to `main`. Branch from latest `main`.
+10. **Merge serially.** Open a PR into `main`. Merge only after the user confirms or after delegated Codex review confirms no blocking issue. After merge, set `Status: done` and clear `Owner`/`Branch`.
+11. **Stale claim recovery.** If `Claimed` is older than 24h with no commits on the branch, the other agent may set `Status: stale` and re-claim, but must announce it in the next session.
+12. **Conflict prevention rules:**
    - Batches that touch the same code region are marked `BlockedBy: <batch-letter>`. Do not start a blocked batch until its blocker is `done`.
    - If you discover a region overlap not flagged here, stop, update this file with the new dependency, and switch to a different batch.
-11. **README & this file are shared.** Edit them for planning/protocol updates, or as part of the implementation batch that justifies the change. Do not edit behavior docs in a way that contradicts an in-progress implementation.
+13. **README & this file are shared.** Edit them for planning/protocol updates, or as part of the implementation batch that justifies the change. Do not edit behavior docs in a way that contradicts an in-progress implementation.
 
 ## Files allowed to edit
 
@@ -159,6 +161,59 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/k-local-smoke-test` (2026-04-26). Added `tests/smoke_event_pos.js`, documented the run command in README, and verified it passes with the cached Codex Node/Playwright runtime.
 
+### Batch L — Void Audit Review & Export
+- **Business objective:** Make voided bills auditable by a booth manager without opening browser developer tools.
+- **Expected benefit:** Better control after mistakes, easier end-of-event review, and clearer evidence for why sales totals changed.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Reuse the existing Correction Center and local `meowseum_event_voided_sales_v1` data instead of building a new admin screen or backend.
+- **Items:**
+  1. Add a compact `Void Audit` section inside `Correction Center > Bill Correction` showing recent voided bills from `state.voidedSales`.
+  2. Each row should show bill id, voided time, voided-by operator, operating day, total, item count, and reason.
+  3. Add an `Export Void Audit CSV` button that exports the void audit log with spreadsheet-safe text cells.
+  4. Keep the full `saleSnapshot` out of the CSV; export concise audit fields only.
+- **Touches:** `meowmeow_pos_event.html` Correction Center markup/rendering, void audit CSV helper, `readme.md` Correction Center/Data notes, `tests/smoke_event_pos.js` if useful.
+- **Do not change:** void creation behavior, `meowseum_event_voided_sales_v1` storage shape, normal sales CSV shape, or existing Bill Correction edit flow.
+- **Acceptance checks:**
+  - With no voids, Correction Center shows a quiet empty state for void audit.
+  - After voiding a bill, the audit row appears without a page refresh and shows bill id, reason, operator, day, total, and item count.
+  - Reloading the app preserves and displays the void audit row from localStorage.
+  - Exported void CSV includes concise audit columns and protects text fields against spreadsheet formula injection.
+  - Running `tests/smoke_event_pos.js` still passes.
+- **Risks/assumptions:** Void audit should be visible only after the existing Correction Center passcode unlock; no separate passcode is needed.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** This is the next highest-value control improvement because Batch H created the audit trail but managers still need an easy way to inspect/export it.
+
+### Batch M — Safer Test Data Reset Cleanup
+- **Business objective:** Make pre-event cleanup safer and clearer so test sales, test voids, and test queue records do not pollute event reporting.
+- **Expected benefit:** Cleaner opening state before the booth starts, fewer confusing old audit rows, and lower risk of staff clearing the wrong data during live selling.
+- **Implementation difficulty:** low to medium.
+- **Cost/complexity tradeoff:** Extend existing local cleanup controls and warning copy rather than adding a separate reset wizard.
+- **Items:**
+  1. Update the `Reset Data` confirmation copy to explicitly list what will be cleared and what will remain.
+  2. Include `state.voidedSales` / `meowseum_event_voided_sales_v1` in the reset path only when the user confirms the destructive reset, so test void audits are cleared with test sales.
+  3. Keep `Clear Pending Send Later` as the separate queue cleanup path; do not silently delete packed/shipped/cancelled queue records from Reset Data.
+  4. After reset, refresh Correction Center views if open so bill lists, void audit rows, dashboard, inventory, and product cards show the clean state.
+  5. Update README Pre-Event Data Hygiene to state that `Reset Data` clears saved sales, inventory setup, allocation data, and void audit logs, while Send Later cleanup remains separate.
+- **Touches:** `resetSavedSales`, reset confirmation dialog copy, correction/void audit refresh paths, README hygiene notes, `tests/smoke_event_pos.js` if needed.
+- **Do not change:** operator login persistence, pending/packed/shipped/cancelled Send Later cleanup behavior, or CSV export formats.
+- **Acceptance checks:**
+  - Create a test sale and void it; confirm `Reset Data` clears saved sales and the void audit log after confirmation.
+  - Confirm inventory/global allocation resets as before.
+  - Confirm pending Send Later records are not removed by Reset Data and still require `Clear Pending Send Later`.
+  - Confirm dashboard, product grid, Inventory Flow, and Correction Center refresh after reset.
+  - Running `tests/smoke_event_pos.js` still passes.
+- **Risks/assumptions:** Reset Data is already a destructive developer/admin action; clearing void audit there is acceptable for test cleanup but must be clearly documented.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** L if Claude starts Batch L first, because both batches touch Correction Center/void audit rendering.
+- **Notes:** Best implemented after Batch L if the void audit section is added first; otherwise update the dependency if Claude chooses to do reset cleanup before audit display.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -168,6 +223,8 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 5. **E** (after D merged).
 6. **G** — Stock & Allocation Setup UI clarity (Claude execution; Codex review recommended because it affects live inventory setup).
 7. **H** — Void Bill from Correction Center (Claude execution; Codex review recommended because it affects saved sales, inventory carry-forward, and audit history).
+8. **L** — Void Audit Review & Export.
+9. **M** — Safer Test Data Reset Cleanup.
 
 ## Done
 

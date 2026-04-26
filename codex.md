@@ -94,6 +94,7 @@ Risks/assumptions:
 
 - **Single-file app.** [meowmeow_pos_event.html](meowmeow_pos_event.html) is the entire app. Treat implementation against it as mutually exclusive: only one executor edits it at a time.
 - **Planning can run ahead.** Codex may add or refine future batches while Claude executes a current batch, as long as Codex does not edit files owned by Claude's in-progress implementation.
+- **Parallel lanes.** Claude uses the implementation checkout for active code changes. Codex may use a separate planning worktree to update protocol notes, draft future batches, prepare review checklists, and analyze code/readme gaps while Claude is coding. This keeps both agents productive without mixing uncommitted edits in the same checkout.
 - **Claim before editing.** Executors update [TASKS.md](TASKS.md): set `Owner`, `Status: in-progress`, `Branch`, and `Claimed`. Commit that update first, then start implementation.
 - **Planner status.** Codex planning work can use `Owner: codex`, `Status: planning` when the batch is being defined but not implemented.
 - **Ready for Claude.** When planning is complete, Codex clears `Owner`, sets `Status: ready-for-claude`, and leaves enough detail for Claude to execute.
@@ -101,6 +102,7 @@ Risks/assumptions:
 - **Branch per batch.** Branch from latest `main`. Never push directly to `main`. Open a PR into `main`. Merge only after user confirmation or delegated review confirmation.
 - **Honor blockers.** If a batch is `BlockedBy: <letter>`, do not start it until the blocker is `done`.
 - **No drive-by code edits.** If Codex spots unrelated improvements during review, note them as a new batch instead of editing them into the current batch.
+- **Sync planning before implementation.** Before Claude claims the next implementation batch, merge or copy Codex's planning updates into the main task board so Claude sees the latest blockers, acceptance checks, and suggested order.
 
 ## Working rules
 
