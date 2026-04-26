@@ -17,6 +17,8 @@ Browser-based event POS for the Meowseum booth. The main selling app is [meowmeo
 - [Data, Storage & CSV](#data-storage--csv)
 - [Layout & Visual Rules](#layout--visual-rules)
 - [Passcodes](#passcodes)
+- [Event-Day Verification Checklist](#event-day-verification-checklist)
+- [Pre-Event Data Hygiene](#pre-event-data-hygiene)
 - [Recently Changed](#recently-changed)
 - [How To Continue Next Time](#how-to-continue-next-time)
 
@@ -368,6 +370,29 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - `123` — Close Day & Export CSV
 - `888` — Correction Center
 
+## Event-Day Verification Checklist
+
+Run this checklist on the event device before booth selling starts. Use test data first, then clear it before real sales.
+
+- Staff login: log in as each expected staff role and confirm product taps are blocked after logout.
+- Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
+- Card/transfer sale: confirm `Save & New Sale` stays blocked until payment confirmation is checked.
+- Send Later sale: add one Send Later line, enter customer name, phone, and receive location, then confirm the queue record is created as paid at event.
+- Free gift: create a cart above the promo threshold and confirm the scarf appears, deducts stock, and shows as a free item.
+- Stock top-up: enter `Added Today` as a top-up amount, confirm setup, verify remaining event stock increases, and verify the input resets to `0`.
+- Day close/export: close a test day, confirm CSV downloads, and confirm remaining stock carries into the next day.
+- Bill correction: edit a saved bill quantity with a reason and confirm inventory carry-forward updates.
+- Void bill: void a test bill with a reason, confirm it disappears from saved sales, and confirm the void audit snapshot exists.
+- Inventory correction: adjust one controlled stock field with a reason and confirm the audit entry appears once.
+
+## Pre-Event Data Hygiene
+
+- Before real selling, use Developer Tools to clear saved test sales and reset inventory only after exporting anything worth keeping.
+- Use `Clear Pending Send Later` to remove test Send Later records; packed, shipped, cancelled records, and saved sales are not deleted by this cleanup.
+- Use `Clear Saved Customer Emails` on shared devices after receipt follow-up work or before handing the device to another team.
+- Export day CSV files before clearing or resetting data. This app is local-only, so CSV is the practical backup.
+- Do not clear data during live selling unless a manager confirms the current device is only holding test data.
+
 ## Recently Changed
 
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
@@ -378,6 +403,9 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026 (Batch D — Sample Qty Per-Day Migration)** — Sample stock moved from a single global field to a per-event-day field; one-time migration copies the legacy global value into Day 1, with Days 2-4 starting at 0.
 - **Apr 2026 (Batch E — Render Memo + Correction Stock Impact)** — Cart-reserved quantities are computed once per `renderProducts` pass instead of once per visible SKU; the Bill Correction review now previews the per-SKU stock movement and the projected starting stock for each later event day.
 - **Apr 2026 (Batch H — Void Bill from Correction Center)** — Bill Correction now has a separate reason-required `Void Bill` path for wrongly saved bills; voiding removes the sale, saves an audit snapshot, and realigns inventory carry-forward.
+
+- **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
+- **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 

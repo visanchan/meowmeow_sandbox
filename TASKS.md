@@ -130,11 +130,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - `stockSetupDraftIssue()` must validate warehouse/event stock using stored added stock plus the entered top-up delta, not only the delta by itself.
   - Review is recommended before merge because this affects live stock setup and staff understanding during the event.
 - **Owner:**
-- **Status:** ready-for-merge
-- **Branch:** batch/g-stock-setup-clarity
-- **Claimed:** 2026-04-26 14:30
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Implementation complete on `batch/g-stock-setup-clarity` (2026-04-26). `Added Today` now renders as a `Top up now` delta input, applies deltas to stored added stock, and resets to `0` after confirm. Idle `No committed send later` / `Sold 0` helper text is hidden; nonzero committed/sold detail still appears. Codex smoke review passed: inline script parse and browser stock-setup acceptance check.
+- **Notes:** Merged into `main` at `1923f0c` on 2026-04-26. `Added Today` now renders as a `Top up now` delta input, applies deltas to stored added stock, and resets to `0` after confirm. Idle `No committed send later` / `Sold 0` helper text is hidden; nonzero committed/sold detail still appears. Codex smoke review passed: inline script parse and browser stock-setup acceptance check.
 
 ## Suggested order (least-conflict first)
 
@@ -158,3 +158,6 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch D — Sample Qty Per-Day Migration** — merged into `start` at `28ffc31` on 2026-04-26 by claude. Per-day `sampleQty` shipped with one-time migration; unblocks Batch E.
 - **Batch E — Render Memoization + Correction Stock Impact** — merged into `main` at `e35aabc` on 2026-04-26 by claude. Per-pass `cartReservedMap` reduces cart walks in `renderProducts`; Bill Correction review previews per-day starting-stock re-alignment.
 - **Batch H — Void Bill from Correction Center** — merged into `main` at `b45838b` on 2026-04-26. Reason-required bill void flow shipped with audit snapshots and inventory carry-forward realignment.
+- **Batch G — Stock & Allocation Setup clarity** — merged into `main` at `1923f0c` on 2026-04-26. Added Today now works as a top-up delta input, resets after confirm, and hides idle stock helper noise.
+- **Batch I — Event-Day Verification Checklist** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now lists the high-risk pre-event manual checks and expected business result for each.
+- **Batch J — Pre-Event Data Hygiene Pass** — documentation-only stabilization pass completed on `main` on 2026-04-26. README now documents safe cleanup paths for test sales, pending Send Later records, saved customer emails, and CSV backup expectations.
