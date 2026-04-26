@@ -5,16 +5,19 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 ## Protocol (read before editing)
 
 0. **Integration branch is `main`.** All batch branches start from `main` and merge back into `main`. The legacy `start` branch is retired (its history is fully merged into `main` as of 2026-04-26).
-1. **One agent per batch.** A batch is "claimed" the moment its `Owner` field is set. Do not edit any file a batch touches if another agent owns the batch.
-2. **One batch in flight per agent.** Finish or release before claiming another.
-3. **Claim by editing this file:** set `Owner: claude` or `Owner: codex`, set `Status: in-progress`, set `Branch: <branch-name>`, set `Claimed: <YYYY-MM-DD HH:MM>`. Commit this update before touching any other file.
-4. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/a-operator-gate`). Never push directly to `main`. Branch from latest `main`.
-5. **Merge serially.** Open a PR into `main`. Merge only after the other agent confirms no in-flight work conflicts. After merge, set `Status: done` and clear `Owner`/`Branch`.
-6. **Stale claim recovery.** If `Claimed` is older than 24h with no commits on the branch, the other agent may set `Status: stale` and re-claim, but must announce it in the next session.
-7. **Conflict prevention rules:**
+1. **Default team roles.** Codex is the planner/reviewer/workflow analyst. Claude is the primary implementation executor.
+2. **Planning can run ahead.** Codex may create, refine, split, and review future batches while Claude executes the current implementation batch, as long as Codex does not edit files owned by Claude's in-progress batch.
+3. **Implementation remains exclusive.** A batch is "claimed" for implementation the moment its `Owner` field is set with `Status: in-progress`. Do not edit any implementation file a claimed batch touches if another agent owns that batch.
+4. **One implementation batch in flight.** Because `meowmeow_pos_event.html` is a single-file app, only one executor should edit it at a time. Finish, release, or request review before starting another implementation batch.
+5. **Claim implementation by editing this file:** set `Owner: claude` unless the user explicitly assigns Codex execution, set `Status: in-progress`, set `Branch: <branch-name>`, set `Claimed: <YYYY-MM-DD HH:MM>`. Commit this update before touching any implementation file.
+6. **Planning status.** Codex may use `Owner: codex`, `Status: planning` for batches being designed. When planning is complete, Codex clears `Owner`, sets `Status: ready-for-claude`, and leaves acceptance checks for Claude.
+7. **Branch per batch.** Branch name format: `batch/<letter>-<short-slug>` (e.g. `batch/h-void-bill`). Never push directly to `main`. Branch from latest `main`.
+8. **Merge serially.** Open a PR into `main`. Merge only after the user confirms or after delegated Codex review confirms no blocking issue. After merge, set `Status: done` and clear `Owner`/`Branch`.
+9. **Stale claim recovery.** If `Claimed` is older than 24h with no commits on the branch, the other agent may set `Status: stale` and re-claim, but must announce it in the next session.
+10. **Conflict prevention rules:**
    - Batches that touch the same code region are marked `BlockedBy: <batch-letter>`. Do not start a blocked batch until its blocker is `done`.
    - If you discover a region overlap not flagged here, stop, update this file with the new dependency, and switch to a different batch.
-8. **README & this file are shared.** Edit them only when no batch is in flight, or as part of the batch that justifies the change. Never edit while another agent has any batch `in-progress`.
+11. **README & this file are shared.** Edit them for planning/protocol updates, or as part of the implementation batch that justifies the change. Do not edit behavior docs in a way that contradicts an in-progress implementation.
 
 ## Files allowed to edit
 
@@ -22,7 +25,7 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 - `meowmeow_receipt_admin.html` — admin tool. Not part of this round; do not edit.
 - `readme.md` — coordinated; update as part of the batch that changes behavior described in it.
 - `TASKS.md` (this file) — coordinated; update on every claim/release/done.
-- `CLAUDE.md`, `codex.md`, `AGENTS.md` — agent protocol files. Treat as documentation; only edit by explicit user request.
+- `CLAUDE.md`, `codex.md`, `AGENTS.md` — agent protocol files. Treat as planning/protocol documentation; Codex may edit when the user asks to change the team workflow.
 
 ## Batches
 
@@ -91,10 +94,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch H — Void Bill from Correction Center
 - **Items:** add an explicit "Void / delete this bill" path in Bill Correction. Today, zeroing every line in `buildCorrectionDraft` triggers `"At least one bill item must remain on the sale."` and review is blocked, so there is no way to delete a wrongly-saved bill. Add a separate **Void Bill** button (with reason + confirm dialog, behind the existing correction passcode) that removes the sale from `state.sales`, realigns inventory carry-forward via `realignInventoryCarryForward(saleDay(sale))`, and writes a `void` entry into `correctionHistory` so the action is auditable. The "items must remain" guard still applies to *edit* corrections so accidental zero-outs during normal edits stay protected.
 - **Touches:** Bill Correction panel markup (new `Void Bill` button + confirm dialog), `buildCorrectionDraft` / `confirmCorrectionSave` (or a new `voidSale` flow that does not reuse the items-required guard), `state.sales` write path + `saveSales`, `realignInventoryCarryForward`, audit/history entry shape, and `readme.md` Correction Center section.
-- **Owner:**
-- **Status:** ready
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/h-void-bill
+- **Claimed:** 2026-04-26 14:00
 - **BlockedBy:**
 - **Notes:** Reported 2026-04-26 — staff hit the "At least one bill item must remain" message when trying to delete a bill by zeroing all lines. Voiding must be reversible only via re-creating the sale; record `voidedAt`, `voidedBy` (logged-in operator), and `reason` so an auditor can see why a bill was removed. Verify carry-forward across all later days after the void.
 
@@ -105,7 +108,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   3. Make the Added Today cell visually distinct from the other (stored-total) cells so staff understand it is a transient "amount to add now" field — different background/border, a "+" prefix, a hint label like "Top up now", or similar.
 - **Touches:** `renderInventoryManagement` table markup (subtext under Warehouse/Remaining Event, Added Today cell styling), `applyStockSetupDraft` (post-save reset of Added Today field), `stockSetupSnapshot` if needed, the inventory CSS in `<style>`, and `readme.md` Inventory section.
 - **Owner:**
-- **Status:** ready
+- **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
@@ -118,8 +121,8 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 3. **B** (after A merged).
 4. **D** — single owner; pause everything else.
 5. **E** (after D merged).
-6. **G** — Stock & Allocation Setup UI clarity (independent of A-F; touches `renderInventoryManagement`).
-7. **H** — Void Bill from Correction Center (independent of A-G; touches Bill Correction panel + `state.sales` write path).
+6. **G** — Stock & Allocation Setup UI clarity (Claude execution; Codex review recommended because it affects live inventory setup).
+7. **H** — Void Bill from Correction Center (Claude execution; Codex review recommended because it affects saved sales, inventory carry-forward, and audit history).
 
 ## Done
 
