@@ -78,12 +78,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch F — Staff Login & Tap-in Dedup
 - **Items:** replace operator chip with name+PIN login gate (Zamm=111, Ben=222, Kat=333, Staff=000); persist session in `localStorage`; add 🔒 Log out button in header (manual only); remove redundant "Operator tap-in" on review/finish-sale page since operator is known from login.
 - **Touches:** operator-chip header markup, `addToCart` operator gate, `renderSuccess` (Operator tap-in region), new login overlay + auth state, `localStorage` session key.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/f-staff-login
-- **Claimed:** 2026-04-26 12:00
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** PINs hardcoded in client source (single-file app, accepted). No auto-logout on idle — manual only. Update `readme.md` Operator section in same batch.
+- **Notes:** Completed on `start` at f674cdb (2026-04-26): staff login overlay with PIN gate, persistent session, 🔒 Log out in header, and Operator tap-in removed from review/finish-sale page.
 
 ## Suggested order (least-conflict first)
 
@@ -98,3 +98,5 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 (Move completed batches here with the merging commit SHA.)
 
 - **Batch A — Operator Gate Trio** — merged into `start` at `6895710` on 2026-04-25 by claude. Items #1, #2, #3 shipped.
+- **Batch C — Cart & Status Guards** — completed on `start` at `2cce88b` on 2026-04-26. Items #7 and pay-later removal shipped.
+- **Batch F — Staff Login & Tap-in Dedup** — completed on `start` at `f674cdb` on 2026-04-26 by claude. Staff PIN login, persistent session, manual logout, redundant operator tap-in removed.
