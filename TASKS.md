@@ -278,12 +278,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Run `tests/smoke_event_pos.js` and confirm it passes.
   - Open the POS visually and compare the selling screen against the pre-corruption screenshot.
 - **Risks/assumptions:** The corruption was likely introduced by writing the HTML with the system default encoding during Batch O. Claude must use a UTF-8-safe edit path.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/p-restore-utf8-symbols
-- **Claimed:** 2026-04-27 (resumed two-agent protocol)
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Do not treat Batch O as fully safe for event use until Batch P is completed and visually checked.
+- **Notes:** Completed on `batch/p-restore-utf8-symbols` 2026-04-27. Rebuilt `meowmeow_pos_event.html` from `6ed423e` (Batch M, last commit with intact UTF-8) by splicing in the Batch N compressed `PRODUCT_IMAGE_DATA` block and re-applying the Batch O inventory-baseline edits (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, `defaultEventStartingStock`, updated `createDefaultInventory` / `createDefaultGlobalInventory`). File written as UTF-8 no-BOM via Node `Buffer.from(text,"utf8")`. Non-ASCII byte count restored from 44 to 325 (matches `6ed423e`). `tests/smoke_event_pos.js` passes. Headed-Edge visual check confirms `฿`, 🧣 free-gift button, ⚠️/📧/📤 dashboard tools, `•` separators, and `—` em dashes render correctly on the selling screen and dashboard tab.
 
 ## Suggested order (least-conflict first)
 
@@ -317,3 +317,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch K — Local Smoke Test Script** — completed on `batch/k-local-smoke-test` on 2026-04-26. Adds a repeatable Playwright smoke check for page load, void/carry-forward, and stock top-up reset behavior.
 - **Batch L — Void Audit Review & Export** — merged into `main` at `aba934c` on 2026-04-26. Adds a `Void Audit` list and concise CSV export inside Bill Correction; refreshes live on void/cross-tab; smoke test extended.
 - **Batch M — Safer Test Data Reset Cleanup** — shipped to `main` on 2026-04-26 under single-agent mode. Explicit reset confirm copy, void audit cleared with reset, Correction Center re-renders after reset, smoke test extended.
+- **Batch P — Restore UTF-8 Symbols After Inventory Baseline** — completed on `batch/p-restore-utf8-symbols` on 2026-04-27 by claude. Rebuilt the POS HTML from Batch M's intact-symbol baseline, re-spliced Batch N's compressed images and Batch O's inventory baseline, and wrote as UTF-8 no-BOM. Smoke test and visual selling-screen check pass.

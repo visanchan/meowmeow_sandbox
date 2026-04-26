@@ -421,6 +421,7 @@ $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\depend
 - **Apr 2026 (Batch L — Void Audit Review & Export)** — Bill Correction now displays a `Void Audit` list (bill id, time, operator, day, total, items, reason) and exports the full void audit log as a CSV with concise columns; full sale snapshots stay in localStorage only.
 - **Apr 2026 (Batch M — Safer Test Data Reset Cleanup)** — `⚠️ Reset Data` confirmation now lists exactly what is cleared (saved sales, void audit, per-day inventory, allocation) and what stays (Send Later queue, login session, saved emails); reset also clears `meowseum_event_voided_sales_v1` and refreshes Correction Center if open.
 
+- **Apr 2026 (Batch P — Restore UTF-8 Symbols After Inventory Baseline)** — Repaired baht (`฿`), emoji (🎁/🚚/🔒/⚠️/📧/📤/✅/🧣/🐱/⭐/💰/📦/🔁), color markers (🔵/🟡/🟤/⚫/⚪), bullets (`•`), em dashes (`—`), and arrows (`→`) that were lost when Batch O wrote the file with system-default encoding. Batch O inventory baseline (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, Day 1 `Event Start = Global - Online`) and Batch N compressed product images are preserved.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 
