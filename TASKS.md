@@ -370,6 +370,36 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** Q
 - **Notes:** User specifically called out `Clear Emails` as still using browser alert and asked for smoother aligned confirmations.
 
+### Batch T - Smoke Coverage for PIN-Gated Workflows
+- **Business objective:** Catch regressions in the PIN-gated entry points before they reach a live event.
+- **Expected benefit:** Less risk that future symbol, encoding, dialog, or refactor work silently breaks operator login, Dashboard, Inventory, or Correction access.
+- **Implementation difficulty:** low.
+- **Cost/complexity tradeoff:** Extend the existing Playwright smoke script instead of adding a new test framework, backend, or separate manual checklist.
+- **Items:**
+  1. Add a PIN-flow scenario near the start of `tests/smoke_event_pos.js` that asserts `#loginOverlay.open` is visible on fresh init with no persisted operator.
+  2. Test a wrong operator PIN, such as selecting `Zamm` and entering `999`, and assert the login overlay stays open with `#loginPinError` text.
+  3. Test a correct operator PIN by selecting `Zamm`, entering `111`, and asserting the overlay closes and the page state/operator UI reflects `Zamm`.
+  4. Add Dashboard lock coverage: wrong PIN remains blocked with an error, correct shared internal PIN opens `#dashboardPanel`, and `#dashboardTotalSales` renders a currency string with `฿`.
+  5. Add Inventory lock coverage: wrong PIN remains blocked with an error, correct shared internal PIN opens the inventory panel and `Stock & Allocation Setup` is visible.
+  6. Add Correction lock coverage: wrong PIN remains blocked with an error, correct shared internal PIN opens `#correctionPanel`, and the Void Audit list renders (empty state is OK).
+  7. Keep existing void/carry-forward and stock-top-up smoke scenarios intact; PIN scenarios should run before deeper workflow checks.
+  8. Update README smoke-test notes with one line saying PIN-gated flows are covered.
+- **Touches:** `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** POS app behavior, `meowmeow_pos_event.html`, CSV shape, localStorage keys, product data, or PIN values.
+- **Acceptance checks:**
+  - Running the smoke script still prints one clear pass message.
+  - If operator login wrong-PIN logic is bypassed, the smoke test fails with a recognizable assertion message.
+  - If the shared internal passcode changes or a lock screen stops accepting it, the smoke test fails with a clear PIN/lock assertion rather than a generic timeout.
+  - Dashboard, Inventory, and Correction lock scenarios each test wrong PIN and correct PIN paths.
+  - README smoke-test section mentions PIN-gated workflow coverage.
+- **Risks/assumptions:** The smoke test will repeat PIN values already present in the production HTML. This is no new disclosure, but future reviewers should remember these are local operational passcodes, not strong secrets.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** Q
+- **Notes:** Codex approves the coverage idea with Inventory included. Recommended after Batch Q because Q changes reset/passcode behavior and may affect smoke-test setup patterns.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -386,6 +416,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 11. **Q** - Destructive Reset Passcode & Severity.
 12. **R** - Manual Event Start Count after reset safety is clear.
 13. **S** - Replace Remaining Browser Alerts With In-App Dialogs after reset/dialog patterns are settled.
+14. **T** - Smoke Coverage for PIN-Gated Workflows after Batch Q updates passcode/reset patterns.
 
 ## Done
 
