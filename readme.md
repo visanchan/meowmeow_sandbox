@@ -89,6 +89,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - left: customer-facing receipt and receipt-share area
   - right: salesperson controls such as QR, payment confirmation, tags, and finish (the operator is taken from the login session — no per-sale operator tap-in)
 - Both columns scroll independently on desktop and collapse back to a normal single-column flow on smaller screens.
+- Send Later customer details are grouped with a clear `Ship to` heading so staff can quickly identify the delivery/pickup destination fields.
+- Each receipt line has an inline `Edit` button. Staff can jump back to the cart, adjust quantities/discounts, and return to review without losing customer, shipping, email, payment reference, or tag details already entered.
 
 ## Free Gift Rules
 
@@ -241,6 +243,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - That email can be collected even if the customer does not request a receipt email, for example for future marketing/contact use.
 - The `Send me an email receipt` checkbox is specifically for post-sale receipt sending.
 - If that checkbox is checked, customer email becomes required before the sale can be saved.
+- Invalid customer email is shown beside the email field with a red inline helper, and `Save & New Sale` stays disabled until the format is corrected.
 - When the checkbox is checked, the app shows an in-app reminder that the receipt will arrive in `3-4 days`.
 - The sale record keeps both:
   - `receiptEmail`
@@ -359,14 +362,12 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
 - **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
 - **Apr 2026 (Batch C — Cart & Status Guards)** — carts that stay inactive for 10 minutes prompt staff to keep or clear them, with clear refreshing product/cart inventory immediately; Send Later is paid at the event and no longer supports pay-later status.
+- **Apr 2026 (Batch B — Checkout Polish)** — Send Later customer details now group delivery/pickup fields under `Ship to`; receipt lines have inline `Edit` buttons that return to cart review without losing entered checkout details; customer email validation is shown inline and blocks save until fixed.
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
 Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan and [TASKS.md](TASKS.md) for live status.
 
-- Group customer details under a single `Ship to` heading in `Review & Finish Sale` (Batch B).
-- Add an inline `Edit` affordance per receipt line that bounces back to cart mode without losing customer details (Batch B).
-- Surface an inline red helper for invalid email instead of failing silently at save (Batch B).
 - Move `sampleQty` from global to per-day with a one-time migration (day 1 inherits existing global value; days 2-4 default to 0) (Batch D).
 - Stock-impact preview inside the correction review step (per-SKU before/after, day re-alignment) (Batch E).
 - Memoize sold-count map within a single `renderProducts()` pass to remove redundant per-product recomputation (Batch E).

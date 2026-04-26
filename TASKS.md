@@ -40,11 +40,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 ### Batch B — Checkout Polish
 - **Items:** #4 `Ship to` heading grouping; #5 inline edit on receipt lines; #6 inline email validation message.
 - **Touches:** `renderSuccess` overlay markup, `finalizeSale` email-validation path, `state.pendingSale` round-trip.
-- **Owner:** codex
-- **Status:** in-progress
-- **Branch:** batch/b-checkout-polish
-- **Claimed:** 2026-04-26 12:02
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:** A (overlaps Save button label region in `renderSuccess`).
+- **Notes:** Completed locally on `batch/b-checkout-polish` (2026-04-26): Ship to grouping, receipt-line Edit return-to-cart, and inline email validation shipped.
 
 ### Batch C — Cart & Status Guards
 - **Items:** #7 idle-cart prompt at 10 minutes; remove pay-later/pre-order status path so Send Later is paid at event.
@@ -94,6 +95,8 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 5. **E** (after D merged).
 
 ## Done
+
+- **Batch B — Checkout Polish** — completed on `batch/b-checkout-polish` on 2026-04-26 by codex. Items #4, #5, #6 shipped.
 
 (Move completed batches here with the merging commit SHA.)
 
