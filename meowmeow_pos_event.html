@@ -1444,6 +1444,18 @@ const EVENT_DAYS = [
   { id: "day4", label: "Day 4" }
 ];
 const DEFAULT_LOW_STOCK_TRIGGER = 3;
+// Default opening stock from inventory/inventory_default.xlsx.
+// Day 1 event stock starts as global stock minus online allocation.
+const DEFAULT_GLOBAL_STOCK = {
+  "002A": 13, "002B": 24, "003": 16, "004": 59, "005": 32, "006": 22, "007": 79,
+  "010": 10, "012": 1, "013": 28, "014": 53, "015": 15, "016": 50, "017": 100,
+  "018": 0, "019": 100, "020": 100, "021": 33, "022": 32, "GIFT-SCARF": 0
+};
+const DEFAULT_ONLINE_STOCK = {
+  "002A": 2, "002B": 4, "003": 4, "004": 6, "005": 10, "006": 18, "007": 10,
+  "010": 2, "012": 0, "013": 2, "014": 20, "015": 0, "016": 0, "017": 0,
+  "018": 0, "019": 0, "020": 0, "021": 0, "022": 0, "GIFT-SCARF": 0
+};
 const BANK_TRANSFER = {
   bankName: "Bangkok Bank",
   accountName: "PHIPHETTHAPHAN CO.,LTD.",
@@ -1517,14 +1529,17 @@ function loadVoidedSales(){try{const raw=JSON.parse(localStorage.getItem(VOIDED_
 function saveVoidedSales(){try{localStorage.setItem(VOIDED_SALES_STORAGE_KEY,JSON.stringify(state.voidedSales));return true;}catch(error){alert("Could not save the void audit log on this device. Please check storage settings before continuing.");console.error(error);return false;}}
 function buildSkuMap(factory){const output={};PRODUCTS.forEach(product=>{output[product.sku]=factory(product);});return output;}
 function clampCount(value){return Math.max(0,Math.floor(Number(value)||0));}
+function defaultGlobalStock(productOrSku){const sku=typeof productOrSku==="string"?productOrSku:productOrSku?.sku;return clampCount(DEFAULT_GLOBAL_STOCK[sku]);}
+function defaultOnlineStock(productOrSku){const sku=typeof productOrSku==="string"?productOrSku:productOrSku?.sku;return clampCount(DEFAULT_ONLINE_STOCK[sku]);}
+function defaultEventStartingStock(productOrSku){return Math.max(0,defaultGlobalStock(productOrSku)-defaultOnlineStock(productOrSku));}
 function createInventoryDay(startingStock,addedStock,addLog,sampleQty){return{startingStock:buildSkuMap(product=>clampCount(startingStock?.[product.sku])),addedStock:buildSkuMap(product=>clampCount(addedStock?.[product.sku])),sampleQty:buildSkuMap(product=>clampCount(sampleQty?.[product.sku])),addLog:Array.isArray(addLog)?addLog.filter(entry=>entry&&typeof entry==="object").map(entry=>({sku:String(entry.sku||""),qty:clampCount(entry.qty),at:entry.at||new Date().toISOString(),dayId:entry.dayId||null})):[],closed:false,closedAt:null,exportedAt:null};}
-function createDefaultInventory(){const days={};EVENT_DAYS.forEach(day=>{days[day.id]=createInventoryDay();});return{currentDay:"day1",viewDay:"day1",thresholds:buildSkuMap(()=>DEFAULT_LOW_STOCK_TRIGGER),days,sampleQtyMigrated:true};}
+function createDefaultInventory(){const days={};EVENT_DAYS.forEach(day=>{days[day.id]=createInventoryDay(day.id==="day1"?buildSkuMap(product=>defaultEventStartingStock(product)):undefined);});return{currentDay:"day1",viewDay:"day1",thresholds:buildSkuMap(()=>DEFAULT_LOW_STOCK_TRIGGER),days,sampleQtyMigrated:true};}
 function normalizeInventory(raw){const normalized=createDefaultInventory();if(!raw||typeof raw!=="object")return normalized;normalized.currentDay=EVENT_DAYS.some(day=>day.id===raw.currentDay)?raw.currentDay:"day1";normalized.viewDay=EVENT_DAYS.some(day=>day.id===raw.viewDay)?raw.viewDay:normalized.currentDay;normalized.thresholds=buildSkuMap(product=>clampCount(raw.thresholds?.[product.sku]));EVENT_DAYS.forEach(day=>{const source=raw.days?.[day.id]||{};normalized.days[day.id]={startingStock:buildSkuMap(product=>clampCount(source.startingStock?.[product.sku])),addedStock:buildSkuMap(product=>clampCount(source.addedStock?.[product.sku])),sampleQty:buildSkuMap(product=>clampCount(source.sampleQty?.[product.sku])),addLog:Array.isArray(source.addLog)?source.addLog.filter(entry=>entry&&typeof entry==="object").map(entry=>({sku:String(entry.sku||""),qty:clampCount(entry.qty),at:entry.at||null,dayId:entry.dayId||day.id})):[],closed:Boolean(source.closed),closedAt:source.closedAt||null,exportedAt:source.exportedAt||null};});normalized.sampleQtyMigrated=Boolean(raw.sampleQtyMigrated);return normalized;}
 function migrateSampleQtyFromGlobal(inventory){if(!inventory||inventory.sampleQtyMigrated)return inventory;try{const raw=JSON.parse(localStorage.getItem(GLOBAL_INVENTORY_STORAGE_KEY)||"null");const legacy=raw?.sampleQty;if(legacy&&typeof legacy==="object"){const day1=inventory.days?.day1;if(day1)PRODUCTS.forEach(product=>{day1.sampleQty[product.sku]=clampCount(legacy[product.sku]);});}}catch(_){/* ignore */}inventory.sampleQtyMigrated=true;try{localStorage.setItem(INVENTORY_STORAGE_KEY,JSON.stringify(inventory));}catch(_){/* ignore */}return inventory;}
 function loadInventory(){try{return migrateSampleQtyFromGlobal(normalizeInventory(JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY)||"null")));}catch(_){return createDefaultInventory();}}
 function saveInventory(){try{localStorage.setItem(INVENTORY_STORAGE_KEY,JSON.stringify(state.inventory));return true;}catch(error){alert("Could not save inventory data on this device. Please check storage settings before continuing.");console.error(error);return false;}}
-function defaultGlobalStockForProduct(product){return clampCount(state?.inventory?.days?.day1?.startingStock?.[product.sku]??0);}
-function createDefaultGlobalInventory(){return{global:buildSkuMap(product=>defaultGlobalStockForProduct(product)),onlineAllocated:buildSkuMap(()=>0),eventAllocated:buildSkuMap(product=>clampCount(state?.inventory?.days?.day1?.startingStock?.[product.sku]??0)),allocationLog:[]};}
+function defaultGlobalStockForProduct(product){return defaultGlobalStock(product);}
+function createDefaultGlobalInventory(){return{global:buildSkuMap(product=>defaultGlobalStock(product)),onlineAllocated:buildSkuMap(product=>defaultOnlineStock(product)),eventAllocated:buildSkuMap(product=>clampCount(state?.inventory?.days?.day1?.startingStock?.[product.sku]??defaultEventStartingStock(product))),allocationLog:[]};}
 function normalizeGlobalInventory(raw){const defaults=createDefaultGlobalInventory();if(!raw||typeof raw!=="object")return defaults;return{global:buildSkuMap(product=>clampCount(raw.global?.[product.sku])),onlineAllocated:buildSkuMap(product=>clampCount(raw.onlineAllocated?.[product.sku])),eventAllocated:buildSkuMap(product=>clampCount(raw.eventAllocated?.[product.sku])),allocationLog:Array.isArray(raw.allocationLog)?raw.allocationLog:[]};}
 function loadGlobalInventory(){try{const raw=localStorage.getItem(GLOBAL_INVENTORY_STORAGE_KEY);return normalizeGlobalInventory(raw?JSON.parse(raw):null);}catch(_){return createDefaultGlobalInventory();}}
 function saveGlobalInventory(){try{localStorage.setItem(GLOBAL_INVENTORY_STORAGE_KEY,JSON.stringify(state.globalInventory));return true;}catch(error){alert("Could not save allocation data on this device.");console.error(error);return false;}}

@@ -169,6 +169,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Staff should not edit inventory from the normal selling flow.
 - Inventory editing belongs in passcode-protected Developer Tools.
 - Developer Tools has one unified `Stock & Allocation Setup` page (no separate Daily Stock and Allocation Setup tabs).
+- New/reset POS data uses `inventory/inventory_default.xlsx` as the built-in opening inventory baseline: `Global` and `Online` come from the workbook, and Day 1 `Event Start` defaults to `Global - Online`.
+- Staff should treat those defaults as the pre-event setup and only adjust small differences in Stock & Allocation Setup before selling starts.
 - The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
 - Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.

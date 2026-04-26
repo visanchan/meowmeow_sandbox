@@ -240,6 +240,23 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed by Codex on `batch/n-compress-embedded-images` on 2026-04-27. Embedded product images were flattened/recompressed as JPEG thumbnails with max width 600 px. `meowmeow_pos_event.html` dropped from 13,426,711 bytes to 1,277,688 bytes; total embedded image payload dropped from 9,833,150 bytes to 721,521 bytes. Local smoke test passed.
 
+### Batch O - Default Inventory Baseline
+- **Business objective:** Start event-day inventory from the prepared `inventory/inventory_default.xlsx` baseline so staff only need small live adjustments.
+- **Expected benefit:** Less opening setup work, fewer manual stock-entry mistakes, and faster booth readiness.
+- **Implementation difficulty:** low.
+- **Cost/complexity tradeoff:** Hardcode the workbook values into the offline HTML defaults instead of adding browser-side Excel import or a build step.
+- **Items:** Set new/reset POS defaults for global stock, online stock, and Day 1 event starting stock (`global - online`). Document the workflow in README.
+- **Touches:** `meowmeow_pos_event.html`, `readme.md`, `TASKS.md`.
+- **Do not change:** saved localStorage inventory on already-used devices, product prices, sales behavior, CSV formats, or event-day carry-forward logic.
+- **Acceptance checks:** New/reset data uses workbook baseline; Day 1 Event Start equals Global minus Online; local smoke test passes.
+- **Risks/assumptions:** The workbook has no separate Event Start column, so Event Start is derived as `Global - Online`.
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** Completed by Codex on `batch/o-default-inventory-baseline` on 2026-04-27. New/reset inventory now uses the prepared workbook baseline: global and online values from `inventory/inventory_default.xlsx`, with Day 1 Event Start derived as Global minus Online. Local smoke test passed.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
