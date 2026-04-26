@@ -121,6 +121,7 @@ async function main() {
       exportBtnEnabled: !exportVoidAuditBtn.disabled,
       csvHeader: voidAuditCsvLines[0],
       csvRowCount: voidAuditCsvLines.length - 1,
+      csvPlainBillId: voidAuditCsvLines[1]?.startsWith("SMOKE-VOID-1,"),
       csvOmitsSnapshot: !voidAuditCsv.includes("saleSnapshot"),
     };
 
@@ -236,6 +237,7 @@ async function main() {
     result
   );
   assert(result.csvRowCount === 1, "Void audit CSV row count mismatch", result);
+  assert(result.csvPlainBillId, "Void audit CSV bill id should export as protected text, not an Excel formula cell", result);
   assert(result.csvOmitsSnapshot, "Void audit CSV must not include saleSnapshot", result);
   assert(result.initialTopUpInput === "0", "Top-up input did not start at 0", result);
   assert(result.noIdleNoise, "Idle stock setup helper text is noisy", result);
