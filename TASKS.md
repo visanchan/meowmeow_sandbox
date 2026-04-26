@@ -285,6 +285,91 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/p-restore-utf8-symbols` 2026-04-27. Rebuilt `meowmeow_pos_event.html` from `6ed423e` (Batch M, last commit with intact UTF-8) by splicing in the Batch N compressed `PRODUCT_IMAGE_DATA` block and re-applying the Batch O inventory-baseline edits (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, `defaultEventStartingStock`, updated `createDefaultInventory` / `createDefaultGlobalInventory`). File written as UTF-8 (with the same BOM the file has carried since Batch M) via Node `Buffer.from(text,"utf8")`. Non-ASCII byte count restored from 44 to 325 (matches `6ed423e`). `tests/smoke_event_pos.js` passes. Headed-Edge visual check confirms `฿`, 🧣 free-gift button, ⚠️/📧/📤 dashboard tools, `•` separators, and `—` em dashes render correctly on the selling screen and dashboard tab.
 
+### Batch Q - Destructive Reset Passcode & Severity
+- **Business objective:** Make `Reset Data` clearly more dangerous than normal admin actions and prevent accidental pre-event/live-event data loss.
+- **Expected benefit:** Lower risk of staff clearing sales, inventory setup, void audit logs, and allocation data by mistake; clearer control for managers.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Reuse the existing in-app reset confirmation overlay, but make it visually severe and require a simple reset passcode (`888`) before enabling the final destructive action. This avoids adding user accounts or a backend while improving safety.
+- **Items:**
+  1. Restyle the `Reset Data` button and confirmation overlay so it looks materially more severe than `Save Stock`, `Corrections`, and `Clear Emails` (danger color, warning title, stronger border/background, and explicit destructive copy).
+  2. Add a reset passcode field/keypad or typed input to the reset confirmation flow. The reset should only execute after entering `888`.
+  3. Keep the confirmation copy explicit about what is cleared and what remains.
+  4. Show an in-app error state for wrong/empty passcode; do not use browser `alert`.
+  5. Update README Pre-Event Data Hygiene with the reset passcode rule.
+- **Touches:** `meowmeow_pos_event.html` reset button styling, `confirmResetSalesOverlay`, `resetSavedSales` trigger path, reset event handlers, CSS, `readme.md`, `TASKS.md`.
+- **Do not change:** what reset clears/keeps, Send Later cleanup behavior, operator login persistence, saved email cleanup behavior, CSV formats, or inventory carry-forward logic.
+- **Acceptance checks:**
+  - `Reset Data` is visually more severe than the other Developer Tools actions.
+  - Clicking `Reset Data` opens an in-app severe warning dialog.
+  - Confirm/reset button stays blocked until passcode `888` is entered.
+  - Wrong passcode shows an in-app message and does not clear data.
+  - Correct passcode clears the same data as today and refreshes dashboard, product grid, Inventory Flow, and Correction Center.
+  - `tests/smoke_event_pos.js` still passes.
+- **Risks/assumptions:** Passcode `888` is intentionally simple and local; this is an operational guard, not strong security.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** User requested reset to look more severe and require passcode `888`.
+
+### Batch R - Manual Event Start Count
+- **Business objective:** Keep the workbook as the stock planning baseline while forcing staff to count and enter actual event-start stock before selling.
+- **Expected benefit:** Less risk of opening the event with unverified stock numbers; staff still benefit from prepared `Global` and `Online` defaults but must confirm booth stock physically.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Keep `inventory_default.xlsx` wired into `Global` and `Online`, but leave `Event Start` blank in Stock & Allocation Setup until staff enter actual counted quantity. This avoids a bigger import flow while improving opening accuracy.
+- **Items:**
+  1. Change new/reset inventory defaults so Day 1 `Event Start` starts empty/unset in the setup UI, not prefilled as `Global - Online`.
+  2. Preserve default `Global` and `Online` values from `inventory/inventory_default.xlsx`.
+  3. Decide implementation shape for empty numeric stock safely, such as using an explicit `eventStartConfirmed`/`eventStartTouched` map or `null` draft state, without breaking existing numeric calculations.
+  4. Prevent selling or clearly block product adds until required Event Start counts are entered for sellable SKUs, or at minimum make zero/unset visually obvious before event use.
+  5. Keep Day 2-4 carry-forward behavior unchanged after Day 1 closes.
+  6. Update README Inventory notes to explain that Event Start waits for staff count at the start of the day.
+- **Touches:** default inventory creation, `renderInventoryManagement`, stock setup draft/read/validation logic, add-to-cart stock guard if blocking unset Event Start, README Inventory section, tests if useful.
+- **Do not change:** `Global` and `Online` default values, product prices, CSV formats, Send Later reservation math, Day 2-4 carry-forward logic after close day, or Batch P UTF-8 restoration.
+- **Acceptance checks:**
+  - After reset/new localStorage, `Global` and `Online` are prefilled from `inventory_default.xlsx`.
+  - `Event Start` fields visually appear empty/unconfirmed for staff counting.
+  - Staff can enter Event Start counts and save through existing `Confirm Stock Setup`.
+  - Saved Event Start counts then drive product remaining stock normally.
+  - Selling cannot silently proceed with misleading uncounted stock.
+  - `tests/smoke_event_pos.js` still passes or is updated for the new required-count behavior.
+- **Risks/assumptions:** Existing code clamps missing stock to `0`, so Claude must avoid representing "empty/unconfirmed" in a way that silently looks like confirmed zero stock.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** Q
+- **Notes:** User requested Event Start in Stock & Allocation Setup to wait for staff count at start day.
+
+### Batch S - Replace Remaining Browser Alerts With In-App Dialogs
+- **Business objective:** Make admin confirmations and errors feel smooth and consistent on iPad/Edge instead of using disruptive browser `alert`, `confirm`, and `prompt` boxes.
+- **Expected benefit:** Better staff confidence, fewer awkward browser popups, clearer passcode/error messaging, and more professional internal-tool flow.
+- **Implementation difficulty:** medium to high depending on how many alert paths are converted in this pass.
+- **Cost/complexity tradeoff:** Extend the app's existing overlay/dialog pattern instead of adding a modal library or framework.
+- **Items:**
+  1. Replace the `Clear Emails` browser `alert` result with an in-app confirmation/result dialog.
+  2. Audit current `alert`, `confirm`, and `prompt` usages and group them into priority tiers.
+  3. Convert the highest-friction admin paths first: `Clear Emails`, `Clear Pending Send Later`, stock setup validation failures, inventory reversal reason, and export-empty/error messages if practical.
+  4. Keep lightweight cart stock notices as toast-style messages where already appropriate.
+  5. Use consistent button styling, title, message, and danger/secondary states across dialogs.
+  6. Update README if user-facing admin behavior changes.
+- **Touches:** dialog markup/CSS, alert/prompt/confirm call sites, `purgeSavedReceiptContacts`, `clearPendingSendLaterOrders`, stock setup validation paths, inventory reversal path, export empty/error paths, README if behavior is documented.
+- **Do not change:** actual data cleared/exported/saved, passcodes except Batch Q reset passcode, CSV formats, inventory logic, or sales logic.
+- **Acceptance checks:**
+  - `Clear Emails` no longer uses browser `alert`; it shows an in-app result dialog.
+  - `Clear Pending Send Later` no longer uses browser `prompt`/`confirm` if included in this batch; passcode and final confirmation are in-app.
+  - Wrong passcodes or validation failures are visible in-app and do not perform the action.
+  - Existing overlays can still close via intended buttons and Escape where appropriate.
+  - `tests/smoke_event_pos.js` still passes.
+- **Risks/assumptions:** There are many alert call sites. Claude should keep this batch focused on staff/admin flows and avoid rewriting every low-level storage failure path unless time allows.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** Q
+- **Notes:** User specifically called out `Clear Emails` as still using browser alert and asked for smoother aligned confirmations.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -298,6 +383,9 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 9. **M** — Safer Test Data Reset Cleanup.
 
 10. **P** - Restore UTF-8 symbols after Batch O before any event-device deployment.
+11. **Q** - Destructive Reset Passcode & Severity.
+12. **R** - Manual Event Start Count after reset safety is clear.
+13. **S** - Replace Remaining Browser Alerts With In-App Dialogs after reset/dialog patterns are settled.
 
 ## Done
 
