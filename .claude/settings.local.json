@@ -5,7 +5,8 @@
       "Bash(node -e \"const fs=require\\('fs'\\);const html=fs.readFileSync\\('c:/Users/USER/Desktop/meowmeow_sandbox/meowmeow_pos_event.html','utf8'\\);const m=html.match\\(/<script>\\([\\\\s\\\\S]*\\)<\\\\/script>\\\\s*<\\\\/body>/\\);if\\(!m\\){console.log\\('no script tag'\\);process.exit\\(1\\);}try{new Function\\(m[1]\\);console.log\\('JS parse OK, length',m[1].length\\);}catch\\(e\\){console.error\\('PARSE ERROR:',e.message\\);process.exit\\(1\\);}\")",
       "Bash(where.exe node *)",
       "Bash(where.exe deno *)",
-      "Bash(powershell -NoProfile -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object Source\")"
+      "Bash(powershell -NoProfile -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object Source\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const html=fs.readFileSync\\('meowmeow_pos_event.html','utf8'\\);const m=html.match\\(/<script[\\\\s\\\\S]*?<\\\\/script>/g\\);if\\(!m\\){console.log\\('no scripts'\\);process.exit\\(0\\);}m.forEach\\(\\(s,i\\)=>{const body=s.replace\\(/^<script[^>]*>/,''\\).replace\\(/<\\\\/script>$/,''\\);try{new Function\\(body\\);}catch\\(e\\){console.log\\('script',i,'parse error:',e.message\\);}}\\);console.log\\('parse ok'\\);\")"
     ]
   }
 }
