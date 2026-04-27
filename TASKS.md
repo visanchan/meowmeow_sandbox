@@ -508,6 +508,50 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** V
 - **Notes:** Completed by Codex on `batch/w-today-by-hour-dashboard` 2026-04-27. Added the Today By Hour dashboard card under 4-Day Pace with `<10`, `10`-`20`, and `>21` local-time buckets, compact vertical bars, dark-brown peak highlight, and peak note. `dashboardMetrics()` now exposes display-only hourly totals/receipt counts; no storage, CSV, product, passcode, inventory, Send Later, reset, discount flag, free-gift, top-seller, or low-stock behavior changed. Smoke and responsive layout sanity checks passed.
 
+### Batch X - Inventory Flow Sample Visibility + Table Readability
+- **Business objective:** Make sample-stock movement and key inventory quantities visible in Inventory Flow so staff/managers can reconcile booth stock faster.
+- **Expected benefit:** Fewer questions about missing stock, clearer review of samples created during the event, and faster scanning of added/remaining stock during operations.
+- **Implementation difficulty:** low to medium.
+- **Cost/complexity tradeoff:** Reuse the existing per-day `sampleQty` inventory model and current Inventory Flow table instead of adding new storage, reports, or export formats.
+- **Items:**
+  1. Show per-day sample stock in the Inventory Flow summary area, visually grouped inside the existing `Added Stock` KPI card:
+     - keep `Added Stock` visible as its own partition
+     - add a `Sample` partition in the same card
+     - show sample movement with a leading plus sign, e.g. `+1`, `+3`
+     - show `+0` in a quiet state when no samples exist
+  2. Show per-product sample stock in the Inventory Flow table:
+     - keep the existing `Added Stock` column
+     - add a compact `+N sample` chip/subline inside that column only when sample quantity is nonzero
+     - do not add a new table column unless layout becomes unreadable
+  3. Improve Inventory Flow table readability:
+     - make numeric values larger and easier to scan
+     - visually emphasize `Added Stock` and `Remaining Stock`
+     - keep `Starting Stock` and `Sold Quantity` readable but less visually dominant
+     - keep low/zero remaining stock easy to notice without making the table noisy
+  4. Preserve current inventory math:
+     - remaining stock must continue to equal `starting + added - sold - sample`
+     - lowering `sampleQty` through `Correction Center > Inventory Correction` must automatically return stock to event remaining stock
+     - do not change sample storage shape or correction save logic
+  5. Update README Inventory notes to explain that Inventory Flow displays sample movement as `+N sample`, and that sample quantity reduces remaining event stock until corrected.
+  6. Extend `tests/smoke_event_pos.js` with a focused sample visibility check.
+- **Touches:** `meowmeow_pos_event.html`, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** sample storage shape, Stock & Allocation Setup sample editing logic, Inventory Correction save logic, sales CSV shape, end-of-day CSV shape, product data, passcodes, Send Later behavior, or dashboard behavior.
+- **Acceptance checks:**
+  - With Day 1 sample quantity set to `1` for a SKU, Inventory Flow summary shows `Sample +1` inside the same visual box as `Added Stock`.
+  - The matching product row shows a visible `+1 sample` indicator.
+  - Added Stock and Remaining Stock table numbers are larger/more visually prominent than the current plain table numbers.
+  - Remaining stock still equals `starting + added - sold - sample`.
+  - If Inventory Correction changes that SKU sample quantity from `1` back to `0`, Inventory Flow removes the row chip or returns it to zero state, and Remaining increases by `1`.
+  - Free gift/scarf display keeps the existing parentheses formatting where relevant.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** Sample stock is already tracked per day in `state.inventory.days[dayId].sampleQty` and already reduces remaining event stock. This batch should be display/readability plus smoke coverage; any inventory-math change is a regression risk.
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/x-inventory-flow-samples
+- **Claimed:** 2026-04-27
+- **BlockedBy:**
+- **Notes:** User assigned Codex to implement the planned monitor-only Inventory Flow sample visibility and table readability batch.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -527,6 +571,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 14. **T** - Smoke Coverage for PIN-Gated Workflows after Batch Q updates passcode/reset patterns.
 15. **V** - Dashboard V3 Manager View after Batch U dashboard base is merged.
 16. **W** - Today By Hour Dashboard Card after Batch V layout is stable.
+17. **X** - Inventory Flow Sample Visibility + Table Readability after Batch W dashboard work is stable.
 
 ## Done
 
