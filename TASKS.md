@@ -363,12 +363,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Existing overlays can still close via intended buttons and Escape where appropriate.
   - `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** There are many alert call sites. Claude should keep this batch focused on staff/admin flows and avoid rewriting every low-level storage failure path unless time allows.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/s-in-app-dialogs
+- **Owner:**
+- **Status:** done
+- **Branch:**
 - **Claimed:** 2026-04-27 21:05
 - **BlockedBy:** Q
-- **Notes:** Partial completed on `main` at `e64905d`: `Clear Pending Send Later` already in-app. Remaining scope implemented on `batch/s-in-app-dialogs` 2026-04-27: added two reusable overlays (`#appNoticeOverlay` for OK-style notices and `#appPromptOverlay` for textarea reason prompts), and replaced every remaining `alert(...)` and `prompt(...)` call site with `showAppNotice(...)` / `openAppPrompt(...)`. Affected paths: `Clear Emails` result, Stock & Allocation Setup validation, Inventory Correction validation, Inventory Reverse top-up reason (textarea, Enter to submit, Cancel/Escape close), Send Later form validation, Send Later/Sale/End-of-Day/Void Audit CSV export empty/error, and the storage-failure save errors in `saveSales`/`saveVoidedSales`/`saveInventory`/`saveGlobalInventory`/`savePreorders`. Free-scarf out-of-stock cart message switched from `alert` to existing `showStockNotice` toast (per spec "keep lightweight cart stock notices as toasts"). ESC closes both new dialogs. `tests/smoke_event_pos.js` still passes. Codex review recommended before merge (touches admin error/result paths). Visual scan of dialogs not done in headed browser yet — call out in handoff.
+- **Notes:** Completed on `main` 2026-04-27. Claude implemented two reusable overlays (`#appNoticeOverlay` for OK-style notices and `#appPromptOverlay` for textarea reason prompts), and replaced every remaining `alert(...)` and `prompt(...)` call site with `showAppNotice(...)` / `openAppPrompt(...)`. Affected paths: `Clear Emails` result, Stock & Allocation Setup validation, Inventory Correction validation, Inventory Reverse top-up reason (textarea, Enter to submit, Cancel/Escape close), Send Later form validation, Send Later/Sale/End-of-Day/Void Audit CSV export empty/error, and the storage-failure save errors in `saveSales`/`saveVoidedSales`/`saveInventory`/`saveGlobalInventory`/`savePreorders`. Free-scarf out-of-stock cart message switched from `alert` to existing `showStockNotice` toast. Codex follow-up fixed Escape handling so app notice/prompt dialogs close before parent overlays. `tests/smoke_event_pos.js` passes.
 
 ### Batch T — Smoke Coverage for PIN-Gated Workflows
 - **Business objective:** Catch regressions in the PIN-gated entry points before they reach a live event.

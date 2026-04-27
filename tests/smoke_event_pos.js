@@ -609,6 +609,43 @@ async function main() {
   assert(result.clearPendingRejectsWrong, "Wrong Clear Pending passcode must show in-app error and keep pending orders", result);
   assert(result.clearPendingClearsPendingOnly, "Correct Clear Pending passcode must remove pending orders only", result);
 
+  // Batch S - app dialogs must close before their parent panels on Escape.
+  const appDialogStackFlow = await page.evaluate(() => {
+    closeLoginOverlay();
+    openPreorderPanel();
+    showAppNotice("Smoke notice", { title: "Smoke notice" });
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const noticeResult = {
+      noticeClosed: !appNoticeOverlay.classList.contains("open"),
+      parentStayedOpen: preorderOverlay.classList.contains("open"),
+    };
+    closePreorderPanel();
+
+    openInventoryView();
+    openAppPrompt({ title: "Smoke prompt", message: "Testing dialog stack" });
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const promptResult = {
+      promptClosed: !appPromptOverlay.classList.contains("open"),
+      parentStayedOpen: inventoryViewOverlay.classList.contains("open"),
+    };
+    closeInventoryView();
+
+    return { noticeResult, promptResult };
+  });
+
+  assert(
+    appDialogStackFlow.noticeResult.noticeClosed &&
+      appDialogStackFlow.noticeResult.parentStayedOpen,
+    "Escape on app notice must close only the notice, not the parent panel",
+    appDialogStackFlow
+  );
+  assert(
+    appDialogStackFlow.promptResult.promptClosed &&
+      appDialogStackFlow.promptResult.parentStayedOpen,
+    "Escape on app prompt must close only the prompt, not the parent panel",
+    appDialogStackFlow
+  );
+
   // Batch X - Inventory Flow sample visibility + table readability.
   const inventorySampleFlow = await page.evaluate(() => {
     localStorage.clear();
