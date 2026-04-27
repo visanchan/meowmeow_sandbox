@@ -89,6 +89,9 @@ async function main() {
       dashboardPaySplitTiles.textContent.includes("Card"),
     timelineSteps: dashboardTimelineTrack.querySelectorAll(".v3-timeline-step").length,
     timelineCells: dashboardTimelineRows.querySelectorAll(".v3-timeline-cell").length,
+    hourBucketCount: dashboardHourChart.querySelectorAll(".v3-hour-bucket").length,
+    hourEmptyNote: dashboardHourPeakNote.textContent,
+    hourChartText: dashboardHourChart.textContent,
     topSellersEmptyState: dashboardTopSellers.textContent.includes("No paid items sold yet"),
     lowStockEmptyState:
       dashboardLowStock.textContent.includes("All booth SKUs above their low-stock alert") ||
@@ -646,6 +649,13 @@ async function main() {
     pinFlows.dashboardAcceptsCorrect
   );
   assert(
+    pinFlows.dashboardAcceptsCorrect.hourBucketCount === 13 &&
+      pinFlows.dashboardAcceptsCorrect.hourEmptyNote === "No sales yet" &&
+      !pinFlows.dashboardAcceptsCorrect.hourChartText.includes("NaN"),
+    "Today By Hour must render 13 empty buckets cleanly with no NaN",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
     pinFlows.dashboardAcceptsCorrect.topSellersEmptyState,
     "V3 top sellers card must show empty state when there are no paid sales",
     pinFlows.dashboardAcceptsCorrect
@@ -836,11 +846,16 @@ async function main() {
     state.inventory.thresholds[skuA] = 30;
     state.inventory.thresholds[skuB] = 5;
 
-    const baseSale = (id, sku, qty, payment, lineTotal) => ({
+    const makeTodayAt = (hour, minute = 0) => {
+      const date = new Date();
+      date.setHours(hour, minute, 0, 0);
+      return date.toISOString();
+    };
+    const baseSale = (id, sku, qty, payment, lineTotal, datetime) => ({
       id,
       billId: id,
-      datetime: new Date().toISOString(),
-      timestamp: Date.now(),
+      datetime,
+      timestamp: new Date(datetime).getTime(),
       operatingDay: "day1",
       payment,
       paymentStatus: "confirmed",
@@ -869,9 +884,11 @@ async function main() {
     });
 
     state.sales = [
-      baseSale("V3-CASH-1", skuA, 25, "cash", 12500),
-      baseSale("V3-TRANSFER-1", skuB, 6, "transfer", 4800),
-      baseSale("V3-CARD-1", skuA, 1, "card", 500),
+      baseSale("V3-CASH-1", skuA, 25, "cash", 12500, makeTodayAt(9, 30)),
+      baseSale("V3-CASH-10", skuB, 1, "cash", 100, makeTodayAt(10, 0)),
+      baseSale("V3-TRANSFER-1", skuB, 6, "transfer", 4800, makeTodayAt(15, 0)),
+      baseSale("V3-CASH-20", skuB, 1, "cash", 100, makeTodayAt(20, 59)),
+      baseSale("V3-CARD-1", skuA, 1, "card", 500, makeTodayAt(21, 15)),
     ];
     state.salesRevision += 1;
     invalidateSalesDerivedData();
@@ -886,6 +903,17 @@ async function main() {
     );
     const liveCells = dashboardTimelineRows.querySelectorAll(".v3-timeline-cell.is-live").length;
     const paySplitText = dashboardPaySplitTiles.textContent;
+    const hourBuckets = Object.fromEntries(
+      Array.from(dashboardHourChart.querySelectorAll(".v3-hour-bucket")).map((bucket) => [
+        bucket.dataset.hourBucket,
+        {
+          total: Number(bucket.dataset.hourTotal || 0),
+          receipts: Number(bucket.dataset.hourReceipts || 0),
+          isPeak: bucket.classList.contains("is-peak"),
+          text: bucket.textContent,
+        },
+      ])
+    );
 
     return {
       skuA,
@@ -903,6 +931,15 @@ async function main() {
         paySplitText.includes("Cash") &&
         paySplitText.includes("Transfer") &&
         paySplitText.includes("Card"),
+      hourBucketCount: Object.keys(hourBuckets).length,
+      hourPeakNote: dashboardHourPeakNote.textContent,
+      before10Total: hourBuckets.before10?.total,
+      before10IsPeak: hourBuckets.before10?.isPeak,
+      hour10Total: hourBuckets["10"]?.total,
+      hour15Total: hourBuckets["15"]?.total,
+      hour20Total: hourBuckets["20"]?.total,
+      after21Total: hourBuckets.after21?.total,
+      after21Receipts: hourBuckets.after21?.receipts,
     };
   });
 
@@ -915,6 +952,13 @@ async function main() {
   assert(v3DashboardFlow.lowExcludesSkuB, "Low Stock card must exclude skuB (50 starting - 6 sold = 44 remaining, threshold 5, well above)", v3DashboardFlow);
   assert(v3DashboardFlow.liveCellCount === 1, "Exactly one V3 timeline cell must be marked live (the active day)", v3DashboardFlow);
   assert(v3DashboardFlow.paySplitMentionsThreeMethods, "Payment split must mention Cash, Transfer, and Card after a populated mix", v3DashboardFlow);
+  assert(v3DashboardFlow.hourBucketCount === 13, "Today By Hour must render the full <10, 10-20, >21 bucket set", v3DashboardFlow);
+  assert(v3DashboardFlow.before10Total === 12500 && v3DashboardFlow.before10IsPeak, "Before-10 sales must land in the <10 bucket and highlight as peak when largest", v3DashboardFlow);
+  assert(v3DashboardFlow.hour10Total === 100, "10:00 sale must land in the 10 bucket", v3DashboardFlow);
+  assert(v3DashboardFlow.hour15Total === 4800, "15:00 sale must land in the 15 bucket", v3DashboardFlow);
+  assert(v3DashboardFlow.hour20Total === 100, "20:59 sale must land in the 20 bucket", v3DashboardFlow);
+  assert(v3DashboardFlow.after21Total === 500 && v3DashboardFlow.after21Receipts === 1, "21:00+ sale must land in the >21 bucket", v3DashboardFlow);
+  assert(v3DashboardFlow.hourPeakNote.includes("peak THB 12.5k @ <10"), "Today By Hour peak note must match the highlighted bucket", v3DashboardFlow);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
