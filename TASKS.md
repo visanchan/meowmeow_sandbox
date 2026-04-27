@@ -654,12 +654,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Old saved scarf bills, if present in localStorage, still render without crashing.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** "Meowsuem+Modern Friends" is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
-- **BlockedBy:** Y
-- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes.
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/z-sticker-promo
+- **Claimed:** 2026-04-28 16:00
+- **BlockedBy:**
+- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes. Y is merged on `main`; Z claimed by Claude 2026-04-28.
 
 ### Batch FINAL_REVIEW — Event Readiness Bug Fix & Full Workflow Check
 - **Business objective:** Do one final bug-fix and readiness pass after delivery fees and the sticker promo are implemented, so the POS is safe to use on the event device.
