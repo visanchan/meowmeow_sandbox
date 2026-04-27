@@ -20,7 +20,12 @@ async function main() {
   });
   const page = await browser.newPage();
   const pageErrors = [];
+  const browserDialogs = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("dialog", async (dialog) => {
+    browserDialogs.push(dialog.message());
+    await dialog.dismiss();
+  });
 
   await page.goto(`file:///${appPath.replace(/\\/g, "/")}`);
   await page.waitForSelector("#productGrid", { timeout: 5000 });
@@ -452,6 +457,59 @@ async function main() {
       voidedStorageAfter: localStorage.getItem("meowseum_event_voided_sales_v1"),
     };
 
+    // Clear Pending Send Later scenario: use in-app passcode dialog, not browser prompt/confirm.
+    state.preorders = [
+      {
+        id: "SMOKE-PENDING-CLEAR",
+        sku,
+        qty: 1,
+        productName: "Smoke Pending",
+        customerName: "Pending customer",
+        status: "pending",
+        fulfillmentType: "reserved_send_later",
+        createdAt: new Date().toISOString(),
+        operatingDay: "day1",
+      },
+      {
+        id: "SMOKE-PACKED-KEEP",
+        sku,
+        qty: 1,
+        productName: "Smoke Packed",
+        customerName: "Packed customer",
+        status: "packed",
+        fulfillmentType: "reserved_send_later",
+        createdAt: new Date().toISOString(),
+        operatingDay: "day1",
+      },
+    ].map((entry, index) => normalizePreorder(entry, index));
+    savePreorders();
+    renderPreorders();
+    openClearPendingSendLaterDialog();
+    const clearPendingInitial = {
+      overlayOpen: els.confirmClearPendingOverlay.classList.contains("open"),
+      confirmDisabled: els.confirmClearPendingBtn.disabled,
+      message: els.confirmClearPendingMessage.textContent,
+    };
+    handleClearPendingInput("9");
+    handleClearPendingInput("9");
+    handleClearPendingInput("9");
+    const clearPendingWrong = {
+      confirmStillDisabled: els.confirmClearPendingBtn.disabled,
+      errorShown: !!els.clearPendingError.textContent,
+      pinClearedAfterReject: state.clearPendingPin === "",
+      pendingStillPresent: state.preorders.some((entry) => entry.id === "SMOKE-PENDING-CLEAR"),
+    };
+    handleClearPendingInput("8");
+    handleClearPendingInput("8");
+    handleClearPendingInput("8");
+    clearPendingSendLaterOrders();
+    const clearPendingAfter = {
+      overlayClosed: !els.confirmClearPendingOverlay.classList.contains("open"),
+      pendingRemoved: !state.preorders.some((entry) => entry.id === "SMOKE-PENDING-CLEAR"),
+      packedKept: state.preorders.some((entry) => entry.id === "SMOKE-PACKED-KEEP"),
+      storageKeptPacked: JSON.parse(localStorage.getItem("meowseum_event_preorders_v1") || "[]").some((entry) => entry.id === "SMOKE-PACKED-KEEP"),
+    };
+
     return {
       sku,
       ...voidResult,
@@ -477,10 +535,14 @@ async function main() {
       resetGateAcceptsCorrect: gateCorrect.confirmEnabled && gateCorrect.errorClearedAfterAccept,
       resetGateConfirmVisible: gateCorrect.confirmButtonVisible,
       resetGateClosedClearsPin: gateAfterClose.pinReset && gateAfterClose.overlayClosed,
+      clearPendingDialogOpens: clearPendingInitial.overlayOpen && clearPendingInitial.confirmDisabled && clearPendingInitial.message.includes("1 pending"),
+      clearPendingRejectsWrong: clearPendingWrong.confirmStillDisabled && clearPendingWrong.errorShown && clearPendingWrong.pinClearedAfterReject && clearPendingWrong.pendingStillPresent,
+      clearPendingClearsPendingOnly: clearPendingAfter.overlayClosed && clearPendingAfter.pendingRemoved && clearPendingAfter.packedKept && clearPendingAfter.storageKeptPacked,
     };
   });
 
   assert(pageErrors.length === 0, "Page errors were reported", pageErrors);
+  assert(browserDialogs.length === 0, "Browser alert/prompt/confirm dialogs should not appear in smoke flows", browserDialogs);
   assert(!uiVoidResult.overlayOpen, "Void confirmation dialog stayed open after UI click", uiVoidResult);
   assert(uiVoidResult.salesAfterVoid === 0, "UI Void Bill click did not remove the sale", uiVoidResult);
   assert(uiVoidResult.voidedCount === 1, "UI Void Bill click did not store audit entry", uiVoidResult);
@@ -533,6 +595,9 @@ async function main() {
   assert(result.resetGateAcceptsCorrect, "Correct reset passcode must enable confirm button and clear error", result);
   assert(result.resetGateConfirmVisible, "Reset confirm button must stay visible after correct passcode entry", result);
   assert(result.resetGateClosedClearsPin, "Closing reset overlay must clear PIN and hide overlay", result);
+  assert(result.clearPendingDialogOpens, "Clear Pending must open an in-app disabled passcode dialog", result);
+  assert(result.clearPendingRejectsWrong, "Wrong Clear Pending passcode must show in-app error and keep pending orders", result);
+  assert(result.clearPendingClearsPendingOnly, "Correct Clear Pending passcode must remove pending orders only", result);
 
   // PIN-gated workflow assertions.
   assert(pinFlows.loginAutoOpen, "Login overlay must auto-open on fresh init when no operator is persisted", pinFlows);
