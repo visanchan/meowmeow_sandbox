@@ -301,8 +301,9 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .dashboard-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
 .dashboard-close{padding:12px 16px;border-radius:16px;background:#f1e7d9;color:#5f462a;font-weight:800}
 .dashboard-grid{display:grid;gap:14px}
-.dashboard-grid.v2{grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);align-items:start}
-.dashboard-grid.v2 .dashboard-hero{grid-column:1 / -1}
+.dashboard-grid.v2{grid-template-columns:1fr;align-items:start}
+.dashboard-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.58fr);gap:14px;align-items:start}
+.dashboard-column{display:grid;gap:14px;align-content:start}
 .dashboard-hero{padding:24px;border:1px solid var(--line);border-radius:24px;background:#fffdf8}
 .dashboard-hero.is-slow{background:linear-gradient(180deg,#fff7f0,#f8e1d4)}
 .dashboard-hero.is-building{background:linear-gradient(180deg,#fffdf6,#f5e8cd)}
@@ -376,7 +377,7 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .v3-low-pill.is-low{background:#f7d9b0;color:#8a571a}
 .v3-low-pill.is-soldout{background:#c45c4e;color:#fff5f1}
 .v3-low-remaining{font-size:13px;font-weight:900;color:#4f3820;text-align:right}
-.v3-hour-card{grid-column:1}
+.v3-hour-card{}
 .v3-hour-note{font-size:12px;color:#8d6236;font-weight:800;text-align:right}
 .v3-hour-chart{min-height:150px;display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:4px;align-items:end;padding:8px 0 0;border-bottom:2px solid #eadcc9}
 .v3-hour-bucket{min-width:0;display:grid;grid-template-rows:30px 92px 20px;gap:4px;align-items:end;text-align:center}
@@ -576,7 +577,7 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 @media (max-width:1100px){.app{margin:0;padding-bottom:470px}.success-card{overflow:auto;display:block}.success-body{grid-template-columns:1fr;overflow:visible}.success-column{overflow:visible;padding-right:0}.cart-shell{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.cart-main{border-right:0;border-bottom:1px solid var(--line)}.sticky-cart{left:16px;right:16px;top:auto;bottom:16px;width:auto}.cart-list{max-height:230px}.correction-review-grid{grid-template-columns:1fr}}
 @media (max-width:1024px){body{padding:14px}.app{padding-bottom:390px}.topbar{padding:16px 18px;align-items:flex-start}.brand-line-the{font-size:17px}.brand-line-meow{gap:5px;font-size:38px}.brand-line-seum{font-size:29px;letter-spacing:.032em;padding-left:.04em}.brand-line-note{margin-top:6px;font-size:11px;letter-spacing:.07em}.tabbar{gap:8px}.tab{min-width:120px;padding:9px 14px;font-size:14px}.product-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.product-card{min-height:0;padding:6px}.product-photo-wrap{aspect-ratio:5 / 2}.product-name{min-height:1.84em;font-size:12.4px}.product-name.compact{font-size:11.8px}.product-sku{font-size:14px}.product-stock{min-width:18px;min-height:18px;font-size:8px;padding:2px 5px}.product-price-row{min-height:21px}.product-price{font-size:14px}.product-quick-action{width:22px;height:22px;font-size:11px;flex-basis:22px}.product-color-badge{min-width:20px;min-height:20px;font-size:11px}.sticky-cart{left:14px;right:14px;bottom:14px;border-radius:24px}.cart-main,.cart-pay{padding:14px 16px}.cart-title{font-size:22px}.cart-list{max-height:160px}.summary{padding:12px}.summary-total{font-size:24px}.payment-grid{gap:8px}.payment-btn{padding:12px 10px;font-size:15px}.action-btn{padding:14px;font-size:17px}.dashboard-card{width:min(900px,calc(100vw - 20px))}.dashboard-head h2{font-size:24px}.dashboard-hero{padding:12px 16px}.dashboard-status-badge{padding:7px 11px}.dashboard-status-emoji{font-size:20px}.dashboard-status-copy{font-size:12px}.dashboard-hero-amount{font-size:30px}.dashboard-hero-goal{font-size:15px}.dashboard-progress{grid-template-columns:104px minmax(0,1fr);gap:12px;margin-top:8px}.goal-gauge{width:104px;height:104px}.goal-gauge::before{width:74px;height:74px}.goal-gauge-percent{font-size:22px}.dashboard-progress-bar{height:12px}.dashboard-progress-note{font-size:11px}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:66px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.dashboard-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.dashboard-day-card{padding:10px;gap:7px}.dashboard-day-title{font-size:14px}.dashboard-day-total{font-size:20px}.dashboard-day-meta span{padding:8px 9px;font-size:10px}.dashboard-day-meta strong{font-size:14px}.preorder-grid{grid-template-columns:1fr}.correction-layout{grid-template-columns:1fr}}
 @media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;gap:8px;align-items:center}.brand-line-the{font-size:15px}.brand-line-meow{gap:4px;font-size:32px}.brand-line-seum{font-size:24px;letter-spacing:.028em;padding-left:.035em}.brand-line-note{margin-top:5px;font-size:10px;letter-spacing:.06em}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{min-height:0;padding:6px}.product-photo-wrap{aspect-ratio:5 / 2.05}.product-name{min-height:1.84em;font-size:12px}.product-name.compact{font-size:11.4px}.product-sku{font-size:13px}.product-stock{min-width:18px;min-height:18px;font-size:7px;padding:2px 4px}.product-price-row{min-height:20px}.product-price{font-size:13px}.product-quick-action{width:21px;height:21px;font-size:10px;flex-basis:21px}.product-color-badge{min-width:19px;min-height:19px;font-size:11px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:64px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.inventory-kpis,.preorder-summary,.preorder-field-row{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-days{grid-template-columns:1fr}}
-@media (max-width:960px){.dashboard-grid.v2{grid-template-columns:1fr}.dashboard-grid.v2 .v2-hero-pct-block{text-align:left}.dashboard-grid.v2 .v2-stats-grid,.dashboard-grid.v2 .v2-pay-tiles{grid-template-columns:1fr 1fr}.dashboard-grid.v2 .dashboard-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.dashboard-columns{grid-template-columns:1fr}.dashboard-grid.v2 .v2-hero-pct-block{text-align:left}.dashboard-grid.v2 .v2-stats-grid,.dashboard-grid.v2 .v2-pay-tiles{grid-template-columns:1fr 1fr}.dashboard-grid.v2 .dashboard-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .dashboard-grid.v2 .dashboard-days{gap:12px}
 .dashboard-grid.v2 .dashboard-day-card{padding:14px 14px 13px;gap:9px;min-height:0;border-radius:14px;overflow:hidden}
 .dashboard-grid.v2 .dashboard-day-card::before{position:absolute;top:14px;left:14px;width:22px;height:22px}
@@ -1300,61 +1301,67 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
             <div class="v2-overage" id="dashboardGoalOverage" hidden>Over Goal THB 0.00</div>
           </div>
         </div>
-        <div class="dashboard-tool-card v2-card">
-          <div class="v2-card-head"><h3>4-Day Pace</h3></div>
-          <div class="v3-timeline">
-            <div class="v3-timeline-track" id="dashboardTimelineTrack"></div>
-            <div class="v3-timeline-rows" id="dashboardTimelineRows"></div>
-          </div>
-        </div>
-        <div class="dashboard-tool-card v2-card">
-          <div class="v2-card-head">
-            <h3 id="dashboardTodayTitle">Today</h3>
-            <div class="v2-today-amount" id="dashboardTodaySales">THB 0.00</div>
-          </div>
-          <div class="v2-stats-grid">
-            <div class="v2-stat">
-              <div class="v2-stat-label">🧾 Receipts</div>
-              <div class="v2-stat-value" id="dashboardReceipts">0</div>
-              <div class="v2-stat-sub" id="dashboardReceiptsSub">0 total event</div>
+        <div class="dashboard-columns">
+          <div class="dashboard-column dashboard-column-main">
+            <div class="dashboard-tool-card v2-card">
+              <div class="v2-card-head"><h3>4-Day Pace</h3></div>
+              <div class="v3-timeline">
+                <div class="v3-timeline-track" id="dashboardTimelineTrack"></div>
+                <div class="v3-timeline-rows" id="dashboardTimelineRows"></div>
+              </div>
             </div>
-            <div class="v2-stat">
-              <div class="v2-stat-label">📦 Items Sold</div>
-              <div class="v2-stat-value" id="dashboardItemsSold">0</div>
-              <div class="v2-stat-sub" id="dashboardItemsSub">0 total event</div>
+            <div class="dashboard-tool-card v2-card v3-hour-card">
+              <div class="v2-card-head">
+                <h3>Today By Hour</h3>
+                <div class="v3-hour-note" id="dashboardHourPeakNote">No sales yet</div>
+              </div>
+              <div class="v3-hour-chart" id="dashboardHourChart"></div>
             </div>
-            <div class="v2-stat">
-              <div class="v2-stat-label">💳 Average Bill</div>
-              <div class="v2-stat-value" id="dashboardAvgBill">THB 0.00</div>
-              <div class="v2-stat-sub" id="dashboardAvgSub">0.0 items/bill</div>
-            </div>
-            <div class="v2-stat">
-              <div class="v2-stat-label">💰 Total Sale</div>
-              <div class="v2-stat-value" id="dashboardTotalSales">THB 0.00</div>
-              <div class="v2-stat-sub">event-wide</div>
+            <div class="dashboard-tool-card v2-card">
+              <div class="v2-card-head"><h3 id="dashboardLowStockTitle">Low Stock Alerts</h3></div>
+              <div class="v3-list-card" id="dashboardLowStock"></div>
             </div>
           </div>
-          <div class="v2-pay-head">
-            <div class="v2-pay-title">Payment split · today</div>
-            <div class="v2-pay-hint">Cash count must match booth float</div>
+          <div class="dashboard-column dashboard-column-side">
+            <div class="dashboard-tool-card v2-card">
+              <div class="v2-card-head">
+                <h3 id="dashboardTodayTitle">Today</h3>
+                <div class="v2-today-amount" id="dashboardTodaySales">THB 0.00</div>
+              </div>
+              <div class="v2-stats-grid">
+                <div class="v2-stat">
+                  <div class="v2-stat-label">🧾 Receipts</div>
+                  <div class="v2-stat-value" id="dashboardReceipts">0</div>
+                  <div class="v2-stat-sub" id="dashboardReceiptsSub">0 total event</div>
+                </div>
+                <div class="v2-stat">
+                  <div class="v2-stat-label">📦 Items Sold</div>
+                  <div class="v2-stat-value" id="dashboardItemsSold">0</div>
+                  <div class="v2-stat-sub" id="dashboardItemsSub">0 total event</div>
+                </div>
+                <div class="v2-stat">
+                  <div class="v2-stat-label">💳 Average Bill</div>
+                  <div class="v2-stat-value" id="dashboardAvgBill">THB 0.00</div>
+                  <div class="v2-stat-sub" id="dashboardAvgSub">0.0 items/bill</div>
+                </div>
+                <div class="v2-stat">
+                  <div class="v2-stat-label">💰 Total Sale</div>
+                  <div class="v2-stat-value" id="dashboardTotalSales">THB 0.00</div>
+                  <div class="v2-stat-sub">event-wide</div>
+                </div>
+              </div>
+              <div class="v2-pay-head">
+                <div class="v2-pay-title">Payment split · today</div>
+                <div class="v2-pay-hint">Cash count must match booth float</div>
+              </div>
+              <div class="v2-pay-bar" id="dashboardPaySplitBar"></div>
+              <div class="v2-pay-tiles" id="dashboardPaySplitTiles"></div>
+            </div>
+            <div class="dashboard-tool-card v2-card">
+              <div class="v2-card-head"><h3>Top Sellers · Event</h3></div>
+              <div class="v3-list-card" id="dashboardTopSellers"></div>
+            </div>
           </div>
-          <div class="v2-pay-bar" id="dashboardPaySplitBar"></div>
-          <div class="v2-pay-tiles" id="dashboardPaySplitTiles"></div>
-        </div>
-        <div class="dashboard-tool-card v2-card v3-hour-card">
-          <div class="v2-card-head">
-            <h3>Today By Hour</h3>
-            <div class="v3-hour-note" id="dashboardHourPeakNote">No sales yet</div>
-          </div>
-          <div class="v3-hour-chart" id="dashboardHourChart"></div>
-        </div>
-        <div class="dashboard-tool-card v2-card">
-          <div class="v2-card-head"><h3>Top Sellers · Event</h3></div>
-          <div class="v3-list-card" id="dashboardTopSellers"></div>
-        </div>
-        <div class="dashboard-tool-card v2-card">
-          <div class="v2-card-head"><h3 id="dashboardLowStockTitle">Low Stock Alerts</h3></div>
-          <div class="v3-list-card" id="dashboardLowStock"></div>
         </div>
       </div>
     </div>
