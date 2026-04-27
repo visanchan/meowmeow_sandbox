@@ -1743,6 +1743,123 @@ async function main() {
     stickerPromoFlow
   );
 
+  // Batch FINAL_REVIEW - combined event-day cart: booth item + Send Later delivery fee + sticker gift.
+  const finalReviewMixedFlow = await page.evaluate(() => {
+    function resetFinalReview() {
+      localStorage.clear();
+      state.sales = [];
+      invalidateSalesDerivedData();
+      state.voidedSales = [];
+      state.preorders = [];
+      state.cart = [];
+      state.payment = "card";
+      state.freeGiftOverride = null;
+      state.freeGiftStickerSku = STICKER_PROMO.defaultChoice;
+      state.freeGiftSuppressedAutoQty = 0;
+      state.pendingSale = null;
+      state.inventory = createDefaultInventory();
+      state.globalInventory = createDefaultGlobalInventory();
+      state.selectedOperator = "Zamm";
+      PRODUCTS.forEach((product) => {
+        state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+        state.inventory.days.day1.startingStock[product.sku] = 20;
+        state.globalInventory.global[product.sku] = 50;
+      });
+      renderProducts();
+      renderPayments();
+      renderCart();
+    }
+    function paidLine(sku, qty, fulfillmentType = "") {
+      const product = PRODUCTS.find((p) => p.sku === sku);
+      return {
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        qty,
+        basePrice: product.price,
+        defaultDiscountAmount: defaultProductDiscount(product),
+        discountAmount: defaultProductDiscount(product),
+        isFreeGift: false,
+        isFulfillmentLater: fulfillmentType === "reserved_send_later",
+        fulfillmentType,
+        preorderPaymentStatus: fulfillmentType ? "paid_now" : "",
+      };
+    }
+
+    resetFinalReview();
+    state.cart = [
+      paidLine("002A", 2),
+      paidLine("013", 1, "reserved_send_later"),
+    ];
+    renderCart();
+    const gift = findFreeGiftLine();
+    const beforeComplete = cartTotals();
+    const entitlementBeforeSave = freeGiftEntitlement();
+    completeSale();
+    const pending = state.pendingSale;
+    state.pendingSale.paymentConfirmed = true;
+    state.pendingSale.paymentStatus = "confirmed";
+    paymentConfirmedInput.checked = true;
+    customerNameInput.value = "Final Review";
+    customerPhoneInput.value = "0800000001";
+    customerReceiveLocationInput.value = "Ship after event";
+    syncPendingSaleCustomerFields();
+    finalizeSale("save");
+    const saved = state.sales[0];
+    const freeGift = saved.items.find((item) => item.isFreeGift);
+    const sendLater = saved.items.find((item) => item.fulfillmentType === "reserved_send_later");
+    const booth = saved.items.find((item) => item.sku === "002A" && !item.isFreeGift);
+    const freeGiftMap = getDayFreeGiftMap("day1");
+    const soldMap = getDaySoldMap("day1");
+    const csv = daySalesToCsv("day1");
+    return {
+      entitlement: freeGiftEntitlement(),
+      entitlementBeforeSave,
+      giftSku: gift?.sku,
+      giftQty: gift?.qty,
+      deliveryFee: beforeComplete.deliveryFee,
+      cardSurcharge: beforeComplete.cardSurcharge,
+      chargeableTotal: beforeComplete.chargeableTotal,
+      pendingTotal: pending.total,
+      pendingDeliveryFee: pending.deliveryFee,
+      savedTotal: saved.total,
+      savedDeliveryFee: saved.deliveryFee,
+      savedCardSurcharge: saved.cardSurcharge,
+      boothQty: booth?.qty,
+      sendLaterLineFee: sendLater?.lineDeliveryFee,
+      freeGiftSku: freeGift?.sku,
+      freeGiftTotal: freeGift?.lineTotal,
+      freeGiftMap021: freeGiftMap["021"],
+      soldMap021: soldMap["021"],
+      soldMap013: soldMap["013"],
+      csvHasDelivery: csv.includes(",200,"),
+      csvHasFreeSticker: csv.includes('"=""021"""') && csv.includes(",true,"),
+    };
+  });
+
+  assert(
+      finalReviewMixedFlow.entitlementBeforeSave === 2 &&
+      finalReviewMixedFlow.giftSku === "021" &&
+      finalReviewMixedFlow.giftQty === 2 &&
+      finalReviewMixedFlow.deliveryFee === 200 &&
+      finalReviewMixedFlow.cardSurcharge > 0 &&
+      finalReviewMixedFlow.pendingTotal === finalReviewMixedFlow.chargeableTotal &&
+      finalReviewMixedFlow.savedTotal === finalReviewMixedFlow.chargeableTotal &&
+      finalReviewMixedFlow.savedDeliveryFee === 200 &&
+      finalReviewMixedFlow.savedCardSurcharge === finalReviewMixedFlow.cardSurcharge &&
+      finalReviewMixedFlow.boothQty === 2 &&
+      finalReviewMixedFlow.sendLaterLineFee === 200 &&
+      finalReviewMixedFlow.freeGiftSku === "021" &&
+      finalReviewMixedFlow.freeGiftTotal === 0 &&
+      finalReviewMixedFlow.freeGiftMap021 === 2 &&
+      finalReviewMixedFlow.soldMap021 === 2 &&
+      finalReviewMixedFlow.soldMap013 === 0 &&
+      finalReviewMixedFlow.csvHasDelivery &&
+      finalReviewMixedFlow.csvHasFreeSticker,
+    "FINAL_REVIEW: mixed booth + Send Later + sticker promo cart must save matching totals, delivery fee, card surcharge, free sticker stock, and CSV rows",
+    finalReviewMixedFlow
+  );
+
   assert(pageErrors.length === 0, "No page errors after Batch Z sticker promo flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch Z sticker promo flow", browserDialogs);
 

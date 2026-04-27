@@ -695,11 +695,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - README's Event-Day Verification Checklist matches the current behavior.
 - **Risks/assumptions:** This is a final stabilization batch, not a redesign batch. If a major structural problem is discovered, stop and split it into a focused emergency batch instead of mixing large changes into final review.
 - **Owner:** codex
-- **Status:** in-progress
+- **Status:** ready-for-review
 - **Branch:** batch/final-review
 - **Claimed:** 2026-04-28 18:30
 - **BlockedBy:**
-- **Notes:** Final readiness pass requested by user on 2026-04-28. Codex is executing this solo after Batch Z was tested by the user and merged locally into `main`.
+- **Notes:** Final readiness pass requested by user on 2026-04-28. Codex executed this solo after Batch Z was tested by the user and merged locally into `main`. Full smoke passes on `batch/final-review`. Final-review coverage added one combined high-risk checkout scenario: paid booth items + Send Later delivery fee + card surcharge + automatic sticker gifts, asserting pending sale total, saved sale total, delivery fee, card surcharge, free sticker inventory movement, Send Later non-event-stock movement, and day CSV rows all agree. Static drift scan found only historical/legacy scarf references in docs and legacy compatibility code; no live `FREE_GIFT_SKU` or browser-dialog regression found.
 
 ## Suggested order (least-conflict first)
 

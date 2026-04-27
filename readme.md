@@ -400,7 +400,7 @@ Run this checklist on the event device before booth selling starts. Use test dat
 $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules'; $env:PLAYWRIGHT_BROWSER_PATH='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'; & 'C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tests\smoke_event_pos.js'
 ```
 
-The smoke test now covers PIN-gated workflows (operator login, Dashboard, Inventory, Correction lock screens), Today By Hour dashboard buckets, Inventory Flow sample visibility, void/carry-forward, stock top-up reset, and the destructive Reset Data gate.
+The smoke test now covers PIN-gated workflows (operator login, Dashboard, Inventory, Correction lock screens), Today By Hour dashboard buckets, Inventory Flow sample visibility, void/carry-forward, stock top-up reset, Send Later delivery fee totals, sticker promo behavior, a combined booth + Send Later + sticker gift cart, and the destructive Reset Data gate.
 
 - Staff login: log in as each expected staff role and confirm product taps are blocked after logout.
 - Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
