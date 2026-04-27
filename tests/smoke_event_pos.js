@@ -614,8 +614,12 @@ async function main() {
     closeLoginOverlay();
     openPreorderPanel();
     showAppNotice("Smoke notice", { title: "Smoke notice" });
+    const noticeOnTop = appNoticeOverlay.contains(
+      document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2)
+    );
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     const noticeResult = {
+      noticeOnTop,
       noticeClosed: !appNoticeOverlay.classList.contains("open"),
       parentStayedOpen: preorderOverlay.classList.contains("open"),
     };
@@ -623,8 +627,12 @@ async function main() {
 
     openInventoryView();
     openAppPrompt({ title: "Smoke prompt", message: "Testing dialog stack" });
+    const promptOnTop = appPromptOverlay.contains(
+      document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2)
+    );
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     const promptResult = {
+      promptOnTop,
       promptClosed: !appPromptOverlay.classList.contains("open"),
       parentStayedOpen: inventoryViewOverlay.classList.contains("open"),
     };
@@ -634,15 +642,17 @@ async function main() {
   });
 
   assert(
-    appDialogStackFlow.noticeResult.noticeClosed &&
+    appDialogStackFlow.noticeResult.noticeOnTop &&
+      appDialogStackFlow.noticeResult.noticeClosed &&
       appDialogStackFlow.noticeResult.parentStayedOpen,
-    "Escape on app notice must close only the notice, not the parent panel",
+    "App notice must render above its parent panel and Escape must close only the notice",
     appDialogStackFlow
   );
   assert(
-    appDialogStackFlow.promptResult.promptClosed &&
+    appDialogStackFlow.promptResult.promptOnTop &&
+      appDialogStackFlow.promptResult.promptClosed &&
       appDialogStackFlow.promptResult.parentStayedOpen,
-    "Escape on app prompt must close only the prompt, not the parent panel",
+    "App prompt must render above its parent panel and Escape must close only the prompt",
     appDialogStackFlow
   );
 
