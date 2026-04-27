@@ -340,11 +340,11 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .v2-pay-hint{font-size:12px;color:#6d5e4e;font-weight:700}
 .v2-pay-bar{display:flex;height:13px;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#f3eadf}
 .v2-pay-segment{min-width:2px;height:100%}
-.v2-pay-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.v2-pay-tile{padding:11px 12px;border:1px solid #eadcc9;border-radius:14px;background:#fffdf9}
+.v2-pay-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.v2-pay-tile{min-width:0;padding:11px 12px;border:1px solid #eadcc9;border-radius:14px;background:#fffdf9}
 .v2-pay-label{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:900;color:#6d5e4e;text-transform:uppercase}
 .v2-pay-dot{width:8px;height:8px;border-radius:50%;background:#8d6236}
-.v2-pay-value{margin-top:6px;font-size:18px;font-weight:900;color:#4f3820;word-break:break-word}
+.v2-pay-value{margin-top:6px;font-size:clamp(15px,1.35vw,18px);font-weight:900;color:#4f3820;white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums lining-nums;letter-spacing:0}
 .v2-pay-count{margin-top:3px;font-size:11px;color:#7a6a58;font-weight:700}
 .dashboard-days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .dashboard-day-card{position:relative;padding:12px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fffdfa 0%,#f8f0e5 100%);display:grid;gap:7px}
