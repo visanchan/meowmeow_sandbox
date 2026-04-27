@@ -2,7 +2,7 @@
 
 Source of truth for work-in-progress. Both Claude and Codex must read this file **before** editing any project file, and update it **immediately after** claiming, completing, or releasing a batch.
 
-> **Two-agent protocol PAUSED as of 2026-04-27** — Codex planning/review is on hold. Claude operates as the sole executor for now. The claim/release rules below still apply (so claims remain tidy if a future session resumes the protocol), but the "wait for Codex review" steps are skipped while paused.
+> **Two-agent protocol RESUMED as of 2026-04-27 20:25** — Codex is back as planner/reviewer/workflow analyst and Claude is the default implementation executor for approved batches. Claim/release, branch-per-batch, and Codex review rules are active again unless the user explicitly assigns Codex implementation work.
 
 ## Protocol (read before editing)
 
