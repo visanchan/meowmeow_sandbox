@@ -427,6 +427,50 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Shipped to `main` on 2026-04-27 alongside Batch R (fast-forward, top commit `3dabcf2`). Cream/brown v2 dashboard: event total vs goal, horizontal goal bar with quartile ticks, remaining + pace strip, today receipts/items/avg-bill/total tiles, today payment split (cash/transfer/card) bar + tiles, 4-day pace cards with Live badge for active day. `dashboardMetrics()` extended with today-only fields, `paySplit`, `openDays`, `paceNeeded`; empty state is NaN-safe. Codex follow-ups on `main` after merge: `dff9190` reset confirm action visibility, `5f8c186` pace-card tightening, `5756356` pace-metric alignment, `66d1e04` payment-tile wrap safety. ACCESS_CONTROL passcodes (`456` shared internal), EVENT_SALES_GOAL, discount-exception flags, free-gift paid/free format, sales storage, CSV, inventory carry-forward, and Batch R event-start gate all preserved. Smoke test extended for new dashboard selectors and passes.
 
+### Batch V - Dashboard V3 Manager View
+- **Business objective:** Upgrade the Internal Dashboard from a clean sales summary into a live manager view for booth decisions: goal progress, day pace, today performance, payment reconciliation, top sellers, and low-stock action.
+- **Expected benefit:** Faster manager decisions during the event, clearer cash/transfer/card checking, earlier restock focus, and better visibility into which products are driving revenue.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Keep the current single-file HTML/CSS/JS app and reuse Batch U's dashboard data patterns. Do not add React, chart libraries, CDN dependencies, or a new storage model. Use CSS bars/cards for the visual dashboard.
+- **Reference:** Use the Dashboard V3 reference image shared in chat, not a workspace file. If Claude cannot see the chat image, implement from this written structure: top event total vs goal card; horizontal 4-day timeline; today KPI section; payment split; top sellers; low-stock alerts.
+- **Items:**
+  1. Redesign the dashboard body into a manager-oriented V3 layout:
+     - event total vs goal card with percent, progress bar, remaining amount, and pace needed
+     - horizontal 4-day pace timeline with day number, live/open/closed state, total, receipt count, and item count
+     - today section with receipts, items sold, average bill, and current day total
+     - today payment split with cash / transfer / card totals and receipt counts
+     - top sellers event card with simple horizontal bars
+     - low stock alerts card based on current event remaining stock
+  2. Extend `dashboardMetrics()` only with display data:
+     - top sellers by event quantity and/or revenue
+     - current low-stock products using the existing inventory snapshot / low-alert threshold
+     - optional today hourly/peak-hour data if saved sale timestamps are reliable and it can be done without a chart library
+  3. Preserve Batch U safety work:
+     - payment tile wrap safety for THB 100,000+ values
+     - 4-day receipt/item alignment
+     - empty dashboard zero states with no `NaN`
+  4. Update smoke assertions only where selectors or visible dashboard structure change.
+- **Touches:** `meowmeow_pos_event.html` dashboard CSS/markup/rendering and `dashboardMetrics()`, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** product data, sales storage, localStorage keys, CSV shape, passcodes, reset behavior, Send Later behavior, inventory math, event-start confirmation behavior, free-gift item display format, or discount exception red flags.
+- **Acceptance checks:**
+  - Wrong dashboard PIN stays locked; correct internal PIN opens the dashboard.
+  - With no sales, V3 dashboard shows clean zero states without broken bars or `NaN`.
+  - Add cash, transfer, and card sales; payment split totals and receipt counts update correctly.
+  - Add sales across different operating days; the 4-day timeline matches saved sales by operating day.
+  - Top sellers exclude free gifts or clearly separate them from paid products.
+  - Low-stock alerts match current event remaining stock and existing low-alert thresholds.
+  - Discount exception red flags still appear on event/day totals where applicable.
+  - Free-gift item counts keep the existing paid/free display format.
+  - iPad/mobile widths do not overlap text; large THB values remain readable.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** The reference image is in chat, not the workspace. Hourly/peak-hour data depends on saved sale timestamps and should be skipped or kept simple if it risks false precision. Low-stock alerts must use current event remaining stock, not global warehouse stock. This batch overlaps the dashboard region, so do not run it in parallel with Batch S if both agents would edit `meowmeow_pos_event.html`.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** Planned by Codex on 2026-04-27 after Batch U. Prefer this before more cosmetic dashboard tweaks because it has higher manager decision value.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -444,6 +488,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 12. **R** - Manual Event Start Count after reset safety is clear.
 13. **S** - Replace Remaining Browser Alerts With In-App Dialogs after reset/dialog patterns are settled.
 14. **T** - Smoke Coverage for PIN-Gated Workflows after Batch Q updates passcode/reset patterns.
+15. **V** - Dashboard V3 Manager View after Batch U dashboard base is merged.
 
 ## Done
 
