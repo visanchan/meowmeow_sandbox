@@ -363,10 +363,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Existing overlays can still close via intended buttons and Escape where appropriate.
   - `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** There are many alert call sites. Claude should keep this batch focused on staff/admin flows and avoid rewriting every low-level storage failure path unless time allows.
-- **Owner:**
-- **Status:** partial-ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/s-in-app-dialogs
+- **Claimed:** 2026-04-27 21:05
 - **BlockedBy:** Q
 - **Notes:** Partial completed on `main` at `e64905d`: `Clear Pending Send Later` now uses an in-app passcode dialog, wrong PIN error, Escape/cancel close, and smoke coverage; it clears only pending records and preserves packed/shipped/cancelled records. Remaining Batch S scope is still ready for Claude, especially `Clear Emails`, stock setup validation failures, inventory reversal reason, and export-empty/error dialogs.
 
