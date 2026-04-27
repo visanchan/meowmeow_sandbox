@@ -552,6 +552,33 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed by Codex on `batch/x-inventory-flow-samples` 2026-04-27. Inventory Flow now shows `Added` and `Sample -N` partitions inside the Added Stock KPI, displays per-row `-N sample` chips, adds an emoji/live sign to Current Flow, and uses larger highlighted table numbers for Added Stock and Remaining Stock. Existing sample math and Inventory Correction behavior unchanged; smoke coverage added and passing.
 
+### Batch Y — Add Delivery Cost for Send Later Orders
+- **Business objective:** Automatically apply delivery cost per unit for Send Later orders to cover shipping expenses.
+- **Expected benefit:** Accurate pricing for delivery, transparent cost to customers, and proper revenue tracking for fulfillment costs.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Extend the existing Send Later cart logic and pricing system without adding new storage keys or external dependencies.
+- **Items:**
+  1. Add a delivery cost constant (e.g., THB 50 per unit) that applies automatically when a cart contains Send Later items.
+  2. Display the delivery cost as a separate line item in the cart summary and receipt, labeled clearly (e.g., "Delivery Cost").
+  3. Calculate delivery cost as cost per unit multiplied by the total Send Later quantity across all items in the cart.
+  4. Ensure delivery cost is included in the total sale amount, CSV exports, and payment processing.
+  5. Update README Fulfillment Later section to document the delivery cost behavior.
+- **Touches:** `meowmeow_pos_event.html` cart totals logic, receipt rendering, CSV export helpers, `readme.md`, `TASKS.md`.
+- **Do not change:** normal selling flow pricing, inventory logic, payment methods, or existing Send Later customer fields.
+- **Acceptance checks:**
+  - When adding Send Later items to cart, delivery cost appears in cart summary and increases total.
+  - Delivery cost is per unit and scales with Send Later quantity.
+  - Receipt and CSV include the delivery cost line.
+  - Normal sales without Send Later have no delivery cost.
+  - `tests/smoke_event_pos.js` passes with updated checks.
+- **Risks/assumptions:** Delivery cost is a flat per-unit fee; if variable costs are needed later, this can be extended. Batch is open for Claude and Codex review and improvement when implementation starts.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:**
+- **Notes:** New batch defined by user. Ready for Claude implementation with Codex review recommended due to pricing and CSV impact.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
