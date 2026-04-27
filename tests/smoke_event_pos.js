@@ -1481,6 +1481,7 @@ async function main() {
       state.payment = "cash";
       state.freeGiftOverride = null;
       state.freeGiftStickerSku = STICKER_PROMO.defaultChoice;
+      state.freeGiftSuppressedAutoQty = 0;
       state.pendingSale = null;
       state.inventory = createDefaultInventory();
       state.globalInventory = createDefaultGlobalInventory();
@@ -1559,6 +1560,29 @@ async function main() {
       buttonText: cartList.textContent,
     };
 
+    resetForStickerPromo();
+    state.cart = [paidLine("002A", 4)];
+    renderCart();
+    setFreeGiftStickerSku("022");
+    let brownIndex = state.cart.indexOf(findFreeGiftLine("021"));
+    decrementFreeGift(brownIndex);
+    const afterBrownMinus = {
+      brownQty: findFreeGiftLine("021")?.qty || 0,
+      blackQty: findFreeGiftLine("022")?.qty || 0,
+      suppressed: state.freeGiftSuppressedAutoQty,
+      totalGiftQty: freeGiftTotals().qty,
+    };
+    incrementFreeGift(state.cart.indexOf(findFreeGiftLine("022")));
+    const quotaRestoreFlow = {
+      afterBrownMinus,
+      dialogOpen: confirmFreeGiftOverlay.classList.contains("open"),
+      brownQty: findFreeGiftLine("021")?.qty || 0,
+      blackQty: findFreeGiftLine("022")?.qty || 0,
+      blackAutoGiftQty: findFreeGiftLine("022")?.autoGiftQty || 0,
+      suppressed: state.freeGiftSuppressedAutoQty,
+      totalGiftQty: freeGiftTotals().qty,
+    };
+
     state.cart = [paidLine("002A", 2), paidLine("022", 1)];
     state.freeGiftOverride = null;
     state.freeGiftStickerSku = "022";
@@ -1634,6 +1658,7 @@ async function main() {
       thresholdGift,
       doubleThreshold,
       choiceFlow,
+      quotaRestoreFlow,
       coexistence,
       fallback,
       manualOverride,
@@ -1673,6 +1698,19 @@ async function main() {
       stickerPromoFlow.choiceFlow.name.includes("Free item") &&
       stickerPromoFlow.choiceFlow.buttonText.includes("Sticker SKU"),
     "Batch Z: staff must be able to split a 2-gift entitlement between SKU 021 and SKU 022 in cart",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.quotaRestoreFlow.afterBrownMinus.brownQty === 0 &&
+      stickerPromoFlow.quotaRestoreFlow.afterBrownMinus.blackQty === 1 &&
+      stickerPromoFlow.quotaRestoreFlow.afterBrownMinus.suppressed === 1 &&
+      !stickerPromoFlow.quotaRestoreFlow.dialogOpen &&
+      stickerPromoFlow.quotaRestoreFlow.brownQty === 0 &&
+      stickerPromoFlow.quotaRestoreFlow.blackQty === 2 &&
+      stickerPromoFlow.quotaRestoreFlow.blackAutoGiftQty === 2 &&
+      stickerPromoFlow.quotaRestoreFlow.suppressed === 0 &&
+      stickerPromoFlow.quotaRestoreFlow.totalGiftQty === 2,
+    "Batch Z: removing one automatic brown sticker must let plus on black restore that automatic quota without a manual override dialog",
     stickerPromoFlow
   );
   assert(
