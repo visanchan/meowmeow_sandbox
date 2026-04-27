@@ -582,12 +582,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Send Later queue CSV still exports the order details and remains paid-at-event.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** The workbook is the source for delivery fee values, but the running app still uses embedded constants; Claude must manually sync the values into `PRODUCTS`. Delivery fee should be a sale charge, not an inventory item. Codex review recommended because this touches payment totals, receipts, QR amount, and CSV reconciliation.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/y-send-later-delivery-fee
+- **Claimed:** 2026-04-28 14:30
 - **BlockedBy:**
-- **Notes:** Refined by Codex on 2026-04-28 after user added `Delivery Fee` values to the product workbook. Ready for Claude implementation.
+- **Notes:** Refined by Codex on 2026-04-28 after user added `Delivery Fee` values to the product workbook. Ready for Claude implementation. Claimed by Claude 2026-04-28.
 
 ### Batch Z — Replace Free Scarf Promo with Sticker Choice Promo
 - **Business objective:** Update the event promotion from free scarf to a lower-threshold sticker gift that matches the current offer: `ซื้อครบ 1200 บาท (Meowsuem+Modern Friends) ฟรี Sticker Meowsuem 1 ชิ้น(sku:021 or 022) มูลค่า 100 บาท`.
