@@ -350,7 +350,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Items:**
   1. Replace the `Clear Emails` browser `alert` result with an in-app confirmation/result dialog.
   2. Audit current `alert`, `confirm`, and `prompt` usages and group them into priority tiers.
-  3. Convert the highest-friction admin paths first: `Clear Emails`, `Clear Pending Send Later`, stock setup validation failures, inventory reversal reason, and export-empty/error messages if practical.
+  3. Convert the highest-friction admin paths first: `Clear Emails`, stock setup validation failures, inventory reversal reason, and export-empty/error messages if practical. `Clear Pending Send Later` is already done as a hotfix.
   4. Keep lightweight cart stock notices as toast-style messages where already appropriate.
   5. Use consistent button styling, title, message, and danger/secondary states across dialogs.
   6. Update README if user-facing admin behavior changes.
@@ -358,17 +358,17 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Do not change:** actual data cleared/exported/saved, passcodes except Batch Q reset passcode, CSV formats, inventory logic, or sales logic.
 - **Acceptance checks:**
   - `Clear Emails` no longer uses browser `alert`; it shows an in-app result dialog.
-  - `Clear Pending Send Later` no longer uses browser `prompt`/`confirm` if included in this batch; passcode and final confirmation are in-app.
+  - `Clear Pending Send Later` remains in-app and does not regress to browser `prompt`/`confirm`.
   - Wrong passcodes or validation failures are visible in-app and do not perform the action.
   - Existing overlays can still close via intended buttons and Escape where appropriate.
   - `tests/smoke_event_pos.js` still passes.
 - **Risks/assumptions:** There are many alert call sites. Claude should keep this batch focused on staff/admin flows and avoid rewriting every low-level storage failure path unless time allows.
 - **Owner:**
-- **Status:** ready-for-claude
+- **Status:** partial-ready-for-claude
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:** Q
-- **Notes:** User specifically called out `Clear Emails` as still using browser alert and asked for smoother aligned confirmations.
+- **Notes:** Partial completed on `main` at `e64905d`: `Clear Pending Send Later` now uses an in-app passcode dialog, wrong PIN error, Escape/cancel close, and smoke coverage; it clears only pending records and preserves packed/shipped/cancelled records. Remaining Batch S scope is still ready for Claude, especially `Clear Emails`, stock setup validation failures, inventory reversal reason, and export-empty/error dialogs.
 
 ### Batch T — Smoke Coverage for PIN-Gated Workflows
 - **Business objective:** Catch regressions in the PIN-gated entry points before they reach a live event.
