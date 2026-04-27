@@ -98,23 +98,19 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 
 ## Free Gift Rules
 
-- The promo scarf is a real tracked SKU: `GIFT-SCARF`.
-- Free scarf inventory follows the same stock flow as normal SKUs.
-- User-facing displays should label the promo scarf as `(Free item)` so staff and customers are not confused, while the same SKU still stays in inventory flow and CSV records.
-- In inventory view and internal dashboard, sold counts should split paid vs free-gift quantity using the format `paid (free)` when free gifts exist.
+- The current promo is: every `THB 1,200` of qualifying paid Meowseum + Modern Friends cart value earns `1` free Sticker Meowsuem.
+- Staff can choose the free sticker SKU in the cart: `021` or `022`.
+- Free stickers use the real sticker SKU with `isFreeGift` metadata, so paid and free sticker movement deduct from the same stock bucket.
+- User-facing displays label free sticker rows as `(Free item)` so staff and customers can separate paid sticker purchases from promo gifts.
+- The old `GIFT-SCARF` SKU is retired for new sales. Old saved scarf bills can still display as legacy free items, but the POS no longer awards new scarves.
+- In inventory view and internal dashboard, sold counts split paid vs free-gift quantity using the format `paid (free)` when free gifts exist.
   Example: `80 (9)` means `80` paid units sold and `9` free gifts given, while stock still deducts all `89`.
 - If a SKU has only free-gift movement and no paid movement, display only the free quantity in parentheses, such as `(4)`, instead of `0 (4)`.
-- In Inventory Flow, any scarf-specific count shown for the `GIFT-SCARF` SKU should use parentheses formatting, including starting, added, sold-only-free, remaining, and top-up log quantity displays.
-- The Inventory Flow summary cards should follow the same split style:
-  - `Starting Stock`, `Added Stock`, and `Remaining` should show `main (scarf)` when the scarf contributes to that total.
-  - `Sold` should keep the paid-vs-free split style, such as `16 (4)`.
 - Inventory Flow shows sample movement inside the `Added Stock` summary card as `Sample -N`, and product rows show `-N sample` when staff turned event stock into samples that day. Sample stock reduces remaining event stock until an Inventory Correction changes the sample quantity back down.
-- The scarf can auto-award based on cart total:
-  - every `THB 2,000` of qualifying cart total earns `1` scarf
-- The scarf can also be manually added beyond entitlement, but that requires in-app confirmation.
-- The scarf line stays at the bottom of the cart.
-- The scarf row has its own `+` and `-` controls.
-- The scarf emoji acts as a toggle for the gift line.
+- The sticker can also be manually added beyond entitlement, but that requires in-app confirmation and is exported as a manual override.
+- The sticker gift line stays at the bottom of the cart.
+- The sticker gift row has its own `+` and `-` controls plus a `Sticker SKU` choice between `021` and `022`.
+- The gift button toggles the sticker gift line.
 
 ## Fulfillment Later (Send Later)
 
@@ -410,7 +406,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
 - Card/transfer sale: confirm `Save & New Sale` stays blocked until payment confirmation is checked.
 - Send Later sale: add one Send Later line, enter customer name, phone, and receive location, then confirm the queue record is created as paid at event.
-- Free gift: create a cart above the promo threshold and confirm the scarf appears, deducts stock, and shows as a free item.
+- Free gift: create a qualifying cart above `THB 1,200`, choose sticker SKU `021` or `022`, and confirm the selected sticker deducts stock and shows as a free item.
 - Stock top-up: enter `Added Today` as a top-up amount, confirm setup, verify remaining event stock increases, and verify the input resets to `0`.
 - Day close/export: close a test day, confirm CSV downloads, and confirm remaining stock carries into the next day.
 - Bill correction: edit a saved bill quantity with a reason and confirm inventory carry-forward updates.
@@ -450,6 +446,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - **Apr 2026 (Batch W — Today By Hour Dashboard Card)** — Internal Dashboard now adds a compact Today By Hour bar card under 4-Day Pace. It buckets local sale timestamps into `<10`, `10`-`20`, and `>21`, highlights the peak bucket, and keeps this as display-only dashboard data with no storage or CSV changes. Smoke covers empty and populated bucket states.
 - **Apr 2026 (Batch S — In-App Dialogs Replace Browser Alerts)** — Browser `alert`/`prompt` boxes across the admin/staff flows are now replaced with in-app overlay dialogs that match the existing confirm-card style. Affected paths: `Clear Emails` (result message), Stock & Allocation Setup validation failures, Inventory Correction validation failures, Inventory Reverse top-up reason (now a dialog with a textarea, Enter to submit), Send Later form validation, Send Later/Sale/End-of-Day/Void Audit CSV export empty/error messages, and storage-failure save errors. `Clear Pending Send Later` and the Free-scarf out-of-stock cart notice were already in-app and stay unchanged. ESC closes the topmost dialog first without closing the screen underneath.
 - **Apr 2026 (Batch Y — Product Delivery Fee for Send Later Orders)** — Per-SKU `Delivery Fee` from `product/product list-event price.xlsx` is now charged on Send Later cart lines (`deliveryFee × qty`, summed). The fee shows as a separate `Delivery Fee` row in the cart and review-receipt summary when nonzero, and is included in the chargeable total, saved sale total, transfer QR amount, payment confirmation amount, and the receipt slip. Booth-only sales are unchanged. Card surcharge (3%) now calculates on `merchandise + delivery fee`. Sale CSV and end-of-day CSV gain `saleDeliveryFee`, `deliveryFeePerUnit`, and `lineDeliveryFee` columns; existing column meanings are preserved. Bill Correction recomputes the delivery fee from the updated Send Later items. Smoke test extended.
+- **Apr 2026 (Batch Z — Sticker Choice Promo)** — The free-scarf promo is replaced by the sticker promo: every `THB 1,200` of qualifying paid Meowseum + Modern Friends cart value earns one free Sticker Meowsuem. Staff can choose SKU `021` or `022` in the cart; free stickers use the real selected SKU with `isFreeGift` metadata, so paid/free sticker quantities coexist in inventory, dashboard, receipts, correction, and CSV. Legacy `GIFT-SCARF` records still display as old free items but are no longer awarded. Smoke test extended.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 

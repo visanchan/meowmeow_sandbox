@@ -162,7 +162,7 @@ async function main() {
     state.preorders = [];
     state.inventory = createDefaultInventory();
     state.globalInventory = createDefaultGlobalInventory();
-    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    const sku = "002A";
     state.globalInventory.global[sku] = 100;
     state.inventory.days.day1.startingStock[sku] = 10;
     PRODUCTS.forEach((product) => {
@@ -212,7 +212,7 @@ async function main() {
   await page.fill("#confirmVoidBillReasonInput", "Automated UI void smoke test");
   await page.click("#confirmVoidBillBtn");
   const uiVoidResult = await page.evaluate(() => {
-    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    const sku = "002A";
     return {
       overlayOpen: confirmVoidBillOverlay.classList.contains("open"),
       salesAfterVoid: state.sales.length,
@@ -253,7 +253,7 @@ async function main() {
     state.inventory = createDefaultInventory();
     state.globalInventory = createDefaultGlobalInventory();
 
-    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    const sku = "002A";
     state.globalInventory.global[sku] = 100;
     state.inventory.days.day1.startingStock[sku] = 10;
     state.inventory.days.day1.addedStock[sku] = 0;
@@ -668,7 +668,7 @@ async function main() {
     state.globalInventory = createDefaultGlobalInventory();
     state.selectedOperator = "Zamm";
 
-    const product = PRODUCTS.find((item) => item.sku !== FREE_GIFT_SKU);
+    const product = PRODUCTS.find((item) => item.sku === "002A");
     const sku = product.sku;
     PRODUCTS.forEach((item) => {
       state.inventory.days.day1.eventStartConfirmed[item.sku] = true;
@@ -878,7 +878,7 @@ async function main() {
     state.globalInventory = createDefaultGlobalInventory();
     state.selectedOperator = "Zamm";
 
-    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    const sku = "002A";
     state.globalInventory.global[sku] = 100;
     state.globalInventory.onlineAllocated[sku] = 0;
     state.globalInventory.eventAllocated[sku] = 0;
@@ -987,7 +987,7 @@ async function main() {
     state.globalInventory = createDefaultGlobalInventory();
     state.selectedOperator = "Zamm";
 
-    const paidProducts = PRODUCTS.filter((p) => p.sku !== FREE_GIFT_SKU).slice(0, 2);
+    const paidProducts = PRODUCTS.filter((p) => p.price > 0).slice(0, 2);
     const skuA = paidProducts[0].sku;
     const skuB = paidProducts[1].sku;
     PRODUCTS.forEach((p) => {
@@ -1469,8 +1469,231 @@ async function main() {
     legacyCorrectionFlow
   );
 
-  assert(pageErrors.length === 0, "No page errors after Batch Y delivery fee flow", pageErrors);
-  assert(browserDialogs.length === 0, "No browser dialogs after Batch Y delivery fee flow", browserDialogs);
+  // Batch Z - sticker choice promo replaces the legacy free scarf flow.
+  const stickerPromoFlow = await page.evaluate(() => {
+    function resetForStickerPromo() {
+      localStorage.clear();
+      state.sales = [];
+      invalidateSalesDerivedData();
+      state.voidedSales = [];
+      state.preorders = [];
+      state.cart = [];
+      state.payment = "cash";
+      state.freeGiftOverride = null;
+      state.freeGiftStickerSku = STICKER_PROMO.defaultChoice;
+      state.pendingSale = null;
+      state.inventory = createDefaultInventory();
+      state.globalInventory = createDefaultGlobalInventory();
+      state.selectedOperator = "Zamm";
+      PRODUCTS.forEach((product) => {
+        state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+        state.inventory.days.day1.startingStock[product.sku] = 20;
+        state.globalInventory.global[product.sku] = 50;
+      });
+      state.inventory.days.day1.startingStock["021"] = 5;
+      state.inventory.days.day1.startingStock["022"] = 5;
+      renderProducts();
+      renderPayments();
+      renderCart();
+    }
+    function paidLine(sku, qty) {
+      const product = PRODUCTS.find((p) => p.sku === sku);
+      return {
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        qty,
+        basePrice: product.price,
+        defaultDiscountAmount: defaultProductDiscount(product),
+        discountAmount: defaultProductDiscount(product),
+        isFreeGift: false,
+      };
+    }
+
+    resetForStickerPromo();
+    state.cart = [paidLine("002A", 1)];
+    renderCart();
+    const belowThreshold = {
+      qualifying: qualifyingCartTotal(),
+      entitlement: freeGiftEntitlement(),
+      hasGift: Boolean(findFreeGiftLine()),
+    };
+
+    state.cart = [paidLine("002A", 2)];
+    renderCart();
+    const autoGift = findFreeGiftLine();
+    const thresholdGift = {
+      qualifying: qualifyingCartTotal(),
+      entitlement: freeGiftEntitlement(),
+      sku: autoGift?.sku,
+      qty: autoGift?.qty,
+      isFreeGift: Boolean(autoGift?.isFreeGift),
+      lineTotal: lineTotal(autoGift),
+      cartMetaText: cartMeta.textContent,
+    };
+
+    state.cart = [paidLine("002A", 4)];
+    state.freeGiftOverride = null;
+    renderCart();
+    const twoGift = findFreeGiftLine();
+    const doubleThreshold = {
+      entitlement: freeGiftEntitlement(),
+      giftQty: twoGift?.qty,
+      autoGiftQty: twoGift?.autoGiftQty,
+    };
+
+    setFreeGiftStickerSku("022");
+    const chosenGift = findFreeGiftLine();
+    const choiceFlow = {
+      sku: chosenGift?.sku,
+      name: displaySaleItemName(chosenGift),
+      buttonText: cartList.textContent,
+    };
+
+    state.cart = [paidLine("002A", 2), paidLine("022", 1)];
+    state.freeGiftOverride = null;
+    state.freeGiftStickerSku = "022";
+    renderCart();
+    const coexistGift = findFreeGiftLine();
+    completeSale();
+    state.pendingSale.paymentConfirmed = true;
+    state.pendingSale.paymentStatus = "confirmed";
+    paymentConfirmedInput.checked = true;
+    finalizeSale("save");
+    const savedSale = state.sales[0];
+    const paid022 = savedSale.items.find((item) => item.sku === "022" && !item.isFreeGift);
+    const free022 = savedSale.items.find((item) => item.sku === "022" && item.isFreeGift);
+    const freeGiftMap = getDayFreeGiftMap("day1");
+    const soldMap = getDaySoldMap("day1");
+    const snapshot022 = getProductInventorySnapshot("day1", "022");
+    const csv = saleToCsvRows(savedSale);
+    const csvLines = csv.split("\n");
+    const csvHeader = csvLines[0].split(",");
+    const csvRows = csvLines.slice(1).map((row) => row.split(","));
+    const csvIndex = (key) => csvHeader.indexOf(key);
+    const skuIndex = csvIndex("sku");
+    const freeIndex = csvIndex("isFreeGift");
+    const totalIndex = csvIndex("lineTotal");
+    const coexistence = {
+      coexistGiftSku: coexistGift?.sku,
+      paid022Qty: paid022?.qty,
+      paid022Total: paid022?.lineTotal,
+      free022Qty: free022?.qty,
+      free022Total: free022?.lineTotal,
+      freeGiftMap022: freeGiftMap["022"],
+      soldMap022: soldMap["022"],
+      remaining022: snapshot022.remaining,
+      csvHasPaid022: csvRows.some(
+        (row) => row[skuIndex] === '"=""022"""' && row[freeIndex] === "false" && Number(row[totalIndex]) === 100
+      ),
+      csvHasFree022: csvRows.some(
+        (row) => row[skuIndex] === '"=""022"""' && row[freeIndex] === "true" && Number(row[totalIndex]) === 0
+      ),
+    };
+
+    resetForStickerPromo();
+    state.inventory.days.day1.startingStock["021"] = 0;
+    state.inventory.days.day1.startingStock["022"] = 3;
+    state.freeGiftStickerSku = "021";
+    state.cart = [paidLine("002A", 2)];
+    renderCart();
+    const fallbackGift = findFreeGiftLine();
+    const fallback = {
+      sku: fallbackGift?.sku,
+      qty: fallbackGift?.qty,
+      stock021: stickerSkuRemainingForGift("021"),
+      stock022: stickerSkuRemainingForGift("022"),
+    };
+
+    resetForStickerPromo();
+    state.cart = [paidLine("002A", 1)];
+    renderCart();
+    toggleFreeGift();
+    const manualDialogOpen = confirmFreeGiftOverlay.classList.contains("open");
+    confirmFreeGiftOverride();
+    const manualGift = findFreeGiftLine();
+    const manualOverride = {
+      dialogOpen: manualDialogOpen,
+      entitlement: freeGiftEntitlement(),
+      manualGiftQty: manualGift?.manualGiftQty,
+      isManualOverride: manualGift?.giftMode === "manual_override",
+      freeGiftOverride: state.freeGiftOverride,
+    };
+
+    return {
+      belowThreshold,
+      thresholdGift,
+      doubleThreshold,
+      choiceFlow,
+      coexistence,
+      fallback,
+      manualOverride,
+    };
+  });
+
+  assert(
+    stickerPromoFlow.belowThreshold.qualifying < 1200 &&
+      stickerPromoFlow.belowThreshold.entitlement === 0 &&
+      !stickerPromoFlow.belowThreshold.hasGift,
+    "Batch Z: cart below THB 1,200 must not auto-award a sticker",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.thresholdGift.qualifying >= 1200 &&
+      stickerPromoFlow.thresholdGift.entitlement === 1 &&
+      stickerPromoFlow.thresholdGift.sku === "021" &&
+      stickerPromoFlow.thresholdGift.qty === 1 &&
+      stickerPromoFlow.thresholdGift.isFreeGift &&
+      stickerPromoFlow.thresholdGift.lineTotal === 0,
+    "Batch Z: qualifying cart must auto-award one free SKU 021 sticker at THB 0",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.doubleThreshold.entitlement === 2 &&
+      stickerPromoFlow.doubleThreshold.giftQty === 2 &&
+      stickerPromoFlow.doubleThreshold.autoGiftQty === 2,
+    "Batch Z: THB 2,400+ qualifying cart must unlock two automatic free stickers",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.choiceFlow.sku === "022" &&
+      stickerPromoFlow.choiceFlow.name.includes("Free item") &&
+      stickerPromoFlow.choiceFlow.buttonText.includes("Sticker SKU"),
+    "Batch Z: staff must be able to switch the free sticker choice to SKU 022 in cart",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.coexistence.paid022Qty === 1 &&
+      stickerPromoFlow.coexistence.free022Qty === 1 &&
+      stickerPromoFlow.coexistence.freeGiftMap022 === 1 &&
+      stickerPromoFlow.coexistence.soldMap022 === 2 &&
+      stickerPromoFlow.coexistence.remaining022 === 3 &&
+      stickerPromoFlow.coexistence.free022Total === 0 &&
+      stickerPromoFlow.coexistence.csvHasPaid022 &&
+      stickerPromoFlow.coexistence.csvHasFree022,
+    "Batch Z: paid and free SKU 022 lines must coexist, deduct shared stock, and export paid/free CSV rows",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.fallback.sku === "022" &&
+      stickerPromoFlow.fallback.qty === 1 &&
+      stickerPromoFlow.fallback.stock021 === 0 &&
+      stickerPromoFlow.fallback.stock022 >= 1,
+    "Batch Z: when default SKU 021 is out of stock, automatic sticker gift must fall back to available SKU 022",
+    stickerPromoFlow
+  );
+  assert(
+    stickerPromoFlow.manualOverride.dialogOpen &&
+      stickerPromoFlow.manualOverride.entitlement === 0 &&
+      stickerPromoFlow.manualOverride.manualGiftQty === 1 &&
+      stickerPromoFlow.manualOverride.isManualOverride &&
+      stickerPromoFlow.manualOverride.freeGiftOverride === "manual_override",
+    "Batch Z: below-threshold manual sticker gift must require confirmation and record manual override metadata",
+    stickerPromoFlow
+  );
+
+  assert(pageErrors.length === 0, "No page errors after Batch Z sticker promo flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch Z sticker promo flow", browserDialogs);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);

@@ -654,12 +654,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Old saved scarf bills, if present in localStorage, still render without crashing.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** "Meowsuem+Modern Friends" is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
-- **Owner:** claude
-- **Status:** in-progress
+- **Owner:** codex
+- **Status:** ready-for-review
 - **Branch:** batch/z-sticker-promo
 - **Claimed:** 2026-04-28 16:00
 - **BlockedBy:**
-- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes. Y is merged on `main`; Z claimed by Claude 2026-04-28.
+- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes. Y is merged on `main`; Z claimed by Claude 2026-04-28. Claude hit rate limit mid-implementation; user paused the two-agent protocol and asked Codex to finish solo. Codex completed the sticker-choice promo on `batch/z-sticker-promo`: retired new `GIFT-SCARF` awards, added THB 1,200 Meowseum + Modern Friends entitlement, added cart choice buttons for SKU `021`/`022`, preserved paid/free sticker coexistence with real SKU inventory deduction, updated README, and extended smoke coverage for threshold, double entitlement, SKU choice, paid/free coexistence, out-of-stock fallback, and manual override. `tests/smoke_event_pos.js` passes.
 
 ### Batch FINAL_REVIEW — Event Readiness Bug Fix & Full Workflow Check
 - **Business objective:** Do one final bug-fix and readiness pass after delivery fees and the sticker promo are implemented, so the POS is safe to use on the event device.
