@@ -582,9 +582,9 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Send Later queue CSV still exports the order details and remains paid-at-event.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** The workbook is the source for delivery fee values, but the running app still uses embedded constants; Claude must manually sync the values into `PRODUCTS`. Delivery fee should be a sale charge, not an inventory item. Codex review recommended because this touches payment totals, receipts, QR amount, and CSV reconciliation.
-- **Owner:** claude
-- **Status:** ready-for-review
-- **Branch:** batch/y-send-later-delivery-fee
+- **Owner:**
+- **Status:** done
+- **Branch:**
 - **Claimed:** 2026-04-28 14:30
 - **BlockedBy:**
 - **Notes:** Implemented by Claude on `batch/y-send-later-delivery-fee` (head `e1482df`). All assertions pass in the local smoke test (`local smoke passed for meowmeow_pos_event.html`), including the two new correction scenarios added after Codex review. Codex review requested before merge because the change touches payment totals, transfer QR amount, receipt, and CSV reconciliation.
@@ -654,12 +654,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Old saved scarf bills, if present in localStorage, still render without crashing.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** "Meowsuem+Modern Friends" is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
-- **Owner:** codex
-- **Status:** ready-for-review
+- **Owner:**
+- **Status:** done
 - **Branch:** batch/z-sticker-promo
 - **Claimed:** 2026-04-28 16:00
 - **BlockedBy:**
-- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes. Y is merged on `main`; Z claimed by Claude 2026-04-28. Claude hit rate limit mid-implementation; user paused the two-agent protocol and asked Codex to finish solo. Codex completed the sticker-choice promo on `batch/z-sticker-promo`: retired new `GIFT-SCARF` awards, added THB 1,200 Meowseum + Modern Friends entitlement, added cart choice buttons for SKU `021`/`022`, preserved paid/free sticker coexistence with real SKU inventory deduction, updated README, and extended smoke coverage for threshold, double entitlement, SKU choice, paid/free coexistence, out-of-stock fallback, and manual override. `tests/smoke_event_pos.js` passes.
+- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes. Y is merged on `main`; Z claimed by Claude 2026-04-28. Claude hit rate limit mid-implementation; user paused the two-agent protocol and asked Codex to finish solo. Codex completed the sticker-choice promo on `batch/z-sticker-promo`: retired new `GIFT-SCARF` awards, added THB 1,200 Meowseum + Modern Friends entitlement, added cart choice buttons for SKU `021`/`022`, preserved paid/free sticker coexistence with real SKU inventory deduction, updated README, and extended smoke coverage for threshold, double entitlement, SKU choice, paid/free coexistence, out-of-stock fallback, manual override, immediate catalog stock refresh, split brown/black gifts, and the minus-then-plus quota restore flow. User tested the app and confirmed the final split-sticker behavior is good. `tests/smoke_event_pos.js` passes.
 
 ### Batch FINAL_REVIEW — Event Readiness Bug Fix & Full Workflow Check
 - **Business objective:** Do one final bug-fix and readiness pass after delivery fees and the sticker promo are implemented, so the POS is safe to use on the event device.
