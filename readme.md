@@ -108,7 +108,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - The Inventory Flow summary cards should follow the same split style:
   - `Starting Stock`, `Added Stock`, and `Remaining` should show `main (scarf)` when the scarf contributes to that total.
   - `Sold` should keep the paid-vs-free split style, such as `16 (4)`.
-- Inventory Flow shows sample movement inside the `Added Stock` summary card as `Sample +N`, and product rows show `+N sample` when staff turned event stock into samples that day. Sample stock reduces remaining event stock until an Inventory Correction changes the sample quantity back down.
+- Inventory Flow shows sample movement inside the `Added Stock` summary card as `Sample -N`, and product rows show `-N sample` when staff turned event stock into samples that day. Sample stock reduces remaining event stock until an Inventory Correction changes the sample quantity back down.
 - The scarf can auto-award based on cart total:
   - every `THB 2,000` of qualifying cart total earns `1` scarf
 - The scarf can also be manually added beyond entitlement, but that requires in-app confirmation.

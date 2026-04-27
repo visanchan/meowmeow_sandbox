@@ -689,9 +689,9 @@ async function main() {
       addedSummaryText,
       summaryHasSplit: inventoryViewAddedTotal.classList.contains("split"),
       summaryShowsAddedTwo: addedSummaryText.includes("Added") && addedSummaryText.includes("2"),
-      summaryShowsSampleOne: addedSummaryText.includes("Sample") && addedSummaryText.includes("+1"),
+      summaryShowsSampleOne: addedSummaryText.includes("Sample") && addedSummaryText.includes("-1"),
       rowShowsSampleChip: !!addedCellBefore?.querySelector(".inventory-sample-chip") &&
-        addedCellBefore.textContent.includes("+1 sample"),
+        addedCellBefore.textContent.includes("-1 sample"),
       addedValueHighlighted: !!addedCellBefore?.querySelector(".inventory-added-value.inventory-table-number"),
       remainingValueHighlighted: !!remainingCellBefore?.classList.contains("inventory-table-number"),
       remainingBefore,
@@ -704,15 +704,15 @@ async function main() {
 
   assert(inventorySampleFlow.summaryHasSplit, "Inventory Flow Added Stock KPI must render as a split Added/Sample card", inventorySampleFlow);
   assert(inventorySampleFlow.summaryShowsAddedTwo, "Inventory Flow Added Stock KPI must keep the added total visible", inventorySampleFlow);
-  assert(inventorySampleFlow.summaryShowsSampleOne, "Inventory Flow Added Stock KPI must show Sample +1", inventorySampleFlow);
-  assert(inventorySampleFlow.rowShowsSampleChip, "Inventory Flow row must show +1 sample for the sampled SKU", inventorySampleFlow);
+  assert(inventorySampleFlow.summaryShowsSampleOne, "Inventory Flow Added Stock KPI must show Sample -1", inventorySampleFlow);
+  assert(inventorySampleFlow.rowShowsSampleChip, "Inventory Flow row must show -1 sample for the sampled SKU", inventorySampleFlow);
   assert(inventorySampleFlow.addedValueHighlighted, "Inventory Flow Added Stock table value must use the highlighted numeric styling", inventorySampleFlow);
   assert(inventorySampleFlow.remainingValueHighlighted, "Inventory Flow Remaining Stock table value must use the highlighted numeric styling", inventorySampleFlow);
   assert(inventorySampleFlow.remainingBefore === 8, "Sample stock must stay deducted from remaining event stock", inventorySampleFlow);
   assert(inventorySampleFlow.sampleAfterCorrection === 0, "Inventory Correction must save sample quantity back to 0", inventorySampleFlow);
   assert(inventorySampleFlow.rowChipGoneAfterCorrection, "Inventory Flow row sample chip must disappear after sample quantity returns to 0", inventorySampleFlow);
   assert(inventorySampleFlow.remainingAfter === 9, "Returning sample stock to 0 must increase remaining event stock by 1", inventorySampleFlow);
-  assert(inventorySampleFlow.summaryAfterCorrection.includes("+0"), "Inventory Flow sample summary must show a quiet +0 state after correction", inventorySampleFlow);
+  assert(inventorySampleFlow.summaryAfterCorrection.includes("-0"), "Inventory Flow sample summary must show a quiet -0 state after correction", inventorySampleFlow);
 
   // PIN-gated workflow assertions.
   assert(pinFlows.loginAutoOpen, "Login overlay must auto-open on fresh init when no operator is persisted", pinFlows);

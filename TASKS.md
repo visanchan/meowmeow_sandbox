@@ -517,11 +517,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   1. Show per-day sample stock in the Inventory Flow summary area, visually grouped inside the existing `Added Stock` KPI card:
      - keep `Added Stock` visible as its own partition
      - add a `Sample` partition in the same card
-     - show sample movement with a leading plus sign, e.g. `+1`, `+3`
-     - show `+0` in a quiet state when no samples exist
+     - show sample movement with a leading minus sign, e.g. `-1`, `-3`
+     - show `-0` in a quiet state when no samples exist
   2. Show per-product sample stock in the Inventory Flow table:
      - keep the existing `Added Stock` column
-     - add a compact `+N sample` chip/subline inside that column only when sample quantity is nonzero
+     - add a compact `-N sample` chip/subline inside that column only when sample quantity is nonzero
      - do not add a new table column unless layout becomes unreadable
   3. Improve Inventory Flow table readability:
      - make numeric values larger and easier to scan
@@ -532,13 +532,13 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
      - remaining stock must continue to equal `starting + added - sold - sample`
      - lowering `sampleQty` through `Correction Center > Inventory Correction` must automatically return stock to event remaining stock
      - do not change sample storage shape or correction save logic
-  5. Update README Inventory notes to explain that Inventory Flow displays sample movement as `+N sample`, and that sample quantity reduces remaining event stock until corrected.
+  5. Update README Inventory notes to explain that Inventory Flow displays sample movement as `-N sample`, and that sample quantity reduces remaining event stock until corrected.
   6. Extend `tests/smoke_event_pos.js` with a focused sample visibility check.
 - **Touches:** `meowmeow_pos_event.html`, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
 - **Do not change:** sample storage shape, Stock & Allocation Setup sample editing logic, Inventory Correction save logic, sales CSV shape, end-of-day CSV shape, product data, passcodes, Send Later behavior, or dashboard behavior.
 - **Acceptance checks:**
-  - With Day 1 sample quantity set to `1` for a SKU, Inventory Flow summary shows `Sample +1` inside the same visual box as `Added Stock`.
-  - The matching product row shows a visible `+1 sample` indicator.
+  - With Day 1 sample quantity set to `1` for a SKU, Inventory Flow summary shows `Sample -1` inside the same visual box as `Added Stock`.
+  - The matching product row shows a visible `-1 sample` indicator.
   - Added Stock and Remaining Stock table numbers are larger/more visually prominent than the current plain table numbers.
   - Remaining stock still equals `starting + added - sold - sample`.
   - If Inventory Correction changes that SKU sample quantity from `1` back to `0`, Inventory Flow removes the row chip or returns it to zero state, and Remaining increases by `1`.
@@ -550,7 +550,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Branch:** batch/x-inventory-flow-samples
 - **Claimed:** 2026-04-27
 - **BlockedBy:**
-- **Notes:** Completed by Codex on `batch/x-inventory-flow-samples` 2026-04-27. Inventory Flow now shows `Added` and `Sample +N` partitions inside the Added Stock KPI, displays per-row `+N sample` chips, and uses larger highlighted table numbers for Added Stock and Remaining Stock. Existing sample math and Inventory Correction behavior unchanged; smoke coverage added and passing.
+- **Notes:** Completed by Codex on `batch/x-inventory-flow-samples` 2026-04-27. Inventory Flow now shows `Added` and `Sample -N` partitions inside the Added Stock KPI, displays per-row `-N sample` chips, adds an emoji/live sign to Current Flow, and uses larger highlighted table numbers for Added Stock and Remaining Stock. Existing sample math and Inventory Correction behavior unchanged; smoke coverage added and passing.
 
 ## Suggested order (least-conflict first)
 

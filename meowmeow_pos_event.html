@@ -416,6 +416,9 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .day-chip{padding:10px 14px;border-radius:999px;background:#f2e7d9;color:#5f462a;font-size:13px;font-weight:800}
 .day-chip.active{background:var(--accent);color:#fffdf7}
 .day-chip.closed{background:#eadccd;color:#7c5a33}
+.inventory-flow-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.inventory-live-badge{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:#dfeedd;color:#3f6d34;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.inventory-live-badge.closed{background:#eadccd;color:#7c5a33}
 .inventory-day-status{margin-top:10px;font-size:13px;color:var(--muted)}
 .inventory-table-wrap{overflow:auto}
 .inventory-table{width:100%;border-collapse:collapse;min-width:620px}
@@ -1037,7 +1040,7 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
       </div>
       <div class="dashboard-tools">
         <div class="dashboard-tool-card">
-          <h3>Current Flow</h3>
+          <h3 class="inventory-flow-title"><span>📦 Current Flow</span><span class="inventory-live-badge" id="inventoryViewFlowBadge">Live</span></h3>
           <div class="day-switch" id="inventoryViewDaySwitch"></div>
           <div class="inventory-kpis">
             <div class="inventory-kpi">
@@ -1925,7 +1928,7 @@ function getDaySales(dayId){return state.sales.filter(sale=>saleDay(sale)===dayI
 function getDaySoldMap(dayId){const cached=state.daySoldCache[dayId];if(cached&&cached.revision===state.salesRevision)return cached.value;const sold=buildSkuMap(()=>0);getDaySales(dayId).forEach(sale=>sale.items.forEach(item=>{if(Boolean(item?.isPreorder))return;if(item?.fulfillmentType==="reserved_send_later")return;if(item.sku in sold)sold[item.sku]+=Number(item.qty||0);}));state.daySoldCache[dayId]={revision:state.salesRevision,value:sold};return sold;}
 function getDayFreeGiftMap(dayId){const gifted=buildSkuMap(()=>0);getDaySales(dayId).forEach(sale=>sale.items.forEach(item=>{if(item.sku in gifted&&Boolean(item.isFreeGift))gifted[item.sku]+=Number(item.qty||0);}));return gifted;}
 function formatInventorySplitDisplay(totalQty,freeQty){const freeCount=Math.max(0,clampCount(freeQty));const mainCount=Math.max(0,clampCount(totalQty)-freeCount);if(freeCount>0&&mainCount===0)return`(${freeCount})`;return freeCount>0?`${mainCount} (${freeCount})`:String(mainCount);}
-function formatInventorySampleDelta(totalQty,freeQty=0){return`+${formatInventorySplitDisplay(totalQty,freeQty)}`;}
+function formatInventorySampleDelta(totalQty,freeQty=0){return`-${formatInventorySplitDisplay(totalQty,freeQty)}`;}
 function formatInventorySoldDisplay(totalSold,freeGiftQty){return formatInventorySplitDisplay(totalSold,freeGiftQty);}
 function getDayRemainingMap(dayId,soldMap=getDaySoldMap(dayId)){const dayRecord=getInventoryDay(dayId);return buildSkuMap(product=>Math.max(0,clampCount(dayRecord.startingStock[product.sku])+clampCount(dayRecord.addedStock[product.sku])-clampCount(dayRecord.sampleQty?.[product.sku])-clampCount(soldMap[product.sku])));}
 function getProductInventorySnapshot(dayId,sku,soldMap=getDaySoldMap(dayId)){const dayRecord=getInventoryDay(dayId);const starting=clampCount(dayRecord.startingStock[sku]);const added=clampCount(dayRecord.addedStock[sku]);const sample=clampCount(dayRecord.sampleQty?.[sku]);const sold=clampCount(soldMap[sku]);const remaining=Math.max(0,starting+added-sample-sold);const threshold=clampCount(state.inventory.thresholds[sku]);return{starting,added,sample,sold,remaining,threshold,isLow:remaining<=threshold,isSoldOut:remaining<=0};}
