@@ -408,6 +408,10 @@ async function main() {
     const gateCorrect = {
       confirmEnabled: !els.confirmResetSalesBtn.disabled,
       errorClearedAfterAccept: !els.resetPasscodeError.textContent,
+      confirmButtonVisible: (() => {
+        const rect = els.confirmResetSalesBtn.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= window.innerHeight && rect.width > 0 && rect.height > 0;
+      })(),
     };
     closeResetSalesConfirmDialog();
     const gateAfterClose = {
@@ -471,6 +475,7 @@ async function main() {
       resetGateInitialClosed: gateInitial.overlayOpen && gateInitial.confirmDisabled && gateInitial.errorEmpty,
       resetGateRejectsWrong: gateWrong.confirmStillDisabled && gateWrong.errorShown && gateWrong.pinClearedAfterReject,
       resetGateAcceptsCorrect: gateCorrect.confirmEnabled && gateCorrect.errorClearedAfterAccept,
+      resetGateConfirmVisible: gateCorrect.confirmButtonVisible,
       resetGateClosedClearsPin: gateAfterClose.pinReset && gateAfterClose.overlayClosed,
     };
   });
@@ -526,6 +531,7 @@ async function main() {
   assert(result.resetGateInitialClosed, "Reset confirm overlay must open with confirm button disabled and no error", result);
   assert(result.resetGateRejectsWrong, "Wrong reset passcode must keep confirm disabled, show in-app error, and clear PIN", result);
   assert(result.resetGateAcceptsCorrect, "Correct reset passcode must enable confirm button and clear error", result);
+  assert(result.resetGateConfirmVisible, "Reset confirm button must stay visible after correct passcode entry", result);
   assert(result.resetGateClosedClearsPin, "Closing reset overlay must clear PIN and hide overlay", result);
 
   // PIN-gated workflow assertions.
