@@ -587,7 +587,13 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Branch:** batch/y-send-later-delivery-fee
 - **Claimed:** 2026-04-28 14:30
 - **BlockedBy:**
-- **Notes:** Implemented by Claude on `batch/y-send-later-delivery-fee` (head `300acb1`). All 20 acceptance assertions pass in the local smoke test (`local smoke passed for meowmeow_pos_event.html`). Codex review requested before merge because the change touches payment totals, transfer QR amount, receipt, and CSV reconciliation.
+- **Notes:** Implemented by Claude on `batch/y-send-later-delivery-fee` (head `e1482df`). All assertions pass in the local smoke test (`local smoke passed for meowmeow_pos_event.html`), including the two new correction scenarios added after Codex review. Codex review requested before merge because the change touches payment totals, transfer QR amount, receipt, and CSV reconciliation.
+
+  Codex review round 1 (2026-04-28) flagged two High issues, both now fixed in `e1482df`:
+  - **Card surcharge dropped/mismatched on correction.** `correctionTotalsFromItems` now takes the corrected `payment` and returns `cardSurcharge` (3% of `merchandise + deliveryFee`) baked into `total`. `buildCorrectionDraft` passes `after.payment` and captures `beforeTotals.cardSurcharge`; `confirmCorrectionSave` persists `sale.cardSurcharge` on save and rolls back on failure. The receipt identity `Total === Merchandise - Discount + Delivery + CardSurcharge` now holds after a card Send Later correction. Cash↔card switches without a qty change also trigger the `saleTotals` change flag.
+  - **Legacy Send Later sales gaining a retroactive delivery fee.** `rebuildCorrectionItem` now defaults missing `deliveryFeePerUnit` to `0` instead of `productDeliveryFee(sku)`. Pre-Batch-Y bills (no delivery fields) stay at 0 even when staff correct only email/payment/tags or change quantity; new Batch Y sales already serialize the field, so they still correct correctly.
+
+  Smoke coverage added for both fixes: card Send Later correction asserts pre/post values to two decimals (1586.20 → 793.10) and the receipt identity, plus the cash cross-check that surcharge zeros out; legacy Send Later correction asserts that an untouched bill records 0 delivery, that card surcharge then applies to merchandise only (preserves pre-Y math), and that a quantity-reduced legacy correction still records 0 delivery.
 
   Workbook delivery fees synced into `PRODUCTS`: 002A/002B/003/004/005/006 = 120, 007 = 200, 010/012 = 120, 013 = 200, 014 = 120, 015/016 = 200, 017 = 50, 018 = 0 (workbook blank), 019/020 = 50, 021/022 = 0 (stickers, workbook blank), GIFT-SCARF = 0.
 
