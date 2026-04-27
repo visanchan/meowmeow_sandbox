@@ -552,32 +552,125 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed by Codex on `batch/x-inventory-flow-samples` 2026-04-27. Inventory Flow now shows `Added` and `Sample -N` partitions inside the Added Stock KPI, displays per-row `-N sample` chips, adds an emoji/live sign to Current Flow, and uses larger highlighted table numbers for Added Stock and Remaining Stock. Existing sample math and Inventory Correction behavior unchanged; smoke coverage added and passing.
 
-### Batch Y — Add Delivery Cost for Send Later Orders
-- **Business objective:** Automatically apply delivery cost per unit for Send Later orders to cover shipping expenses.
-- **Expected benefit:** Accurate pricing for delivery, transparent cost to customers, and proper revenue tracking for fulfillment costs.
+### Batch Y — Product Delivery Fee for Send Later Orders
+- **Business objective:** Charge the correct delivery fee for Send Later orders using the per-SKU `Delivery Fee` values from `product/product list-event price.xlsx`.
+- **Expected benefit:** Delivery orders cover real fulfillment cost, staff do not need to calculate shipping manually, and CSV/revenue totals reconcile with what the customer paid.
 - **Implementation difficulty:** medium.
-- **Cost/complexity tradeoff:** Extend the existing Send Later cart logic and pricing system without adding new storage keys or external dependencies.
+- **Cost/complexity tradeoff:** Add a small `deliveryFee` field to embedded product data and sale totals instead of adding a backend, separate shipping table, or manual checkout step. This keeps the booth workflow fast while letting fees vary by product.
 - **Items:**
-  1. Add a delivery cost constant (e.g., THB 50 per unit) that applies automatically when a cart contains Send Later items.
-  2. Display the delivery cost as a separate line item in the cart summary and receipt, labeled clearly (e.g., "Delivery Cost").
-  3. Calculate delivery cost as cost per unit multiplied by the total Send Later quantity across all items in the cart.
-  4. Ensure delivery cost is included in the total sale amount, CSV exports, and payment processing.
-  5. Update README Fulfillment Later section to document the delivery cost behavior.
-- **Touches:** `meowmeow_pos_event.html` cart totals logic, receipt rendering, CSV export helpers, `readme.md`, `TASKS.md`.
-- **Do not change:** normal selling flow pricing, inventory logic, payment methods, or existing Send Later customer fields.
+  1. Update embedded `PRODUCTS` entries from `product/product list-event price.xlsx` so each normal SKU has `deliveryFee` from the workbook's `Delivery Fee` column.
+     - Confirmed workbook shape: `SKU`, `Description`, `RSP (ราคาขาย)`, `Promotion Price`, `Discount`, `Delivery Fee`, optional promotion note.
+     - Example inspected values: SKU `002A` delivery fee `120`, SKU `007` delivery fee `200`, SKU `013` delivery fee `200`.
+  2. Calculate delivery fee only for Send Later cart lines as `product.deliveryFee * sendLaterQty`, summed across all Send Later items.
+  3. Show `Delivery Fee` as a separate summary row in the cart and review receipt whenever the total delivery fee is greater than 0.
+  4. Include delivery fee in `cartTotals().chargeableTotal`, saved sale total, transfer QR amount, payment confirmation amount, receipt text, and day CSV sale-level fields.
+  5. Add CSV fields for delivery fee without changing existing column meanings:
+     - recommended sale-level fields: `saleDeliveryFee`, `deliveryFeePerUnit`, `lineDeliveryFee`
+     - keep product merchandise line totals as product revenue; do not hide delivery inside product discount.
+  6. Update README Fulfillment Later and Data/CSV notes to explain that Send Later adds per-SKU delivery fee from the product price workbook.
+  7. Extend `tests/smoke_event_pos.js` with a focused Send Later delivery-fee check.
+- **Touches:** `meowmeow_pos_event.html` product catalog, `cartTotals`, receipt/cart summary markup, `completeSale`, `serializeCartLine`, transfer QR amount path, CSV helper(s), `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** normal booth-sale pricing, discount editing behavior, inventory math, Send Later warehouse reservation math, customer/shipping required fields, payment methods, passcodes, or existing localStorage keys unless a backwards-compatible sale field is needed.
 - **Acceptance checks:**
-  - When adding Send Later items to cart, delivery cost appears in cart summary and increases total.
-  - Delivery cost is per unit and scales with Send Later quantity.
-  - Receipt and CSV include the delivery cost line.
-  - Normal sales without Send Later have no delivery cost.
-  - `tests/smoke_event_pos.js` passes with updated checks.
-- **Risks/assumptions:** Delivery cost is a flat per-unit fee; if variable costs are needed later, this can be extended. Batch is open for Claude and Codex review and improvement when implementation starts.
+  - Normal non-Send-Later sale has no delivery fee row and existing totals remain unchanged.
+  - One Send Later SKU with `Delivery Fee = 120` and qty `1` adds THB 120 to total due.
+  - Same SKU qty `2` adds THB 240 delivery fee.
+  - Mixed Send Later SKUs with different delivery fees sum correctly, e.g. `120 + 200`.
+  - Mixed cart with booth item + Send Later item charges delivery only for the Send Later item.
+  - Receipt slip, copied/emailed receipt text, transfer QR amount, and saved sale total all include the delivery fee.
+  - Day CSV exports delivery fee fields clearly enough for Excel reconciliation.
+  - Send Later queue CSV still exports the order details and remains paid-at-event.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** The workbook is the source for delivery fee values, but the running app still uses embedded constants; Claude must manually sync the values into `PRODUCTS`. Delivery fee should be a sale charge, not an inventory item. Codex review recommended because this touches payment totals, receipts, QR amount, and CSV reconciliation.
 - **Owner:**
 - **Status:** ready-for-claude
 - **Branch:**
 - **Claimed:**
 - **BlockedBy:**
-- **Notes:** New batch defined by user. Ready for Claude implementation with Codex review recommended due to pricing and CSV impact.
+- **Notes:** Refined by Codex on 2026-04-28 after user added `Delivery Fee` values to the product workbook. Ready for Claude implementation.
+
+### Batch Z — Replace Free Scarf Promo with Sticker Choice Promo
+- **Business objective:** Update the event promotion from free scarf to a lower-threshold sticker gift that matches the current offer: `ซื้อครบ 1200 บาท (Meowsuem+Modern Friends) ฟรี Sticker Meowsuem 1 ชิ้น(sku:021 or 022) มูลค่า 100 บาท`.
+- **Expected benefit:** Staff follow the real promotion in the POS, customers can choose the sticker variant, and inventory/CSV correctly track free sticker movement by SKU.
+- **Implementation difficulty:** high.
+- **Cost/complexity tradeoff:** Rework the existing free-gift engine instead of adding a separate promo app or manual discount process. This is more complex than copy changes because the current logic is scarf-specific and uses a dedicated `GIFT-SCARF` SKU, while the new promo uses real sellable SKUs `021` or `022` that can also be bought normally.
+- **Items:**
+  1. Replace the current free scarf rule (`THB 2,000` earns `GIFT-SCARF`) with the new sticker rule:
+     - qualifying cart total threshold: THB 1,200
+     - qualifying paid items: Meowseum + Modern Friends products
+     - free gift: one Sticker Meowsuem item per threshold, selectable as SKU `021` or `022`
+     - gift value display: THB 100
+  2. Add a simple staff choice flow for the free sticker:
+     - when entitlement is reached, show/enable a gift choice between SKU `021` and SKU `022`
+     - preserve quick flow; staff should not need to leave checkout
+     - if only one sticker SKU has stock, make the available choice obvious
+  3. Track free stickers using the real SKU selected (`021` or `022`) with `isFreeGift` metadata so inventory deducts from the same sticker stock as paid sticker sales.
+  4. Preserve paid-vs-free display format for inventory and dashboard for sticker SKUs, not only the old scarf SKU.
+  5. Update cart, receipt, review, correction, CSV, and dashboard labels from scarf language to sticker language.
+  6. Keep manual gift override only behind the existing in-app confirmation pattern, updated for sticker wording and selected SKU.
+  7. Remove or retire user-facing `GIFT-SCARF` behavior. If backwards compatibility is needed for old saved sales, keep display helpers able to read old `GIFT-SCARF` records without awarding new scarves.
+  8. Update README Free Gift Rules and Event-Day Verification Checklist for the sticker promo.
+  9. Extend `tests/smoke_event_pos.js` with the new threshold and sticker-choice behavior.
+- **Touches:** `meowmeow_pos_event.html` free-gift constants/helpers, gift button/cart UI, gift confirmation dialog, inventory free-gift maps/display helpers, dashboard paid/free counts, receipt rendering, correction item rebuild/labels, CSV helpers, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** paid sticker product price/discount behavior, non-gift product pricing, delivery-fee behavior from Batch Y, Send Later warehouse reservation math, payment methods, passcodes, localStorage keys, or inventory correction rules.
+- **Acceptance checks:**
+  - Cart below THB 1,200 earns no automatic gift.
+  - Qualifying paid cart at or above THB 1,200 unlocks one free sticker choice.
+  - Cart at THB 2,400 unlocks two free sticker gifts if stock allows.
+  - Staff can choose SKU `021` or `022`; the selected SKU appears in cart/receipt as a free item at THB 0.
+  - Paid SKU `021`/`022` purchases still work as normal paid items when added directly.
+  - Inventory deducts free sticker quantity from the selected sticker SKU and displays paid/free counts in parentheses.
+  - If one sticker SKU is out of stock, staff cannot award that SKU but can choose the other if available.
+  - Manual extra sticker gift requires confirmation and is marked as manual override in CSV.
+  - Old saved scarf bills, if present in localStorage, still render without crashing.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** "Meowsuem+Modern Friends" is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** Y
+- **Notes:** User described this as likely the last batch. Keep after Batch Y to avoid mixing pricing/receipt total changes with promo-inventory changes.
+
+### Batch FINAL_REVIEW — Event Readiness Bug Fix & Full Workflow Check
+- **Business objective:** Do one final bug-fix and readiness pass after delivery fees and the sticker promo are implemented, so the POS is safe to use on the event device.
+- **Expected benefit:** Fewer live-booth surprises, cleaner staff workflow, more reliable payment/CSV/inventory totals, and higher confidence before real sales start.
+- **Implementation difficulty:** medium to high, depending on findings.
+- **Cost/complexity tradeoff:** Focus on targeted fixes and verification, not new features. This keeps the single-file POS stable and avoids adding complexity right before event use.
+- **Items:**
+  1. Run the full local smoke test and fix any failing coverage.
+  2. Manually test the highest-risk end-to-end workflows:
+     - staff login/logout
+     - Event Start count gate
+     - normal cash sale
+     - transfer/card payment confirmation
+     - Send Later with per-SKU delivery fee
+     - sticker gift entitlement and selected SKU inventory deduction
+     - mixed cart with booth item + Send Later item + sticker promo
+     - close day/export CSV
+     - dashboard totals/payment split/top sellers/low-stock alerts
+     - Bill Correction, Void Bill, and Inventory Correction
+     - Reset Data and cleanup controls
+  3. Compare totals across cart, review receipt, saved sale, dashboard, transfer QR amount, day CSV, and Send Later CSV.
+  4. Check mobile/iPad layout for overlapping text, hidden buttons, and unreadable long THB values.
+  5. Review README and TASKS for behavior drift after Batches Y and Z.
+  6. Fix only blocking or event-readiness bugs found during the review; log nice-to-have improvements as future notes instead of expanding scope.
+- **Touches:** likely `meowmeow_pos_event.html`, `tests/smoke_event_pos.js`, `readme.md`, and `TASKS.md`; exact code regions depend on findings.
+- **Do not change:** product pricing/promo rules unless a bug is proven, localStorage key strategy, passcodes, CSV column meanings except bug-compatible additions, or UI design direction.
+- **Acceptance checks:**
+  - `tests/smoke_event_pos.js` passes.
+  - No browser console errors during normal selling, Send Later, promo gift, dashboard, correction, void, reset, and CSV export flows.
+  - Cart total, review receipt total, saved sale total, dashboard total, transfer QR amount, and CSV sale total match for tested cases.
+  - Inventory remaining stock matches expected movement for paid sales, Send Later warehouse reservations, samples, corrections, voids, and free sticker gifts.
+  - Staff can complete a sale without developer tools, page refreshes, or manual calculator work.
+  - README's Event-Day Verification Checklist matches the current behavior.
+- **Risks/assumptions:** This is a final stabilization batch, not a redesign batch. If a major structural problem is discovered, stop and split it into a focused emergency batch instead of mixing large changes into final review.
+- **Owner:**
+- **Status:** ready-for-claude
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** Z
+- **Notes:** Final readiness pass requested by user on 2026-04-28. Codex should review findings before event deployment.
 
 ## Suggested order (least-conflict first)
 
@@ -599,6 +692,9 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 15. **V** - Dashboard V3 Manager View after Batch U dashboard base is merged.
 16. **W** - Today By Hour Dashboard Card after Batch V layout is stable.
 17. **X** - Inventory Flow Sample Visibility + Table Readability after Batch W dashboard work is stable.
+18. **Y** - Product Delivery Fee for Send Later Orders.
+19. **Z** - Replace Free Scarf Promo with Sticker Choice Promo after Batch Y is reviewed.
+20. **FINAL_REVIEW** - Event readiness bug fix and full workflow check after Batch Z is reviewed.
 
 ## Done
 
