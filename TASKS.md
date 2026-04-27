@@ -471,6 +471,43 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Planned by Codex on 2026-04-27 after Batch U. Prefer this before more cosmetic dashboard tweaks because it has higher manager decision value. Claude claiming on 2026-04-27 to implement V3 manager view; Batch S remaining alert call sites paused while V is in flight per the mutual-exclusion rule.
 
+### Batch W - Today By Hour Dashboard Card
+- **Business objective:** Help managers see the live sales rhythm during the event by hour, so they can judge when the booth is warming up, peaking, or slowing down.
+- **Expected benefit:** Faster staffing, stock, and promotion decisions during the day; clearer view of peak selling time.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Use existing sale timestamps and plain HTML/CSS bars. No chart library, no new storage keys, and no data-shape changes.
+- **Reference screenshot:** `dashboard re-design task/references/today-by-hour-reference.png`
+- **Items:**
+  1. Add a `Today By Hour` card in the empty dashboard space under `4-Day Pace`.
+  2. Use hourly buckets:
+     - `<10` for sales before 10:00
+     - `10` through `20` for sales from 10:00-20:59
+     - `>21` for sales at 21:00 or later
+  3. Render compact vertical bars in the approved visual style:
+     - cream/tan normal bars
+     - darker brown peak bucket
+     - compact amount labels above nonzero bars
+     - peak note in the header, for example `peak THB 12k @ 15:00`
+  4. Extend `dashboardMetrics()` only with display data for hourly bucket totals, receipt counts, and peak bucket.
+  5. Preserve all existing dashboard totals, payment split, top sellers, low-stock alerts, discount flags, and free-gift display.
+- **Touches:** `meowmeow_pos_event.html` dashboard markup/CSS/rendering and `dashboardMetrics()`, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** sales storage, localStorage keys, CSV shape, product data, passcodes, inventory math, Send Later behavior, reset behavior, or saved sale shape.
+- **Acceptance checks:**
+  - No sales today shows a clean empty state with no `NaN`.
+  - Sale before 10:00 appears in `<10`.
+  - Sales from 10:00 through 20:59 appear in matching buckets `10` through `20`.
+  - Sale at 21:00 or later appears in `>21`.
+  - Peak bucket is highlighted dark brown and peak text matches the bucket.
+  - Dashboard remains readable on desktop, iPad, and mobile widths.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** Bucket by local device time using existing `sale.datetime`. Amount labels use compact THB formatting to avoid crowding. The reference screenshot is saved for implementation guidance only and should not be loaded by the POS app at runtime.
+- **Owner:**
+- **Status:** ready-for-codex
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** V
+- **Notes:** Planned by Codex on 2026-04-27 from the user-approved visual reference. Save the reference before implementation continues so future sessions do not depend only on chat history.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -489,6 +526,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 13. **S** - Replace Remaining Browser Alerts With In-App Dialogs after reset/dialog patterns are settled.
 14. **T** - Smoke Coverage for PIN-Gated Workflows after Batch Q updates passcode/reset patterns.
 15. **V** - Dashboard V3 Manager View after Batch U dashboard base is merged.
+16. **W** - Today By Hour Dashboard Card after Batch V layout is stable.
 
 ## Done
 
