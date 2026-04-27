@@ -169,8 +169,12 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Staff should not edit inventory from the normal selling flow.
 - Inventory editing belongs in passcode-protected Developer Tools.
 - Developer Tools has one unified `Stock & Allocation Setup` page (no separate Daily Stock and Allocation Setup tabs).
-- New/reset POS data uses `inventory/inventory_default.xlsx` as the built-in opening inventory baseline: `Global` and `Online` come from the workbook, and Day 1 `Event Start` defaults to `Global - Online`.
-- Staff should treat those defaults as the pre-event setup and only adjust small differences in Stock & Allocation Setup before selling starts.
+- New/reset POS data uses `inventory/inventory_default.xlsx` as the built-in planning baseline: `Global` and `Online` come from the workbook so staff do not enter those by hand.
+- Day 1 `Event Start` is intentionally left blank on a fresh setup. Staff must physically count booth stock and enter the actual quantity in Stock & Allocation Setup before selling starts; the workbook is for planning only, not a confirmed event-start count.
+- Unconfirmed Event Start cells render with a red outline, an empty input, a `count` placeholder, a `Count needed` hint under the input, and a `Not counted` warning beside Remaining Event so the missing count is visually obvious.
+- `addToCart` is blocked for any SKU whose Event Start has not been counted yet; the cart toast tells the operator to open Stock & Allocation Setup and count it first.
+- Saving an Event Start through `Confirm Stock Setup` both stores the counted quantity and confirms the SKU, which removes the visual warnings and unblocks selling for that SKU.
+- Closing an operating day automatically confirms Event Start for the next day, since the carry-forward quantity is the source of truth and no recount is needed.
 - The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.
 - Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
@@ -427,6 +431,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - **Apr 2026 (Batch P — Restore UTF-8 Symbols After Inventory Baseline)** — Repaired baht (`฿`), emoji (🎁/🚚/🔒/⚠️/📧/📤/✅/🧣/🐱/⭐/💰/📦/🔁), color markers (🔵/🟡/🟤/⚫/⚪), bullets (`•`), em dashes (`—`), and arrows (`→`) that were lost when Batch O wrote the file with system-default encoding. Batch O inventory baseline (`DEFAULT_GLOBAL_STOCK`, `DEFAULT_ONLINE_STOCK`, Day 1 `Event Start = Global - Online`) and Batch N compressed product images are preserved.
 - **Apr 2026 (Batch Q — Destructive Reset Passcode & Severity)** — `Reset Data` is now visually severe (🚨 icon, hazard banner, deeper crimson button) and gated behind a 3-digit reset passcode (`888`). The confirm button stays disabled until the correct passcode is entered; wrong passcodes show an in-app error and clear the entry. Cancelling the dialog or closing the app resets the passcode state. The smoke test now covers the gate.
 - **Apr 2026 (Batch T — Smoke Coverage for PIN-Gated Workflows)** — Test-only batch. The smoke test now drives the operator login overlay, Dashboard lock, Inventory lock, and Correction lock through both wrong-PIN and correct-PIN paths, asserting overlay state, error text, and PIN clearing. No app behavior changed.
+- **Apr 2026 (Batch R — Manual Event Start Count)** — Day 1 `Event Start` no longer auto-defaults to `Global - Online`; it starts unconfirmed so staff must physically count booth stock and enter it in Stock & Allocation Setup. Unconfirmed cells render with a red outline, empty input, `count` placeholder, `Count needed` hint, and `Not counted` warning beside Remaining Event. `addToCart` is blocked for unconfirmed SKUs with a stock toast pointing staff to the setup page. Saving an Event Start through `Confirm Stock Setup` confirms the SKU and unblocks selling. Closing a day auto-confirms the next day's Event Start (carry-forward is the source of truth). Smoke test extended.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 

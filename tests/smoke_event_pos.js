@@ -144,6 +144,9 @@ async function main() {
     const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
     state.globalInventory.global[sku] = 100;
     state.inventory.days.day1.startingStock[sku] = 10;
+    PRODUCTS.forEach((product) => {
+      state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+    });
     state.sales = [
       {
         id: "SMOKE-UI-VOID-1",
@@ -234,6 +237,9 @@ async function main() {
     state.inventory.days.day1.startingStock[sku] = 10;
     state.inventory.days.day1.addedStock[sku] = 0;
     state.inventory.days.day1.sampleQty[sku] = 0;
+    PRODUCTS.forEach((product) => {
+      state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+    });
 
     const sale = {
       id: "SMOKE-VOID-1",
@@ -309,6 +315,9 @@ async function main() {
     state.inventory.days.day1.startingStock[sku] = 10;
     state.inventory.days.day1.addedStock[sku] = 0;
     state.inventory.days.day1.sampleQty[sku] = 0;
+    PRODUCTS.forEach((product) => {
+      state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+    });
     renderInventoryManagement();
 
     const emptyTableText = inventoryControlList.textContent;
@@ -572,6 +581,91 @@ async function main() {
     "Correct correction PIN must reveal the correction panel with void audit list",
     pinFlows.correctionAcceptsCorrect
   );
+
+  // Batch R — Manual Event Start Count.
+  // Fresh inventory must not auto-confirm Event Start, addToCart must block
+  // until staff count, and saving an Event Start through the setup form must
+  // both confirm the SKU and unblock selling.
+  const eventStartFlow = await page.evaluate(() => {
+    function inputFor(sku, field) {
+      return Array.from(
+        inventoryControlList.querySelectorAll("[data-stock-input-sku]")
+      ).find(
+        (input) =>
+          input.dataset.stockInputSku === sku &&
+          input.dataset.stockInputField === field
+      );
+    }
+
+    localStorage.clear();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.voidedSales = [];
+    state.preorders = [];
+    state.cart = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    state.selectedOperator = "Zamm";
+
+    const sku = PRODUCTS.find((product) => product.sku !== FREE_GIFT_SKU).sku;
+    state.globalInventory.global[sku] = 100;
+    state.globalInventory.onlineAllocated[sku] = 0;
+    state.globalInventory.eventAllocated[sku] = 0;
+    const day1 = state.inventory.days.day1;
+    const noneConfirmed = PRODUCTS.every(
+      (product) => day1.eventStartConfirmed[product.sku] === false
+    );
+    const helperBefore = isEventStartConfirmed(sku);
+
+    renderInventoryManagement();
+    const setupRowText = inventoryControlList.textContent;
+    const inputBefore = inputFor(sku, "eventStarting");
+    const inputUnconfirmed = inputBefore.classList.contains("is-unconfirmed");
+    const inputEmpty = inputBefore.value === "";
+    const placeholderShown = inputBefore.placeholder === "count";
+
+    addToCart(sku);
+    const cartBlocked =
+      state.cart.length === 0 &&
+      cartStockToast.textContent.includes("event start has not been counted");
+
+    inputFor(sku, "eventStarting").value = "12";
+    saveGlobalInventorySetup();
+    confirmInventoryAdd();
+
+    const confirmedAfterSave = isEventStartConfirmed(sku);
+    const startingAfterSave = day1.startingStock[sku];
+
+    state.cart = [];
+    addToCart(sku);
+    const cartUnblocked = state.cart.length === 1 && state.cart[0].sku === sku;
+
+    return {
+      noneConfirmed,
+      helperBefore,
+      inputUnconfirmed,
+      inputEmpty,
+      placeholderShown,
+      hasCountNeededHint: setupRowText.includes("Count needed"),
+      hasNotCountedWarning: setupRowText.includes("Not counted"),
+      cartBlocked,
+      confirmedAfterSave,
+      startingAfterSave,
+      cartUnblocked,
+    };
+  });
+
+  assert(eventStartFlow.noneConfirmed, "Fresh inventory must default eventStartConfirmed to false for every SKU", eventStartFlow);
+  assert(eventStartFlow.helperBefore === false, "isEventStartConfirmed must return false on a fresh day before any save", eventStartFlow);
+  assert(eventStartFlow.inputUnconfirmed, "Unconfirmed Event Start input must render with the .is-unconfirmed class", eventStartFlow);
+  assert(eventStartFlow.inputEmpty, "Unconfirmed Event Start input must render empty (no value attr)", eventStartFlow);
+  assert(eventStartFlow.placeholderShown, "Unconfirmed Event Start input must show the 'count' placeholder", eventStartFlow);
+  assert(eventStartFlow.hasCountNeededHint, "Setup row must show 'Count needed' hint for unconfirmed Event Start", eventStartFlow);
+  assert(eventStartFlow.hasNotCountedWarning, "Remaining Event cell must warn 'Not counted' for unconfirmed Event Start", eventStartFlow);
+  assert(eventStartFlow.cartBlocked, "addToCart must block adds and surface a stock notice when Event Start is unconfirmed", eventStartFlow);
+  assert(eventStartFlow.confirmedAfterSave, "Saving an Event Start through Stock & Allocation Setup must confirm the SKU", eventStartFlow);
+  assert(eventStartFlow.startingAfterSave === 12, "Saved Event Start value must be persisted on the day record", eventStartFlow);
+  assert(eventStartFlow.cartUnblocked, "addToCart must succeed once Event Start is confirmed for the SKU", eventStartFlow);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
