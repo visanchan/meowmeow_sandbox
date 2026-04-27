@@ -335,12 +335,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Selling cannot silently proceed with misleading uncounted stock.
   - `tests/smoke_event_pos.js` still passes or is updated for the new required-count behavior.
 - **Risks/assumptions:** Existing code clamps missing stock to `0`, so Claude must avoid representing "empty/unconfirmed" in a way that silently looks like confirmed zero stock.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/r-manual-event-start-count
-- **Claimed:** 2026-04-27 03:10
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Q merged at `5a50bd6`, blocker cleared. User requested Event Start in Stock & Allocation Setup to wait for staff count at start day.
+- **Notes:** Implemented on `batch/r-manual-event-start-count` 2026-04-27. Per-day `eventStartConfirmed[sku]` map; default Day 1 Event Start renders empty/unconfirmed (red outline + `Count needed` hint + `Not counted` warning); `addToCart` blocked for unconfirmed SKUs with stock toast; saving an Event Start through Stock & Allocation Setup flips the SKU to confirmed and unblocks selling; `closeOperatingDay` auto-confirms the next day. Legacy nonzero startingStock treated as already-confirmed for backwards compatibility. Smoke test extended with Batch R scenario (11 new assertions) and adjusted seed sites in void/top-up scenarios; full smoke passes.
 
 ### Batch S - Replace Remaining Browser Alerts With In-App Dialogs
 - **Business objective:** Make admin confirmations and errors feel smooth and consistent on iPad/Edge instead of using disruptive browser `alert`, `confirm`, and `prompt` boxes.
@@ -439,3 +439,4 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **Batch P — Restore UTF-8 Symbols After Inventory Baseline** — merged into `main` at `33bd06f` on 2026-04-27 by claude after Codex review (safe to merge, BOM/note mismatch corrected). Rebuilt the POS HTML from Batch M's intact-symbol baseline, re-spliced Batch N's compressed images and Batch O's inventory baseline, and wrote as UTF-8 with the file's pre-existing BOM. Smoke test and visual selling-screen check pass.
 - **Batch Q — Destructive Reset Passcode & Severity** — merged into `main` at `5a50bd6` on 2026-04-27 by claude (Codex push-review). Reset Data button restyled to `🚨` `.action-btn.severe`; reset overlay restyled to `.confirm-card.severe` with hazard banner; 3-digit passcode keypad gates the destructive button, which starts disabled and only enables after entering `888`. Wrong passcode shows in-app error and clears entry; cancel/close clears state. Smoke test extended with 4 gate assertions; README Pre-Event Data Hygiene rewritten. Unblocks R, S, T.
 - **Batch T — Smoke Coverage for PIN-Gated Workflows** — merged into `main` at `ebb87c0` on 2026-04-27 by claude. Smoke test now drives login overlay + Dashboard/Inventory/Correction lock screens through wrong-PIN and right-PIN paths (12 new assertions). Test-only batch; no app behavior changed.
+- **Batch R — Manual Event Start Count** — implemented on `batch/r-manual-event-start-count` on 2026-04-27 by claude (PR pending). Per-day `eventStartConfirmed[sku]` map; Day 1 Event Start renders empty/unconfirmed by default; `addToCart` blocked for unconfirmed SKUs; saving through Stock & Allocation Setup confirms and unblocks; closing a day auto-confirms the next. Smoke test extended with Batch R scenario.
