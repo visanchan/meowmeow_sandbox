@@ -1112,6 +1112,216 @@ async function main() {
   assert(v3DashboardFlow.after21Total === 500 && v3DashboardFlow.after21Receipts === 1, "21:00+ sale must land in the >21 bucket", v3DashboardFlow);
   assert(v3DashboardFlow.hourPeakNote.includes("peak THB 12.5k @ <10"), "Today By Hour peak note must match the highlighted bucket", v3DashboardFlow);
 
+  // Batch Y — Send Later delivery fee from product workbook flows through cart, sale, and CSV.
+  const deliveryFeeFlow = await page.evaluate(() => {
+    function buildSendLaterLine(sku, qty) {
+      const product = PRODUCTS.find((p) => p.sku === sku);
+      return {
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        qty,
+        basePrice: product.price,
+        defaultDiscountAmount: product.defaultDiscount || 0,
+        discountAmount: product.defaultDiscount || 0,
+        isFreeGift: false,
+        isFulfillmentLater: true,
+        fulfillmentType: "reserved_send_later",
+        preorderPaymentStatus: "paid_now",
+      };
+    }
+    function buildBoothLine(sku, qty) {
+      const product = PRODUCTS.find((p) => p.sku === sku);
+      return {
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        qty,
+        basePrice: product.price,
+        defaultDiscountAmount: product.defaultDiscount || 0,
+        discountAmount: product.defaultDiscount || 0,
+        isFreeGift: false,
+      };
+    }
+
+    localStorage.clear();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.voidedSales = [];
+    state.preorders = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    PRODUCTS.forEach((product) => {
+      state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+    });
+    state.selectedOperator = "Zamm";
+
+    // 1) Workbook delivery fees are present on the catalog (spot-check known values).
+    const fee002A = productDeliveryFee("002A");
+    const fee007 = productDeliveryFee("007");
+    const fee013 = productDeliveryFee("013");
+    const fee021 = productDeliveryFee("021");
+
+    // 2) Empty cart: zero delivery fee, summary row hidden.
+    state.cart = [];
+    state.payment = "cash";
+    renderCart();
+    const empty = cartTotals();
+    const emptyRowHidden = summaryDeliveryFeeRow.classList.contains("hidden");
+
+    // 3) Booth-only sale: no delivery fee, summary row hidden.
+    state.cart = [buildBoothLine("002A", 1)];
+    state.payment = "cash";
+    renderCart();
+    const boothTotals = cartTotals();
+    const boothRowHidden = summaryDeliveryFeeRow.classList.contains("hidden");
+
+    // 4) One Send Later SKU (002A, fee 120) qty 1.
+    state.cart = [buildSendLaterLine("002A", 1)];
+    state.payment = "cash";
+    renderCart();
+    const oneSL = cartTotals();
+    const oneSLRowVisible = !summaryDeliveryFeeRow.classList.contains("hidden");
+
+    // 5) Same SKU qty 2 (fee 240).
+    state.cart = [buildSendLaterLine("002A", 2)];
+    renderCart();
+    const twoSL = cartTotals();
+
+    // 6) Mixed Send Later SKUs: 002A x1 (120) + 007 x1 (200) = 320.
+    state.cart = [
+      buildSendLaterLine("002A", 1),
+      buildSendLaterLine("007", 1),
+    ];
+    renderCart();
+    const mixedSL = cartTotals();
+
+    // 7) Mixed booth + Send Later: booth item charges no delivery fee.
+    state.cart = [
+      buildBoothLine("002A", 1),
+      buildSendLaterLine("007", 1),
+    ];
+    renderCart();
+    const mixedCart = cartTotals();
+
+    // 8) Card payment with delivery fee: surcharge applied to merchandise + delivery fee.
+    state.cart = [buildSendLaterLine("002A", 1)];
+    state.payment = "card";
+    renderCart();
+    const cardWithDelivery = cartTotals();
+
+    // 9) serializeCartLine records per-line delivery fee fields.
+    state.cart = [buildSendLaterLine("002A", 2), buildBoothLine("002A", 1)];
+    state.payment = "cash";
+    const serializedSendLater = serializeCartLine(state.cart[0]);
+    const serializedBooth = serializeCartLine(state.cart[1]);
+
+    // 10) Save the sale: state.pendingSale.total includes delivery fee, sale.deliveryFee persists.
+    state.cart = [buildSendLaterLine("013", 1)]; // fee 200
+    state.payment = "cash";
+    renderCart();
+    const beforeCompleteTotals = cartTotals();
+    completeSale();
+    const pendingSnapshot = {
+      total: state.pendingSale.total,
+      deliveryFee: state.pendingSale.deliveryFee,
+      itemDeliveryFeePerUnit: state.pendingSale.items[0].deliveryFeePerUnit,
+      itemLineDeliveryFee: state.pendingSale.items[0].lineDeliveryFee,
+    };
+    // Approve and finalize so it is saved.
+    state.pendingSale.paymentConfirmed = true;
+    state.pendingSale.paymentStatus = "confirmed";
+    paymentConfirmedInput.checked = true;
+    customerNameInput.value = "Smoke Y Customer";
+    customerPhoneInput.value = "0800000000";
+    customerReceiveLocationInput.value = "Smoke Y address";
+    syncPendingSaleCustomerFields();
+    finalizeSale("save");
+
+    const savedSale = state.sales[0];
+    const csv = daySalesToCsv("day1");
+    const headerRow = csv.split("\n")[0].split(",");
+    const dataRow = csv.split("\n")[1].split(",");
+    const headerIndex = (key) => headerRow.indexOf(key);
+    const cellAt = (key) => dataRow[headerIndex(key)];
+
+    return {
+      // workbook-derived fees
+      fee002A,
+      fee007,
+      fee013,
+      fee021,
+      // empty
+      emptyDeliveryFee: empty.deliveryFee,
+      emptyChargeable: empty.chargeableTotal,
+      emptyRowHidden,
+      // booth-only
+      boothDeliveryFee: boothTotals.deliveryFee,
+      boothChargeable: boothTotals.chargeableTotal,
+      boothMerch: boothTotals.total,
+      boothRowHidden,
+      // one Send Later
+      oneSLDelivery: oneSL.deliveryFee,
+      oneSLChargeable: oneSL.chargeableTotal,
+      oneSLMerch: oneSL.total,
+      oneSLRowVisible,
+      // qty 2
+      twoSLDelivery: twoSL.deliveryFee,
+      // mixed Send Later SKUs
+      mixedSLDelivery: mixedSL.deliveryFee,
+      // mixed cart (booth + Send Later)
+      mixedCartDelivery: mixedCart.deliveryFee,
+      // card
+      cardSurcharge: cardWithDelivery.cardSurcharge,
+      cardChargeable: cardWithDelivery.chargeableTotal,
+      cardMerch: cardWithDelivery.total,
+      cardDelivery: cardWithDelivery.deliveryFee,
+      // serialized item shape
+      serializedSendLaterPerUnit: serializedSendLater.deliveryFeePerUnit,
+      serializedSendLaterLine: serializedSendLater.lineDeliveryFee,
+      serializedBoothPerUnit: serializedBooth.deliveryFeePerUnit,
+      serializedBoothLine: serializedBooth.lineDeliveryFee,
+      // saved sale + csv
+      pendingSnapshot,
+      savedDeliveryFee: savedSale?.deliveryFee,
+      savedTotal: savedSale?.total,
+      savedSubtotal: savedSale?.subtotal,
+      savedItemPerUnit: savedSale?.items?.[0]?.deliveryFeePerUnit,
+      savedItemLineFee: savedSale?.items?.[0]?.lineDeliveryFee,
+      csvHasSaleDeliveryFee: headerIndex("saleDeliveryFee") >= 0,
+      csvHasPerUnit: headerIndex("deliveryFeePerUnit") >= 0,
+      csvHasLineDeliveryFee: headerIndex("lineDeliveryFee") >= 0,
+      csvSaleDeliveryFeeCell: cellAt("saleDeliveryFee"),
+      csvDeliveryFeePerUnitCell: cellAt("deliveryFeePerUnit"),
+      csvLineDeliveryFeeCell: cellAt("lineDeliveryFee"),
+      // QR amount uses chargeableTotal (sale.total includes delivery fee).
+      pendingTotalIncludesFee: pendingSnapshot.total === beforeCompleteTotals.chargeableTotal,
+    };
+  });
+
+  assert(deliveryFeeFlow.fee002A === 120, "002A delivery fee from workbook must be 120", deliveryFeeFlow);
+  assert(deliveryFeeFlow.fee007 === 200, "007 delivery fee from workbook must be 200", deliveryFeeFlow);
+  assert(deliveryFeeFlow.fee013 === 200, "013 delivery fee from workbook must be 200", deliveryFeeFlow);
+  assert(deliveryFeeFlow.fee021 === 0, "021 (sticker) must have no delivery fee in workbook", deliveryFeeFlow);
+  assert(deliveryFeeFlow.emptyDeliveryFee === 0 && deliveryFeeFlow.emptyRowHidden, "Empty cart must have zero delivery fee and the summary row hidden", deliveryFeeFlow);
+  assert(deliveryFeeFlow.boothDeliveryFee === 0 && deliveryFeeFlow.boothChargeable === deliveryFeeFlow.boothMerch && deliveryFeeFlow.boothRowHidden, "Booth-only sale must charge no delivery fee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.oneSLDelivery === 120 && deliveryFeeFlow.oneSLChargeable === deliveryFeeFlow.oneSLMerch + 120 && deliveryFeeFlow.oneSLRowVisible, "One Send Later 002A x1 must add THB 120 delivery fee and surface the summary row", deliveryFeeFlow);
+  assert(deliveryFeeFlow.twoSLDelivery === 240, "Send Later 002A x2 must charge THB 240 delivery fee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.mixedSLDelivery === 320, "Mixed Send Later SKUs must sum delivery fees (120 + 200 = 320)", deliveryFeeFlow);
+  assert(deliveryFeeFlow.mixedCartDelivery === 200, "Mixed booth + Send Later cart must charge delivery only on the Send Later line", deliveryFeeFlow);
+  assert(deliveryFeeFlow.cardSurcharge > 0 && deliveryFeeFlow.cardChargeable === deliveryFeeFlow.cardMerch + deliveryFeeFlow.cardDelivery + deliveryFeeFlow.cardSurcharge, "Card payment chargeable total must equal merchandise + delivery + 3% card surcharge", deliveryFeeFlow);
+  assert(deliveryFeeFlow.cardSurcharge === Math.round((deliveryFeeFlow.cardMerch + deliveryFeeFlow.cardDelivery) * 0.03 * 100) / 100, "Card surcharge must be 3% of (merchandise + delivery fee)", deliveryFeeFlow);
+  assert(deliveryFeeFlow.serializedSendLaterPerUnit === 120 && deliveryFeeFlow.serializedSendLaterLine === 240, "Saved Send Later item must record deliveryFeePerUnit and lineDeliveryFee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.serializedBoothPerUnit === 0 && deliveryFeeFlow.serializedBoothLine === 0, "Saved booth item must record zero delivery fee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.savedDeliveryFee === 200 && deliveryFeeFlow.savedTotal === deliveryFeeFlow.pendingSnapshot.total, "Saved sale must persist sale.deliveryFee and total must match the pending sale total (which already includes the delivery fee)", deliveryFeeFlow);
+  assert(deliveryFeeFlow.savedItemPerUnit === 200 && deliveryFeeFlow.savedItemLineFee === 200, "Saved sale item must persist deliveryFeePerUnit and lineDeliveryFee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.csvHasSaleDeliveryFee && deliveryFeeFlow.csvHasPerUnit && deliveryFeeFlow.csvHasLineDeliveryFee, "Day CSV header must include saleDeliveryFee, deliveryFeePerUnit, lineDeliveryFee", deliveryFeeFlow);
+  assert(deliveryFeeFlow.csvSaleDeliveryFeeCell === "200" && deliveryFeeFlow.csvDeliveryFeePerUnitCell === "200" && deliveryFeeFlow.csvLineDeliveryFeeCell === "200", "Day CSV row must export delivery fee numeric values", deliveryFeeFlow);
+  assert(deliveryFeeFlow.pendingTotalIncludesFee, "pending sale.total must equal cartTotals().chargeableTotal so the transfer QR amount includes the delivery fee", deliveryFeeFlow);
+
+  assert(pageErrors.length === 0, "No page errors after Batch Y delivery fee flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch Y delivery fee flow", browserDialogs);
+
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
 }

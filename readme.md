@@ -136,6 +136,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - cannot be added to cart if warehouse stock is not enough
   - reserve committed warehouse stock once the sale is saved
   - default to and stay `Paid at event`
+  - charge a per-SKU `Delivery Fee` taken from `product/product list-event price.xlsx`. The fee is added once per Send Later unit (`deliveryFee × qty`), summed across all Send Later lines in the cart, and shown as a separate `Delivery Fee` row in the cart and review-receipt summary whenever it is greater than zero.
+  - Delivery Fee is included in the chargeable total, the saved sale total, the transfer QR amount, the payment confirmation amount, and the receipt slip. Booth-only items are not charged a delivery fee.
+  - When the payment method is Card, the 3% card surcharge is calculated on `merchandise + delivery fee` so the surcharge matches the real transaction amount.
 - Mixed carts can contain live stock items and `Send Later` items in the same checkout.
 - If a cart is inactive for 10 minutes, the app prompts staff to keep or clear it so unsaved Send Later holds do not keep confusing warehouse availability during the session.
 - The Send Later Queue is monitor-only. Staff should not manually create Send Later records from that page.
@@ -329,6 +332,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - `customerPhone`
   - `customerLineId`
   - `customerReceiveLocation`
+  - `saleDeliveryFee` — total delivery fee charged on the sale (sum of all Send Later lines).
+  - `deliveryFeePerUnit` — per-unit delivery fee for the line; non-zero only on Send Later lines, taken from `product/product list-event price.xlsx`.
+  - `lineDeliveryFee` — `deliveryFeePerUnit × qty` for the line. Booth (non-Send-Later) lines record `0`.
 - Send Later CSV includes split customer/shipping fields plus `linkedBillId` and paid-at-event payment status.
 - CSV exports from both the POS app and the admin tool should emit SKU values in spreadsheet-safe text form so leading zeros stay intact during sorting, syncing, and post-processing.
 - Free-gift CSV detail also includes gift metadata such as auto/manual gift quantities.
@@ -443,6 +449,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - **Apr 2026 (Batch V — Dashboard V3 Manager View)** — 4-day pace card converted from a grid into a horizontal timeline (numbered Day 1→Day 4 dots + connector with per-day total/receipts/items cells underneath); added Top Sellers card (paid items, top 5 by units then revenue) and Low Stock Alerts card (active-day SKUs at or below their low-stock threshold, sorted by remaining; suppressed before staff count Event Start). `dashboardMetrics()` extended with `topSellers`, `topSellerMaxQty`, `lowStock`, `anyEventStartConfirmed`, `activeDayId`, `activeDayLabel`. PINs/CSV/storage/inventory math/Send Later/reset behavior unchanged. Smoke covers empty and populated V3 dashboard states.
 - **Apr 2026 (Batch W — Today By Hour Dashboard Card)** — Internal Dashboard now adds a compact Today By Hour bar card under 4-Day Pace. It buckets local sale timestamps into `<10`, `10`-`20`, and `>21`, highlights the peak bucket, and keeps this as display-only dashboard data with no storage or CSV changes. Smoke covers empty and populated bucket states.
 - **Apr 2026 (Batch S — In-App Dialogs Replace Browser Alerts)** — Browser `alert`/`prompt` boxes across the admin/staff flows are now replaced with in-app overlay dialogs that match the existing confirm-card style. Affected paths: `Clear Emails` (result message), Stock & Allocation Setup validation failures, Inventory Correction validation failures, Inventory Reverse top-up reason (now a dialog with a textarea, Enter to submit), Send Later form validation, Send Later/Sale/End-of-Day/Void Audit CSV export empty/error messages, and storage-failure save errors. `Clear Pending Send Later` and the Free-scarf out-of-stock cart notice were already in-app and stay unchanged. ESC closes the topmost dialog first without closing the screen underneath.
+- **Apr 2026 (Batch Y — Product Delivery Fee for Send Later Orders)** — Per-SKU `Delivery Fee` from `product/product list-event price.xlsx` is now charged on Send Later cart lines (`deliveryFee × qty`, summed). The fee shows as a separate `Delivery Fee` row in the cart and review-receipt summary when nonzero, and is included in the chargeable total, saved sale total, transfer QR amount, payment confirmation amount, and the receipt slip. Booth-only sales are unchanged. Card surcharge (3%) now calculates on `merchandise + delivery fee`. Sale CSV and end-of-day CSV gain `saleDeliveryFee`, `deliveryFeePerUnit`, and `lineDeliveryFee` columns; existing column meanings are preserved. Bill Correction recomputes the delivery fee from the updated Send Later items. Smoke test extended.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 
