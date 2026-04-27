@@ -583,11 +583,34 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** The workbook is the source for delivery fee values, but the running app still uses embedded constants; Claude must manually sync the values into `PRODUCTS`. Delivery fee should be a sale charge, not an inventory item. Codex review recommended because this touches payment totals, receipts, QR amount, and CSV reconciliation.
 - **Owner:** claude
-- **Status:** in-progress
+- **Status:** ready-for-review
 - **Branch:** batch/y-send-later-delivery-fee
 - **Claimed:** 2026-04-28 14:30
 - **BlockedBy:**
-- **Notes:** Refined by Codex on 2026-04-28 after user added `Delivery Fee` values to the product workbook. Ready for Claude implementation. Claimed by Claude 2026-04-28.
+- **Notes:** Implemented by Claude on `batch/y-send-later-delivery-fee` (head `300acb1`). All 20 acceptance assertions pass in the local smoke test (`local smoke passed for meowmeow_pos_event.html`). Codex review requested before merge because the change touches payment totals, transfer QR amount, receipt, and CSV reconciliation.
+
+  Workbook delivery fees synced into `PRODUCTS`: 002A/002B/003/004/005/006 = 120, 007 = 200, 010/012 = 120, 013 = 200, 014 = 120, 015/016 = 200, 017 = 50, 018 = 0 (workbook blank), 019/020 = 50, 021/022 = 0 (stickers, workbook blank), GIFT-SCARF = 0.
+
+  Implementation summary:
+  - New helpers `productDeliveryFee(sku)` / `lineDeliveryFee(line)` (Send Later lines only).
+  - `cartTotals()` now returns `deliveryFee` and bakes it into `chargeableTotal`. Card surcharge is calculated on `merchandise + deliveryFee` so the 3% matches the real transaction amount.
+  - New `Delivery Fee` summary row in the cart panel (`#summaryDeliveryFeeRow` / `#summaryDeliveryFee`) and in the review-receipt slip (`#receiptDeliveryFeeRow` / `#receiptDeliveryFee`); both hidden when 0.
+  - `completeSale` persists `pendingSale.deliveryFee`. `serializeCartLine` records `deliveryFeePerUnit` / `lineDeliveryFee` per saved item.
+  - Bill Correction: `correctionTotalsFromItems` returns `{subtotal, discount, total, deliveryFee}` (recomputed from updated Send Later items), `confirmCorrectionSave` persists/rolls back `sale.deliveryFee`, `rebuildCorrectionItem` rebuilds per-line delivery fee on qty changes, and the correction review summary surfaces the fee when > 0.
+  - Transfer QR amount: `refreshTransferQr` switched to `totals.chargeableTotal` so the QR encodes the full chargeable amount (including delivery fee). `renderPendingTransferQr` already used `sale.total` (now chargeable) — unchanged.
+  - `receiptText` includes a `Delivery Fee:` line when > 0 (copied/emailed receipt).
+  - CSV: `saleDeliveryFee`, `deliveryFeePerUnit`, `lineDeliveryFee` appended at the end of `saleToCsvRows` and `daySalesToCsv` headers + per-row data; existing column meanings preserved. Booth lines record `0`. Send Later queue CSV is unchanged (paid-at-event only).
+  - Legacy saved sales without `sale.deliveryFee` / `item.deliveryFeePerUnit` render safely (defaults to 0 everywhere).
+  - README: Fulfillment Later and Data, Storage & CSV sections updated. Recently Changed entry added.
+
+  Smoke coverage (Batch Y scenario, end of `tests/smoke_event_pos.js`): empty cart hides the row, booth-only sale charges no delivery, 002A x1 = THB 120 with row visible, 002A x2 = THB 240, 002A + 007 = THB 320, mixed booth + Send Later charges only the Send Later line, card surcharge = 3% × (merchandise + delivery), serialized line records per-unit + line fee, saved sale persists `deliveryFee`, day CSV header has the three new columns and the row exports `200/200/200` for a 013 Send Later sale, pending sale total equals `cartTotals().chargeableTotal` so the transfer QR amount includes delivery. Final `pageErrors`/`browserDialogs` gate re-asserted after the new scenario.
+
+  Files touched: `meowmeow_pos_event.html`, `readme.md`, `tests/smoke_event_pos.js`. Out of scope per spec: Send Later queue CSV shape, inventory/Send Later reservation math, passcodes, localStorage keys, normal booth-sale pricing.
+
+  Open assumptions for Codex review:
+  - SKU 018 (Lobster Doll) has a blank `Delivery Fee` cell in the workbook → I default it to 0. If the operator expects 50 (matching the other Modern Friends plush 017), update the workbook and the constant.
+  - SKU 021/022 (Stickers) likewise default to 0; this lines up with the upcoming Batch Z sticker-promo intent.
+  - Card surcharge now applies to `merchandise + deliveryFee`; pre-Y behavior applied 3% to merchandise only. Surfacing this to flag the user-visible total change.
 
 ### Batch Z — Replace Free Scarf Promo with Sticker Choice Promo
 - **Business objective:** Update the event promotion from free scarf to a lower-threshold sticker gift that matches the current offer: `ซื้อครบ 1200 บาท (Meowsuem+Modern Friends) ฟรี Sticker Meowsuem 1 ชิ้น(sku:021 or 022) มูลค่า 100 บาท`.
