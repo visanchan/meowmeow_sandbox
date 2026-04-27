@@ -1522,6 +1522,10 @@ async function main() {
     state.cart = [paidLine("002A", 2)];
     renderCart();
     const autoGift = findFreeGiftLine();
+    state.activeTab = getProductTab(getStickerProduct("021"));
+    renderTabs();
+    renderProducts();
+    const sticker021Card = productGrid.querySelector('[data-sku="021"]');
     const thresholdGift = {
       qualifying: qualifyingCartTotal(),
       entitlement: freeGiftEntitlement(),
@@ -1530,6 +1534,7 @@ async function main() {
       isFreeGift: Boolean(autoGift?.isFreeGift),
       lineTotal: lineTotal(autoGift),
       cartMetaText: cartMeta.textContent,
+      productCardStock: sticker021Card?.querySelector(".product-stock")?.textContent.trim(),
     };
 
     state.cart = [paidLine("002A", 4)];
@@ -1644,8 +1649,9 @@ async function main() {
       stickerPromoFlow.thresholdGift.sku === "021" &&
       stickerPromoFlow.thresholdGift.qty === 1 &&
       stickerPromoFlow.thresholdGift.isFreeGift &&
-      stickerPromoFlow.thresholdGift.lineTotal === 0,
-    "Batch Z: qualifying cart must auto-award one free SKU 021 sticker at THB 0",
+      stickerPromoFlow.thresholdGift.lineTotal === 0 &&
+      stickerPromoFlow.thresholdGift.productCardStock === "4",
+    "Batch Z: qualifying cart must auto-award one free SKU 021 sticker at THB 0 and immediately reserve catalog stock",
     stickerPromoFlow
   );
   assert(

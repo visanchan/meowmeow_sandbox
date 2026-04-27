@@ -2216,6 +2216,7 @@ function commitCartLineDiscountInput(control,{refresh=true}={}){if(!control)retu
 function removeLine(index){state.cart.splice(index,1);refreshCartUi();}
 function renderCart(){
   syncFreeGift();
+  renderProducts();
   const totals=cartTotals();
   const closed=isCurrentDayClosed();
   const entitlement=freeGiftEntitlement();
