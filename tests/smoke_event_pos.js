@@ -87,6 +87,13 @@ async function main() {
     paySplitRendered: dashboardPaySplitTiles.textContent.includes("Cash") &&
       dashboardPaySplitTiles.textContent.includes("Transfer") &&
       dashboardPaySplitTiles.textContent.includes("Card"),
+    timelineSteps: dashboardTimelineTrack.querySelectorAll(".v3-timeline-step").length,
+    timelineCells: dashboardTimelineRows.querySelectorAll(".v3-timeline-cell").length,
+    topSellersEmptyState: dashboardTopSellers.textContent.includes("No paid items sold yet"),
+    lowStockEmptyState:
+      dashboardLowStock.textContent.includes("All booth SKUs above their low-stock alert") ||
+      dashboardLowStock.textContent.includes("Count Event Start in Stock & Allocation Setup"),
+    lowStockTitleHasDay: dashboardLowStockTitle.textContent.includes("Day"),
   }));
   await page.evaluate(() => closeDashboard());
 
@@ -633,6 +640,27 @@ async function main() {
     pinFlows.dashboardAcceptsCorrect
   );
   assert(
+    pinFlows.dashboardAcceptsCorrect.timelineSteps === 4 &&
+      pinFlows.dashboardAcceptsCorrect.timelineCells === 4,
+    "V3 4-day timeline must render exactly 4 day steps and 4 day cells",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
+    pinFlows.dashboardAcceptsCorrect.topSellersEmptyState,
+    "V3 top sellers card must show empty state when there are no paid sales",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
+    pinFlows.dashboardAcceptsCorrect.lowStockEmptyState,
+    "V3 low stock card must show empty state when no SKU is at or below its threshold",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
+    pinFlows.dashboardAcceptsCorrect.lowStockTitleHasDay,
+    "V3 low stock title must include the active day label",
+    pinFlows.dashboardAcceptsCorrect
+  );
+  assert(
     pinFlows.inventoryRejectsWrong.locked &&
       pinFlows.inventoryRejectsWrong.panelHidden &&
       pinFlows.inventoryRejectsWrong.errorShown &&
@@ -781,6 +809,112 @@ async function main() {
   assert(eventStartFlow.confirmedAfterSave, "Saving an Event Start through Stock & Allocation Setup must confirm the SKU", eventStartFlow);
   assert(eventStartFlow.startingAfterSave === 12, "Saved Event Start value must be persisted on the day record", eventStartFlow);
   assert(eventStartFlow.cartUnblocked, "addToCart must succeed once Event Start is confirmed for the SKU", eventStartFlow);
+
+  // Batch V — populated V3 dashboard scenario.
+  // Seed paid sales across two SKUs and a cash/transfer/card mix; drop one
+  // SKU's remaining stock below its threshold so the Low Stock card has work
+  // to do. Assert top-seller bars, low-stock pills, day cells, and no NaN.
+  const v3DashboardFlow = await page.evaluate(() => {
+    localStorage.clear();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.voidedSales = [];
+    state.preorders = [];
+    state.cart = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    state.selectedOperator = "Zamm";
+
+    const paidProducts = PRODUCTS.filter((p) => p.sku !== FREE_GIFT_SKU).slice(0, 2);
+    const skuA = paidProducts[0].sku;
+    const skuB = paidProducts[1].sku;
+    PRODUCTS.forEach((p) => {
+      state.inventory.days.day1.eventStartConfirmed[p.sku] = true;
+      state.inventory.days.day1.startingStock[p.sku] = 50;
+      state.globalInventory.global[p.sku] = 200;
+    });
+    state.inventory.thresholds[skuA] = 30;
+    state.inventory.thresholds[skuB] = 5;
+
+    const baseSale = (id, sku, qty, payment, lineTotal) => ({
+      id,
+      billId: id,
+      datetime: new Date().toISOString(),
+      timestamp: Date.now(),
+      operatingDay: "day1",
+      payment,
+      paymentStatus: "confirmed",
+      paymentConfirmed: true,
+      operator: "Zamm",
+      items: [
+        {
+          sku,
+          name: "V3 SKU",
+          category: "V3",
+          qty,
+          basePrice: lineTotal / qty,
+          discountPerItem: 0,
+          discounted: false,
+          finalUnitPrice: lineTotal / qty,
+          lineSubtotal: lineTotal,
+          discountAmount: 0,
+          lineDiscount: 0,
+          lineTotal,
+        },
+      ],
+      subtotal: lineTotal,
+      discount: 0,
+      total: lineTotal,
+      correctionHistory: [],
+    });
+
+    state.sales = [
+      baseSale("V3-CASH-1", skuA, 25, "cash", 12500),
+      baseSale("V3-TRANSFER-1", skuB, 6, "transfer", 4800),
+      baseSale("V3-CARD-1", skuA, 1, "card", 500),
+    ];
+    state.salesRevision += 1;
+    invalidateSalesDerivedData();
+    renderDashboard();
+
+    const dashText = dashboardPanel.textContent;
+    const topRows = dashboardTopSellers.querySelectorAll(".v3-bar-row");
+    const lowRows = dashboardLowStock.querySelectorAll(".v3-low-row");
+    const firstTopMeta = topRows[0]?.querySelector(".v3-bar-meta strong")?.textContent || "";
+    const lowSkuList = Array.from(lowRows).map(
+      (row) => row.querySelector(".v3-low-name")?.title?.split(" · ")[1] || ""
+    );
+    const liveCells = dashboardTimelineRows.querySelectorAll(".v3-timeline-cell.is-live").length;
+    const paySplitText = dashboardPaySplitTiles.textContent;
+
+    return {
+      skuA,
+      skuB,
+      hasNoNaN: !dashText.includes("NaN"),
+      topRowsCount: topRows.length,
+      firstTopName: topRows[0]?.querySelector(".v3-bar-name")?.textContent || "",
+      firstTopMetaContainsQty: firstTopMeta.includes("26 sold"),
+      firstTopMetaContainsRevenue: firstTopMeta.includes("THB"),
+      lowRowsCount: lowRows.length,
+      lowIncludesSkuA: lowSkuList.includes(skuA),
+      lowExcludesSkuB: !lowSkuList.includes(skuB),
+      liveCellCount: liveCells,
+      paySplitMentionsThreeMethods:
+        paySplitText.includes("Cash") &&
+        paySplitText.includes("Transfer") &&
+        paySplitText.includes("Card"),
+    };
+  });
+
+  assert(v3DashboardFlow.hasNoNaN, "Populated V3 dashboard must not contain NaN anywhere", v3DashboardFlow);
+  assert(v3DashboardFlow.topRowsCount >= 1 && v3DashboardFlow.topRowsCount <= 5, "Top sellers must render between 1 and 5 bar rows when paid sales exist", v3DashboardFlow);
+  assert(v3DashboardFlow.firstTopMetaContainsQty, "First top-seller row must reflect aggregated paid quantity (skuA = 25 + 1 = 26 sold)", v3DashboardFlow);
+  assert(v3DashboardFlow.firstTopMetaContainsRevenue, "Top-seller row must show revenue in THB", v3DashboardFlow);
+  assert(v3DashboardFlow.lowRowsCount >= 1, "Low Stock card must render at least one row when a SKU is at or below its threshold", v3DashboardFlow);
+  assert(v3DashboardFlow.lowIncludesSkuA, "Low Stock card must list skuA (50 starting - 26 sold = 24 remaining, threshold 30, so isLow=true)", v3DashboardFlow);
+  assert(v3DashboardFlow.lowExcludesSkuB, "Low Stock card must exclude skuB (50 starting - 6 sold = 44 remaining, threshold 5, well above)", v3DashboardFlow);
+  assert(v3DashboardFlow.liveCellCount === 1, "Exactly one V3 timeline cell must be marked live (the active day)", v3DashboardFlow);
+  assert(v3DashboardFlow.paySplitMentionsThreeMethods, "Payment split must mention Cash, Transfer, and Card after a populated mix", v3DashboardFlow);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
