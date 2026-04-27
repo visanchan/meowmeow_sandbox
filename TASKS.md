@@ -464,12 +464,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - iPad/mobile widths do not overlap text; large THB values remain readable.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** The reference image is in chat, not the workspace. Hourly/peak-hour data depends on saved sale timestamps and should be skipped or kept simple if it risks false precision. Low-stock alerts must use current event remaining stock, not global warehouse stock. This batch overlaps the dashboard region, so do not run it in parallel with Batch S if both agents would edit `meowmeow_pos_event.html`.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** batch/v-dashboard-v3-manager
+- **Claimed:** 2026-04-27 12:30
 - **BlockedBy:**
-- **Notes:** Planned by Codex on 2026-04-27 after Batch U. Prefer this before more cosmetic dashboard tweaks because it has higher manager decision value.
+- **Notes:** Planned by Codex on 2026-04-27 after Batch U. Prefer this before more cosmetic dashboard tweaks because it has higher manager decision value. Claude claiming on 2026-04-27 to implement V3 manager view; Batch S remaining alert call sites paused while V is in flight per the mutual-exclusion rule.
 
 ## Suggested order (least-conflict first)
 
