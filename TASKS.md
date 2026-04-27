@@ -545,12 +545,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Free gift/scarf display keeps the existing parentheses formatting where relevant.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** Sample stock is already tracked per day in `state.inventory.days[dayId].sampleQty` and already reduces remaining event stock. This batch should be display/readability plus smoke coverage; any inventory-math change is a regression risk.
-- **Owner:** codex
-- **Status:** in-progress
+- **Owner:**
+- **Status:** done
 - **Branch:** batch/x-inventory-flow-samples
 - **Claimed:** 2026-04-27
 - **BlockedBy:**
-- **Notes:** User assigned Codex to implement the planned monitor-only Inventory Flow sample visibility and table readability batch.
+- **Notes:** Completed by Codex on `batch/x-inventory-flow-samples` 2026-04-27. Inventory Flow now shows `Added` and `Sample +N` partitions inside the Added Stock KPI, displays per-row `+N sample` chips, and uses larger highlighted table numbers for Added Stock and Remaining Stock. Existing sample math and Inventory Correction behavior unchanged; smoke coverage added and passing.
 
 ## Suggested order (least-conflict first)
 

@@ -108,6 +108,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - The Inventory Flow summary cards should follow the same split style:
   - `Starting Stock`, `Added Stock`, and `Remaining` should show `main (scarf)` when the scarf contributes to that total.
   - `Sold` should keep the paid-vs-free split style, such as `16 (4)`.
+- Inventory Flow shows sample movement inside the `Added Stock` summary card as `Sample +N`, and product rows show `+N sample` when staff turned event stock into samples that day. Sample stock reduces remaining event stock until an Inventory Correction changes the sample quantity back down.
 - The scarf can auto-award based on cart total:
   - every `THB 2,000` of qualifying cart total earns `1` scarf
 - The scarf can also be manually added beyond entitlement, but that requires in-app confirmation.
@@ -397,7 +398,7 @@ Run this checklist on the event device before booth selling starts. Use test dat
 $env:NODE_PATH='C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules'; $env:PLAYWRIGHT_BROWSER_PATH='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'; & 'C:\Users\USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'tests\smoke_event_pos.js'
 ```
 
-The smoke test now covers PIN-gated workflows (operator login, Dashboard, Inventory, Correction lock screens), Today By Hour dashboard buckets, void/carry-forward, stock top-up reset, and the destructive Reset Data gate.
+The smoke test now covers PIN-gated workflows (operator login, Dashboard, Inventory, Correction lock screens), Today By Hour dashboard buckets, Inventory Flow sample visibility, void/carry-forward, stock top-up reset, and the destructive Reset Data gate.
 
 - Staff login: log in as each expected staff role and confirm product taps are blocked after logout.
 - Cash sale: save one normal cash sale and confirm it appears in dashboard, inventory, receipt text, and CSV export.
