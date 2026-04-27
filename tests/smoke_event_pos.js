@@ -1319,6 +1319,156 @@ async function main() {
   assert(deliveryFeeFlow.csvSaleDeliveryFeeCell === "200" && deliveryFeeFlow.csvDeliveryFeePerUnitCell === "200" && deliveryFeeFlow.csvLineDeliveryFeeCell === "200", "Day CSV row must export delivery fee numeric values", deliveryFeeFlow);
   assert(deliveryFeeFlow.pendingTotalIncludesFee, "pending sale.total must equal cartTotals().chargeableTotal so the transfer QR amount includes the delivery fee", deliveryFeeFlow);
 
+  // Batch Y review #1 — correcting a card Send Later sale must recompute cardSurcharge on (merchandise + deliveryFee).
+  const cardCorrectionFlow = await page.evaluate(() => {
+    // Build a fresh saved card Send Later sale: 002A x2 Send Later, qty edit will drop it to x1.
+    // Pre-correction:  merch 1300, delivery 240, surcharge 3% of 1540 = 46.20, total 1586.20
+    // Post-correction (qty 1): merch 650, delivery 120, surcharge 3% of 770 = 23.10, total 793.10
+    const product = PRODUCTS.find((p) => p.sku === "002A");
+    const beforeItem = {
+      sku: "002A",
+      name: product.name,
+      category: product.category,
+      qty: 2,
+      basePrice: 790,
+      discountPerItem: 140,
+      discounted: true,
+      finalUnitPrice: 650,
+      lineSubtotal: 1580,
+      discountAmount: 280,
+      lineDiscount: 280,
+      lineTotal: 1300,
+      isFulfillmentLater: true,
+      fulfillmentType: "reserved_send_later",
+      preorderPaymentStatus: "paid_now",
+      deliveryFeePerUnit: 120,
+      lineDeliveryFee: 240,
+    };
+    const beforeTotalsCard = correctionTotalsFromItems([beforeItem], "card");
+    // Edit qty 2 -> 1 via rebuildCorrectionItem (the same path readCorrectionItemsFromInputs uses).
+    const afterItem = rebuildCorrectionItem(beforeItem, 1);
+    const afterTotalsCard = correctionTotalsFromItems([afterItem], "card");
+    // Same correction with cash payment must not invent a surcharge.
+    const afterTotalsCash = correctionTotalsFromItems([afterItem], "cash");
+    return {
+      beforeMerch: beforeTotalsCard.subtotal - beforeTotalsCard.discount,
+      beforeDelivery: beforeTotalsCard.deliveryFee,
+      beforeSurcharge: beforeTotalsCard.cardSurcharge,
+      beforeTotal: beforeTotalsCard.total,
+      afterPerUnit: afterItem.deliveryFeePerUnit,
+      afterLineFee: afterItem.lineDeliveryFee,
+      afterMerch: afterTotalsCard.subtotal - afterTotalsCard.discount,
+      afterDelivery: afterTotalsCard.deliveryFee,
+      afterSurcharge: afterTotalsCard.cardSurcharge,
+      afterTotal: afterTotalsCard.total,
+      cashTotal: afterTotalsCash.total,
+      cashSurcharge: afterTotalsCash.cardSurcharge,
+    };
+  });
+
+  assert(
+    cardCorrectionFlow.beforeMerch === 1300 &&
+      cardCorrectionFlow.beforeDelivery === 240 &&
+      cardCorrectionFlow.beforeSurcharge === 46.2 &&
+      cardCorrectionFlow.beforeTotal === 1586.2,
+    "Pre-correction card Send Later totals: merch 1300 + delivery 240 + 3% surcharge 46.20 = 1586.20",
+    cardCorrectionFlow
+  );
+  assert(
+    cardCorrectionFlow.afterPerUnit === 120 && cardCorrectionFlow.afterLineFee === 120,
+    "Edited Send Later item must keep deliveryFeePerUnit and recompute lineDeliveryFee for the new qty",
+    cardCorrectionFlow
+  );
+  assert(
+    cardCorrectionFlow.afterMerch === 650 &&
+      cardCorrectionFlow.afterDelivery === 120 &&
+      cardCorrectionFlow.afterSurcharge === 23.1 &&
+      cardCorrectionFlow.afterTotal === 793.1,
+    "Post-correction card Send Later totals must equal merchandise + delivery + 3% × (merchandise + delivery)",
+    cardCorrectionFlow
+  );
+  assert(
+    cardCorrectionFlow.afterTotal ===
+      cardCorrectionFlow.afterMerch + cardCorrectionFlow.afterDelivery + cardCorrectionFlow.afterSurcharge,
+    "Corrected card receipt identity: Total === Merchandise + Delivery + CardSurcharge",
+    cardCorrectionFlow
+  );
+  assert(
+    cardCorrectionFlow.cashSurcharge === 0 && cardCorrectionFlow.cashTotal === 770,
+    "Same Send Later correction under cash must zero out cardSurcharge",
+    cardCorrectionFlow
+  );
+
+  // Batch Y review #2 — correcting a legacy Send Later sale missing delivery fields must NOT gain a fee.
+  const legacyCorrectionFlow = await page.evaluate(() => {
+    // Legacy saved Send Later item from before Batch Y: no deliveryFeePerUnit, no lineDeliveryFee.
+    const legacyItem = {
+      sku: "002A",
+      name: "Cat the Curator (legacy)",
+      category: "Signature",
+      qty: 2,
+      basePrice: 790,
+      discountPerItem: 140,
+      discounted: true,
+      finalUnitPrice: 650,
+      lineSubtotal: 1580,
+      discountAmount: 280,
+      lineDiscount: 280,
+      lineTotal: 1300,
+      isFulfillmentLater: true,
+      fulfillmentType: "reserved_send_later",
+      preorderPaymentStatus: "paid_now",
+      // no deliveryFeePerUnit, no lineDeliveryFee
+    };
+    // Untouched correction (e.g. just a tags/email edit) — readCorrectionItemsFromInputs pipes the
+    // legacy item through rebuildCorrectionItem with its original qty.
+    const untouched = rebuildCorrectionItem(legacyItem, legacyItem.qty);
+    const untouchedTotalsCash = correctionTotalsFromItems([untouched], "cash");
+    const untouchedTotalsCard = correctionTotalsFromItems([untouched], "card");
+    // Quantity-changed correction: still legacy, must still not invent a fee.
+    const reduced = rebuildCorrectionItem(legacyItem, 1);
+    const reducedTotalsCash = correctionTotalsFromItems([reduced], "cash");
+    return {
+      untouchedPerUnit: untouched.deliveryFeePerUnit,
+      untouchedLineFee: untouched.lineDeliveryFee,
+      untouchedDelivery: untouchedTotalsCash.deliveryFee,
+      untouchedTotalCash: untouchedTotalsCash.total,
+      untouchedSurchargeCard: untouchedTotalsCard.cardSurcharge,
+      untouchedTotalCard: untouchedTotalsCard.total,
+      reducedPerUnit: reduced.deliveryFeePerUnit,
+      reducedLineFee: reduced.lineDeliveryFee,
+      reducedDelivery: reducedTotalsCash.deliveryFee,
+      reducedTotalCash: reducedTotalsCash.total,
+    };
+  });
+
+  assert(
+    legacyCorrectionFlow.untouchedPerUnit === 0 &&
+      legacyCorrectionFlow.untouchedLineFee === 0 &&
+      legacyCorrectionFlow.untouchedDelivery === 0,
+    "Legacy Send Later correction with no delivery fields must default deliveryFeePerUnit/lineDeliveryFee/saleDeliveryFee to 0 (must not pull from current catalog)",
+    legacyCorrectionFlow
+  );
+  assert(
+    legacyCorrectionFlow.untouchedTotalCash === 1300,
+    "Legacy untouched cash correction total must equal merchandise only (1300), not gain a delivery fee",
+    legacyCorrectionFlow
+  );
+  assert(
+    legacyCorrectionFlow.untouchedSurchargeCard === Math.round(1300 * 0.03 * 100) / 100 &&
+      legacyCorrectionFlow.untouchedTotalCard === Math.round((1300 + legacyCorrectionFlow.untouchedSurchargeCard) * 100) / 100,
+    "Legacy untouched card correction surcharge must apply to merchandise only (no delivery fee), preserving pre-Batch-Y math for legacy bills",
+    legacyCorrectionFlow
+  );
+  assert(
+    legacyCorrectionFlow.reducedPerUnit === 0 &&
+      legacyCorrectionFlow.reducedLineFee === 0 &&
+      legacyCorrectionFlow.reducedDelivery === 0 &&
+      legacyCorrectionFlow.reducedTotalCash === 650,
+    "Legacy quantity-reduced correction must still record zero delivery fee and a merchandise-only total",
+    legacyCorrectionFlow
+  );
+
   assert(pageErrors.length === 0, "No page errors after Batch Y delivery fee flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch Y delivery fee flow", browserDialogs);
 
