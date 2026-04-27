@@ -501,10 +501,10 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Dashboard remains readable on desktop, iPad, and mobile widths.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** Bucket by local device time using existing `sale.datetime`. Amount labels use compact THB formatting to avoid crowding. The reference screenshot is saved for implementation guidance only and should not be loaded by the POS app at runtime.
-- **Owner:**
-- **Status:** ready-for-codex
-- **Branch:**
-- **Claimed:**
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/w-today-by-hour-dashboard
+- **Claimed:** 2026-04-27 19:13
 - **BlockedBy:** V
 - **Notes:** Planned by Codex on 2026-04-27 from the user-approved visual reference. Save the reference before implementation continues so future sessions do not depend only on chat history.
 
