@@ -1548,10 +1548,14 @@ async function main() {
     };
 
     setFreeGiftStickerSku("022");
-    const chosenGift = findFreeGiftLine();
+    const chosenGift = findFreeGiftLine("022");
+    const remainingBrownGift = findFreeGiftLine("021");
     const choiceFlow = {
       sku: chosenGift?.sku,
       name: displaySaleItemName(chosenGift),
+      blackQty: chosenGift?.qty,
+      brownQty: remainingBrownGift?.qty,
+      totalGiftQty: freeGiftTotals().qty,
       buttonText: cartList.textContent,
     };
 
@@ -1663,9 +1667,12 @@ async function main() {
   );
   assert(
     stickerPromoFlow.choiceFlow.sku === "022" &&
+      stickerPromoFlow.choiceFlow.blackQty === 1 &&
+      stickerPromoFlow.choiceFlow.brownQty === 1 &&
+      stickerPromoFlow.choiceFlow.totalGiftQty === 2 &&
       stickerPromoFlow.choiceFlow.name.includes("Free item") &&
       stickerPromoFlow.choiceFlow.buttonText.includes("Sticker SKU"),
-    "Batch Z: staff must be able to switch the free sticker choice to SKU 022 in cart",
+    "Batch Z: staff must be able to split a 2-gift entitlement between SKU 021 and SKU 022 in cart",
     stickerPromoFlow
   );
   assert(

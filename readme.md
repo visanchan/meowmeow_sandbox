@@ -99,7 +99,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 ## Free Gift Rules
 
 - The current promo is: every `THB 1,200` of qualifying paid Meowseum + Modern Friends cart value earns `1` free Sticker Meowsuem.
-- Staff can choose the free sticker SKU in the cart: `021` or `022`.
+- Staff can choose the free sticker SKU in the cart: `021`, `022`, or split multiple free stickers across both SKUs.
 - Free stickers use the real sticker SKU with `isFreeGift` metadata, so paid and free sticker movement deduct from the same stock bucket.
 - User-facing displays label free sticker rows as `(Free item)` so staff and customers can separate paid sticker purchases from promo gifts.
 - The old `GIFT-SCARF` SKU is retired for new sales. Old saved scarf bills can still display as legacy free items, but the POS no longer awards new scarves.
@@ -109,7 +109,7 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Inventory Flow shows sample movement inside the `Added Stock` summary card as `Sample -N`, and product rows show `-N sample` when staff turned event stock into samples that day. Sample stock reduces remaining event stock until an Inventory Correction changes the sample quantity back down.
 - The sticker can also be manually added beyond entitlement, but that requires in-app confirmation and is exported as a manual override.
 - The sticker gift line stays at the bottom of the cart.
-- The sticker gift row has its own `+` and `-` controls plus a `Sticker SKU` choice between `021` and `022`.
+- Each sticker gift row has its own `+` and `-` controls plus a `Sticker SKU` choice between `021` and `022`.
 - The gift button toggles the sticker gift line.
 
 ## Fulfillment Later (Send Later)
