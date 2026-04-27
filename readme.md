@@ -173,6 +173,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Day 1 `Event Start` is intentionally left blank on a fresh setup. Staff must physically count booth stock and enter the actual quantity in Stock & Allocation Setup before selling starts; the workbook is for planning only, not a confirmed event-start count.
 - Unconfirmed Event Start cells render with a red outline, an empty input, a `count` placeholder, a `Count needed` hint under the input, and a `Not counted` warning beside Remaining Event so the missing count is visually obvious.
 - `addToCart` is blocked for any SKU whose Event Start has not been counted yet; the cart toast tells the operator to open Stock & Allocation Setup and count it first.
+- Product cards for unconfirmed SKUs render a `Count` stock chip with the `.is-uncounted` visual hook (red border) instead of the `Sold out` chip, and stay clickable so tapping the card surfaces the same "event start has not been counted" toast.
+- Send Later (warehouse-pool flow) intentionally remains usable before Event Start is counted, since Send Later draws from warehouse stock, not booth stock. The Event Start gate only protects the normal selling-from-booth path.
 - Saving an Event Start through `Confirm Stock Setup` both stores the counted quantity and confirms the SKU, which removes the visual warnings and unblocks selling for that SKU.
 - Closing an operating day automatically confirms Event Start for the next day, since the carry-forward quantity is the source of truth and no recount is needed.
 - The unified setup table shows SKU, product, global stock, online stock, event starting stock, added-today stock, sample stock, warehouse stock, remaining event stock, and low alert.

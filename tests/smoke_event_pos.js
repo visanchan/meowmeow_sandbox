@@ -639,6 +639,24 @@ async function main() {
       state.cart.length === 0 &&
       cartStockToast.textContent.includes("event start has not been counted");
 
+    // Product-card UI path: unconfirmed cards must look like "Count" not
+    // "Sold out", must stay clickable, and clicking must surface the toast.
+    state.cart = [];
+    cartStockToast.textContent = "";
+    renderProducts();
+    const cardEl = productGrid.querySelector(`[data-sku="${sku}"]`);
+    const cardExists = !!cardEl;
+    const cardBlockedAttr = cardEl?.dataset.blocked;
+    const cardUnconfirmedAttr = cardEl?.dataset.eventStartUnconfirmed;
+    const cardHasUncountedClass = cardEl?.classList.contains("is-uncounted");
+    const cardChipText = cardEl?.querySelector(".product-stock")?.textContent.trim();
+    const cardChipTitle = cardEl?.querySelector(".product-stock")?.getAttribute("title");
+    cardEl?.click();
+    const clickToastShown = cartStockToast.textContent.includes(
+      "event start has not been counted"
+    );
+    const cartStillEmpty = state.cart.length === 0;
+
     inputFor(sku, "eventStarting").value = "12";
     saveGlobalInventorySetup();
     confirmInventoryAdd();
@@ -659,6 +677,14 @@ async function main() {
       hasCountNeededHint: setupRowText.includes("Count needed"),
       hasNotCountedWarning: setupRowText.includes("Not counted"),
       cartBlocked,
+      cardExists,
+      cardBlockedAttr,
+      cardUnconfirmedAttr,
+      cardHasUncountedClass,
+      cardChipText,
+      cardChipTitle,
+      clickToastShown,
+      cartStillEmpty,
       confirmedAfterSave,
       startingAfterSave,
       cartUnblocked,
@@ -673,6 +699,14 @@ async function main() {
   assert(eventStartFlow.hasCountNeededHint, "Setup row must show 'Count needed' hint for unconfirmed Event Start", eventStartFlow);
   assert(eventStartFlow.hasNotCountedWarning, "Remaining Event cell must warn 'Not counted' for unconfirmed Event Start", eventStartFlow);
   assert(eventStartFlow.cartBlocked, "addToCart must block adds and surface a stock notice when Event Start is unconfirmed", eventStartFlow);
+  assert(eventStartFlow.cardExists, "Product card must render for an unconfirmed SKU", eventStartFlow);
+  assert(eventStartFlow.cardBlockedAttr === "false", "Unconfirmed card must remain clickable (data-blocked='false') so the click handler can surface the toast", eventStartFlow);
+  assert(eventStartFlow.cardUnconfirmedAttr === "true", "Unconfirmed card must expose data-event-start-unconfirmed='true'", eventStartFlow);
+  assert(eventStartFlow.cardHasUncountedClass, "Unconfirmed card must carry the .is-uncounted visual hook", eventStartFlow);
+  assert(eventStartFlow.cardChipText === "Count", "Unconfirmed card stock chip must read 'Count', not 'Sold out'", eventStartFlow);
+  assert(typeof eventStartFlow.cardChipTitle === "string" && eventStartFlow.cardChipTitle.includes("Event Start not counted"), "Unconfirmed card stock chip title must explain the Event Start state", eventStartFlow);
+  assert(eventStartFlow.clickToastShown, "Clicking an unconfirmed product card must surface the 'event start has not been counted' toast", eventStartFlow);
+  assert(eventStartFlow.cartStillEmpty, "Clicking an unconfirmed product card must not add it to the cart", eventStartFlow);
   assert(eventStartFlow.confirmedAfterSave, "Saving an Event Start through Stock & Allocation Setup must confirm the SKU", eventStartFlow);
   assert(eventStartFlow.startingAfterSave === 12, "Saved Event Start value must be persisted on the day record", eventStartFlow);
   assert(eventStartFlow.cartUnblocked, "addToCart must succeed once Event Start is confirmed for the SKU", eventStartFlow);
