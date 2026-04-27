@@ -464,12 +464,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - iPad/mobile widths do not overlap text; large THB values remain readable.
   - `tests/smoke_event_pos.js` passes.
 - **Risks/assumptions:** The reference image is in chat, not the workspace. Hourly/peak-hour data depends on saved sale timestamps and should be skipped or kept simple if it risks false precision. Low-stock alerts must use current event remaining stock, not global warehouse stock. This batch overlaps the dashboard region, so do not run it in parallel with Batch S if both agents would edit `meowmeow_pos_event.html`.
-- **Owner:** claude
-- **Status:** in-progress
-- **Branch:** batch/v-dashboard-v3-manager
-- **Claimed:** 2026-04-27 12:30
+- **Owner:**
+- **Status:** done
+- **Branch:**
+- **Claimed:**
 - **BlockedBy:**
-- **Notes:** Planned by Codex on 2026-04-27 after Batch U. Prefer this before more cosmetic dashboard tweaks because it has higher manager decision value. Claude claiming on 2026-04-27 to implement V3 manager view; Batch S remaining alert call sites paused while V is in flight per the mutual-exclusion rule.
+- **Notes:** Merged into `main` at `4c23c09` on 2026-04-27 by claude. V3 manager dashboard shipped: event goal card, horizontal 4-day pace timeline with Live badge, today KPI tiles, payment split bars, Top Sellers (paid items, top 5), Low Stock Alerts (active day SKUs at/below threshold). `dashboardMetrics()` extended with `topSellers`, `topSellerMaxQty`, `lowStock`, `anyEventStartConfirmed`, `activeDayId`, `activeDayLabel`. Smoke test extended. Codex post-merge cosmetic adjustments on `main`: `d352042` (move top sellers below today), `0a6833b` (docs: add Batch W to TASKS). Unblocks Batch W.
 
 ### Batch W - Today By Hour Dashboard Card
 - **Business objective:** Help managers see the live sales rhythm during the event by hour, so they can judge when the booth is warming up, peaking, or slowing down.
