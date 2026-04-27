@@ -694,12 +694,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Staff can complete a sale without developer tools, page refreshes, or manual calculator work.
   - README's Event-Day Verification Checklist matches the current behavior.
 - **Risks/assumptions:** This is a final stabilization batch, not a redesign batch. If a major structural problem is discovered, stop and split it into a focused emergency batch instead of mixing large changes into final review.
-- **Owner:**
-- **Status:** ready-for-claude
-- **Branch:**
-- **Claimed:**
-- **BlockedBy:** Z
-- **Notes:** Final readiness pass requested by user on 2026-04-28. Codex should review findings before event deployment.
+- **Owner:** codex
+- **Status:** in-progress
+- **Branch:** batch/final-review
+- **Claimed:** 2026-04-28 18:30
+- **BlockedBy:**
+- **Notes:** Final readiness pass requested by user on 2026-04-28. Codex is executing this solo after Batch Z was tested by the user and merged locally into `main`.
 
 ## Suggested order (least-conflict first)
 
