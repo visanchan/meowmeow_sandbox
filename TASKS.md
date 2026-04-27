@@ -400,6 +400,33 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Completed on `batch/t-pin-smoke-coverage` 2026-04-27. Smoke test now drives login (auto-open + wrong/right Zamm PIN), Dashboard lock (wrong/right shared PIN), Inventory lock (wrong/right shared PIN, opened via `developerAccessBtn`), and Correction lock (wrong/right correction PIN, opened via the inventory-panel-nested `correctionAccessBtn` which also exercises the "I Understand" confirm dialog). 12 new assertions cover overlay-open/closed, panel-hidden, error text, PIN cleared, and panel-rendered states. Spec called for `฿` in the dashboard total but the dashboard uses `Intl.NumberFormat` with `THB ` prefix — assertion adjusted to match real app behavior. README smoke-test note updated.
 
+### Batch U — Internal Dashboard Redesign
+- **Business objective:** Make the passcode-protected Internal Dashboard easier for managers to read during the event: total sales, today performance, payment mix, goal progress, and 4-day pace.
+- **Expected benefit:** Faster booth decisions, clearer cash/transfer/card checking, and easier sales goal tracking.
+- **Implementation difficulty:** medium.
+- **Cost/complexity tradeoff:** Reuse the single-file vanilla HTML/CSS/JS app and the existing dashboard passcode flow; use `dashboard re-design task` only as reference, with no React/Babel/CDN/design-canvas dependency.
+- **Items:**
+  1. Replace the dashboard body with the cream/brown v2 structure: event total vs goal, horizontal goal bar, remaining-to-goal, needed pace per open day, 4-day pace cards, today stats, and payment split.
+  2. Extend `dashboardMetrics()` only for display data: today receipt/item/free-gift counts, today average bill, payment split totals/counts, open days, and pace needed.
+  3. Preserve passcode `987`, sales goal constant, discount exception flags, free-gift count format, storage, CSV, and Batch R event-start behavior.
+  4. Update smoke coverage for the new dashboard selectors.
+- **Touches:** `meowmeow_pos_event.html` dashboard CSS/markup/rendering, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** product data, sales storage, CSV shape, inventory behavior, localStorage keys, PIN values, or the React design-board files.
+- **Acceptance checks:**
+  - Wrong Dashboard PIN remains blocked; correct `987` opens the redesigned dashboard.
+  - Empty dashboard renders clean zero states without `NaN`.
+  - Dashboard shows event total, goal progress, remaining amount, pace/day, 4-day cards, today stats, and cash/transfer/card split.
+  - Discount exception flags still appear on event and day totals.
+  - Free-gift sold counts keep the existing paid/free parentheses format.
+  - `tests/smoke_event_pos.js` passes.
+- **Risks/assumptions:** Implemented on top of the current Batch R checkout because the user asked Codex to implement now while Batch R edits were present. The copied `dashboard re-design task/Meowmeow POS.html` was not bulk-merged.
+- **Owner:** codex
+- **Status:** review-ready
+- **Branch:** batch/r-manual-event-start-count
+- **Claimed:** 2026-04-27 10:30
+- **BlockedBy:**
+- **Notes:** Implementation complete and ready for final review/merge prep with Batch R. Dashboard now renders the v2 cream/brown layout with goal bar, remaining pace, 4-day pace cards, today stats, and payment split. Smoke test updated and passing with the documented Codex Node/Playwright command.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.

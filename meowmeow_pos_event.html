@@ -276,7 +276,7 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .dashboard-overlay.open{display:flex}
 #closeDayPasscodeOverlay{z-index:95}
 #correctionOverlay{z-index:96}
-.dashboard-card{width:min(960px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;border:1px solid var(--line);border-radius:28px;background:#fffaf4;box-shadow:0 22px 64px rgba(26,18,11,.18);padding:20px}
+.dashboard-card{width:min(1060px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;border:1px solid var(--line);border-radius:28px;background:#fffaf4;box-shadow:0 22px 64px rgba(26,18,11,.18);padding:20px}
 .dashboard-lock{display:grid;gap:14px}
 .dashboard-lock-head{text-align:center}
 .dashboard-lock-head h2{margin:0;font-size:22px}
@@ -295,46 +295,66 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 .dashboard-head h2{margin:0;font-size:28px}
 .dashboard-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
 .dashboard-close{padding:12px 16px;border-radius:16px;background:#f1e7d9;color:#5f462a;font-weight:800}
-.dashboard-grid{display:grid;gap:12px}
-.dashboard-hero{padding:14px 18px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,#fffdf8,#f6ecde)}
+.dashboard-grid{display:grid;gap:14px}
+.dashboard-grid.v2{grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);align-items:start}
+.dashboard-grid.v2 .dashboard-hero{grid-column:1 / -1}
+.dashboard-hero{padding:24px;border:1px solid var(--line);border-radius:24px;background:#fffdf8}
 .dashboard-hero.is-slow{background:linear-gradient(180deg,#fff7f0,#f8e1d4)}
 .dashboard-hero.is-building{background:linear-gradient(180deg,#fffdf6,#f5e8cd)}
 .dashboard-hero.is-strong{background:linear-gradient(180deg,#fffaf2,#efddc0)}
 .dashboard-hero.is-goal{background:linear-gradient(180deg,#fff7ea,#ead3aa)}
-.dashboard-status{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
 .dashboard-status-badge{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.78);font-weight:800}
 .dashboard-status-emoji{font-size:22px;line-height:1}
-.dashboard-status-copy{font-size:13px;color:#6d5e4e;max-width:100%}
-.dashboard-hero-total{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-top:8px;flex-wrap:wrap}
-.dashboard-hero-amount{font-size:34px;font-weight:900;line-height:1;color:var(--accent-strong);max-width:100%;word-break:break-word}
-.dashboard-hero-goal{font-size:16px;color:#6d5e4e;font-weight:700}
-.dashboard-progress{display:grid;grid-template-columns:112px minmax(0,1fr);gap:14px;align-items:center;margin-top:10px}
-.goal-gauge{--progress:0deg;position:relative;width:112px;height:112px;margin:auto;border-radius:50%;background:conic-gradient(var(--gauge-color,#8d6236) 0deg,var(--progress),#eadfce var(--progress),360deg);display:grid;place-items:center}
-.goal-gauge::before{content:"";width:80px;height:80px;border-radius:50%;background:#fffaf4;box-shadow:inset 0 0 0 1px #e0d4c4}
-.goal-gauge-center{position:absolute;display:grid;gap:2px;text-align:center}
-.goal-gauge-percent{font-size:24px;font-weight:900;color:#2b231d}
-.goal-gauge-sub{font-size:11px;color:var(--muted);font-weight:700}
+.v2-hero-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;flex-wrap:wrap}
+.v2-hero-label,.v2-pay-title,.v2-card-head h3{font-size:12px;font-weight:900;color:#6d5e4e;text-transform:uppercase}
+.v2-hero-amount{margin-top:6px;font-size:42px;font-weight:900;line-height:1;color:var(--accent-strong);word-break:break-word}
+.v2-hero-pct-block{text-align:right}
+.v2-hero-pct{font-size:34px;font-weight:900;line-height:1;color:#8d6236}
+.v2-hero-target{margin-top:5px;font-size:13px;color:#6d5e4e;font-weight:800}
+.v2-goalbar{position:relative;height:16px;margin-top:18px;border:1px solid var(--line);border-radius:999px;background:#f0e2c9;overflow:hidden}
+.v2-goalbar-fill{height:100%;width:0;border-radius:999px;background:#8d6236;transition:width .25s ease}
+.v2-goalbar-tick{position:absolute;top:-4px;bottom:-4px;width:1px;background:rgba(255,253,248,.9)}
+.v2-goalbar-scale{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:11px;color:#6d5e4e;font-weight:700}
+.v2-pace-strip{display:flex;justify-content:space-between;gap:12px;margin-top:14px;padding:12px 14px;border:1px dashed #d8c6aa;border-radius:12px;background:rgba(255,253,248,.62);color:#6d5e4e;font-size:13px;font-weight:700;flex-wrap:wrap}
+.v2-pace-strip strong{color:#4f3820}
+.v2-status-row{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.v2-overage{padding:8px 12px;border-radius:999px;background:#fffdf8;color:#239b5b;font-size:13px;font-weight:900}
 .dashboard-progress-bar{height:14px;border-radius:999px;background:#eadfce;overflow:hidden}
 .dashboard-progress-fill{height:100%;width:0;border-radius:999px;background:var(--gauge-color,#8d6236);transition:width .25s ease}
-.dashboard-progress-note{display:flex;justify-content:space-between;gap:12px;margin-top:6px;font-size:12px;color:#6d5e4e;flex-wrap:wrap}
-.dashboard-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
-.dashboard-stat{padding:9px 12px;border:1px solid var(--line);border-radius:16px;background:#fffdf9;min-height:70px;display:grid;align-content:space-between}
-.dashboard-stat-label{display:flex;align-items:center;gap:6px;font-size:11px;color:#6d5e4e;flex-wrap:wrap}
-.dashboard-stat-value{margin-top:2px;font-size:17px;font-weight:900;color:var(--accent-strong);line-height:1.02;word-break:break-word}
-.dashboard-stat.is-money .dashboard-stat-value{font-size:16px;letter-spacing:-.02em}
 .dashboard-alert-count{display:inline-block;margin-left:5px;font-size:.48em;font-weight:800;color:#b24337;line-height:1.05;letter-spacing:-.01em;vertical-align:baseline}
-.dashboard-stat-emoji{font-size:14px}
+.v2-card{display:grid;gap:14px}
+.v2-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.v2-card-head h3{margin:0}
+.v2-today-amount{font-size:28px;font-weight:900;line-height:1;color:var(--accent-strong)}
+.v2-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.v2-stat{padding:12px;border:1px solid #eadcc9;border-radius:14px;background:#fffdf9;min-height:86px;display:grid;align-content:space-between}
+.v2-stat-label{font-size:11px;font-weight:800;color:#6d5e4e;text-transform:uppercase}
+.v2-stat-value{font-size:20px;font-weight:900;line-height:1.05;color:var(--accent-strong);word-break:break-word}
+.v2-stat-sub{font-size:11px;color:#7a6a58;font-weight:700}
+.v2-pay-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.v2-pay-hint{font-size:12px;color:#6d5e4e;font-weight:700}
+.v2-pay-bar{display:flex;height:13px;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#f3eadf}
+.v2-pay-segment{min-width:2px;height:100%}
+.v2-pay-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v2-pay-tile{padding:11px 12px;border:1px solid #eadcc9;border-radius:14px;background:#fffdf9}
+.v2-pay-label{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:900;color:#6d5e4e;text-transform:uppercase}
+.v2-pay-dot{width:8px;height:8px;border-radius:50%;background:#8d6236}
+.v2-pay-value{margin-top:6px;font-size:18px;font-weight:900;color:#4f3820;word-break:break-word}
+.v2-pay-count{margin-top:3px;font-size:11px;color:#7a6a58;font-weight:700}
 .dashboard-days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.dashboard-day-card{padding:12px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fffdfa 0%,#f8f0e5 100%);display:grid;gap:8px}
-.dashboard-day-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.dashboard-day-title{font-size:15px;font-weight:900;color:#4f3820}
-.dashboard-day-badge{padding:5px 8px;border-radius:999px;background:#efe3d2;color:#6d5e4e;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.dashboard-day-card{position:relative;padding:12px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fffdfa 0%,#f8f0e5 100%);display:grid;gap:7px}
+.dashboard-day-card::before{content:"";width:34px;height:34px;border-radius:50%;background:#efe3d2;border:1px solid #d8c6aa}
+.dashboard-day-card.live::before{background:#8d6236;border-color:#8d6236;box-shadow:0 0 0 4px rgba(141,98,54,.16)}
+.dashboard-day-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.dashboard-day-title{font-size:14px;font-weight:900;color:#4f3820}
+.dashboard-day-badge{padding:5px 8px;border-radius:999px;background:#efe3d2;color:#6d5e4e;font-size:10px;font-weight:800;text-transform:uppercase}
 .dashboard-day-badge.closed{background:#ead4cb;color:#8b3d34}
-.dashboard-day-total{font-size:22px;font-weight:900;color:var(--accent-strong);letter-spacing:-.03em}
+.dashboard-day-badge.live{background:#8d6236;color:#fffdf8}
+.dashboard-day-total{font-size:18px;font-weight:900;color:var(--accent-strong)}
 .dashboard-day-total .dashboard-alert-count{font-size:.46em}
 .dashboard-day-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.dashboard-day-meta span{display:block;padding:8px 10px;border-radius:14px;background:#fffdf9;color:#6d5e4e;font-size:11px}
-.dashboard-day-meta strong{display:block;margin-top:3px;font-size:15px;color:#4f3820}
+.dashboard-day-meta span{display:block;padding:7px 8px;border-radius:12px;background:#fffdf9;color:#6d5e4e;font-size:11px}
+.dashboard-day-meta strong{display:block;margin-top:2px;font-size:14px;color:#4f3820}
 .dashboard-tools{display:grid;gap:12px}
 .dashboard-tool-card{padding:16px 18px;border:1px solid var(--line);border-radius:22px;background:#fff}
 .dashboard-tool-card h3{margin:0 0 6px;font-size:20px}
@@ -502,6 +522,8 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
 @media (max-width:1100px){.app{margin:0;padding-bottom:470px}.success-card{overflow:auto;display:block}.success-body{grid-template-columns:1fr;overflow:visible}.success-column{overflow:visible;padding-right:0}.cart-shell{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.cart-main{border-right:0;border-bottom:1px solid var(--line)}.sticky-cart{left:16px;right:16px;top:auto;bottom:16px;width:auto}.cart-list{max-height:230px}.correction-review-grid{grid-template-columns:1fr}}
 @media (max-width:1024px){body{padding:14px}.app{padding-bottom:390px}.topbar{padding:16px 18px;align-items:flex-start}.brand-line-the{font-size:17px}.brand-line-meow{gap:5px;font-size:38px}.brand-line-seum{font-size:29px;letter-spacing:.032em;padding-left:.04em}.brand-line-note{margin-top:6px;font-size:11px;letter-spacing:.07em}.tabbar{gap:8px}.tab{min-width:120px;padding:9px 14px;font-size:14px}.product-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.product-card{min-height:0;padding:6px}.product-photo-wrap{aspect-ratio:5 / 2}.product-name{min-height:1.84em;font-size:12.4px}.product-name.compact{font-size:11.8px}.product-sku{font-size:14px}.product-stock{min-width:18px;min-height:18px;font-size:8px;padding:2px 5px}.product-price-row{min-height:21px}.product-price{font-size:14px}.product-quick-action{width:22px;height:22px;font-size:11px;flex-basis:22px}.product-color-badge{min-width:20px;min-height:20px;font-size:11px}.sticky-cart{left:14px;right:14px;bottom:14px;border-radius:24px}.cart-main,.cart-pay{padding:14px 16px}.cart-title{font-size:22px}.cart-list{max-height:160px}.summary{padding:12px}.summary-total{font-size:24px}.payment-grid{gap:8px}.payment-btn{padding:12px 10px;font-size:15px}.action-btn{padding:14px;font-size:17px}.dashboard-card{width:min(900px,calc(100vw - 20px))}.dashboard-head h2{font-size:24px}.dashboard-hero{padding:12px 16px}.dashboard-status-badge{padding:7px 11px}.dashboard-status-emoji{font-size:20px}.dashboard-status-copy{font-size:12px}.dashboard-hero-amount{font-size:30px}.dashboard-hero-goal{font-size:15px}.dashboard-progress{grid-template-columns:104px minmax(0,1fr);gap:12px;margin-top:8px}.goal-gauge{width:104px;height:104px}.goal-gauge::before{width:74px;height:74px}.goal-gauge-percent{font-size:22px}.dashboard-progress-bar{height:12px}.dashboard-progress-note{font-size:11px}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:66px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.dashboard-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.dashboard-day-card{padding:10px;gap:7px}.dashboard-day-title{font-size:14px}.dashboard-day-total{font-size:20px}.dashboard-day-meta span{padding:8px 9px;font-size:10px}.dashboard-day-meta strong{font-size:14px}.preorder-grid{grid-template-columns:1fr}.correction-layout{grid-template-columns:1fr}}
 @media (max-width:760px){body{padding:12px}.app{padding-bottom:470px}.topbar{padding:14px 16px;display:grid}.brand-head{display:grid;gap:8px;align-items:center}.brand-line-the{font-size:15px}.brand-line-meow{gap:4px;font-size:32px}.brand-line-seum{font-size:24px;letter-spacing:.028em;padding-left:.035em}.brand-line-note{margin-top:5px;font-size:10px;letter-spacing:.06em}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-card{min-height:0;padding:6px}.product-photo-wrap{aspect-ratio:5 / 2.05}.product-name{min-height:1.84em;font-size:12px}.product-name.compact{font-size:11.4px}.product-sku{font-size:13px}.product-stock{min-width:18px;min-height:18px;font-size:7px;padding:2px 4px}.product-price-row{min-height:20px}.product-price{font-size:13px}.product-quick-action{width:21px;height:21px;font-size:10px;flex-basis:21px}.product-color-badge{min-width:19px;min-height:19px;font-size:11px}.payment-grid{grid-template-columns:1fr}.transfer-grid{grid-template-columns:1fr}.sticky-cart{left:10px;right:10px;bottom:10px;top:auto;width:auto}.cart-list{max-height:190px}.success-head,.success-body{padding-left:16px;padding-right:16px}.dashboard-lock-box{padding:22px 18px 24px}.dashboard-numpad{grid-template-columns:repeat(3,minmax(84px,1fr));gap:12px}.dashboard-key{min-height:82px;font-size:34px;border-radius:24px}.dashboard-key.action{font-size:16px}.dashboard-hero-total,.dashboard-status,.dashboard-progress-note{display:grid}.dashboard-progress{grid-template-columns:1fr}.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-stat{padding:8px 10px;min-height:64px}.dashboard-stat-label{font-size:10px}.dashboard-stat-value,.dashboard-stat.is-money .dashboard-stat-value{font-size:15px}.dashboard-stat-emoji{font-size:13px}.inventory-kpis,.preorder-summary,.preorder-field-row{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-days{grid-template-columns:1fr}}
+@media (max-width:960px){.dashboard-grid.v2{grid-template-columns:1fr}.dashboard-grid.v2 .v2-hero-pct-block{text-align:left}.dashboard-grid.v2 .v2-stats-grid,.dashboard-grid.v2 .v2-pay-tiles{grid-template-columns:1fr 1fr}.dashboard-grid.v2 .dashboard-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.dashboard-grid.v2 .v2-hero-amount{font-size:32px}.dashboard-grid.v2 .v2-hero-pct{font-size:28px}.dashboard-grid.v2 .v2-stats-grid,.dashboard-grid.v2 .v2-pay-tiles,.dashboard-grid.v2 .dashboard-days{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1146,58 +1168,74 @@ linear-gradient(135deg,#fffaf4 0%,#f4e6d1 100%);color:#8d704f;font-size:12px;fon
         </div>
         <button class="dashboard-close" id="dashboardCloseBtn" type="button">Close</button>
       </div>
-      <div class="dashboard-grid">
+      <div class="dashboard-grid v2">
         <div class="dashboard-hero" id="dashboardHero">
-          <div class="dashboard-status">
+          <div class="v2-hero-row">
+            <div class="v2-hero-amount-block">
+              <div class="v2-hero-label">Event total · vs goal</div>
+              <div class="v2-hero-amount" id="dashboardGoalCurrent">THB 0.00</div>
+            </div>
+            <div class="v2-hero-pct-block">
+              <div class="v2-hero-pct" id="dashboardGoalPercent">0%</div>
+              <div class="v2-hero-target" id="dashboardGoalTarget">of THB 500,000.00</div>
+            </div>
+          </div>
+          <div class="v2-goalbar">
+            <div class="v2-goalbar-fill dashboard-progress-fill" id="dashboardProgressFill"></div>
+            <div class="v2-goalbar-tick" style="left:25%"></div>
+            <div class="v2-goalbar-tick" style="left:50%"></div>
+            <div class="v2-goalbar-tick" style="left:75%"></div>
+          </div>
+          <div class="v2-goalbar-scale"><span>0</span><span>25%</span><span>50%</span><span>75%</span><span id="dashboardGoalScaleEnd">THB 500,000</span></div>
+          <div class="v2-pace-strip">
+            <span>To hit goal: <strong id="dashboardGoalRemaining">THB 500,000.00</strong> across <strong id="dashboardDaysLeft">4 days</strong></span>
+            <span>Pace needed: <strong id="dashboardPaceNeeded">THB 125,000.00/day</strong></span>
+          </div>
+          <div class="v2-status-row">
             <div class="dashboard-status-badge">
               <span class="dashboard-status-emoji" id="dashboardStatusEmoji">&#128578;</span>
               <span id="dashboardStatusText">Sales are warming up</span>
             </div>
-            <div class="dashboard-status-copy" id="dashboardGoalTarget">Goal: THB 500,000.00</div>
-          </div>
-          <div class="dashboard-hero-total">
-            <div class="dashboard-hero-amount" id="dashboardGoalCurrent">THB 0.00</div>
-            <div class="dashboard-hero-goal" id="dashboardTodaySales">Today THB 0.00</div>
-          </div>
-          <div class="dashboard-progress">
-            <div class="goal-gauge" id="dashboardGoalGauge">
-              <div class="goal-gauge-center">
-                <div class="goal-gauge-percent" id="dashboardGoalPercent">0%</div>
-                <div class="goal-gauge-sub">Reached</div>
-              </div>
-            </div>
-            <div>
-              <div class="dashboard-progress-bar">
-                <div class="dashboard-progress-fill" id="dashboardProgressFill"></div>
-              </div>
-              <div class="dashboard-progress-note">
-                <span id="dashboardGoalRemaining">Remaining THB 500,000.00</span>
-                <span id="dashboardGoalOverage">Over Goal THB 0.00</span>
-              </div>
-            </div>
+            <div class="v2-overage" id="dashboardGoalOverage" hidden>Over Goal THB 0.00</div>
           </div>
         </div>
-        <div class="dashboard-stats">
-          <div class="dashboard-stat">
-            <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">🧾</span> Receipts</div>
-            <div class="dashboard-stat-value" id="dashboardReceipts">0</div>
-          </div>
-          <div class="dashboard-stat">
-            <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">📦</span> Items Sold</div>
-            <div class="dashboard-stat-value" id="dashboardItemsSold">0</div>
-          </div>
-          <div class="dashboard-stat is-money">
-            <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">💳</span> Average Bill</div>
-            <div class="dashboard-stat-value" id="dashboardAvgBill">THB 0.00</div>
-          </div>
-          <div class="dashboard-stat is-money">
-            <div class="dashboard-stat-label"><span class="dashboard-stat-emoji">💰</span> Total Sale</div>
-            <div class="dashboard-stat-value" id="dashboardTotalSales">THB 0.00</div>
-          </div>
-        </div>
-        <div class="dashboard-tool-card">
-          <h3>Operating Day Sales</h3>
+        <div class="dashboard-tool-card v2-card">
+          <div class="v2-card-head"><h3>4-Day Pace</h3></div>
           <div class="dashboard-days" id="dashboardDayCards"></div>
+        </div>
+        <div class="dashboard-tool-card v2-card">
+          <div class="v2-card-head">
+            <h3 id="dashboardTodayTitle">Today</h3>
+            <div class="v2-today-amount" id="dashboardTodaySales">THB 0.00</div>
+          </div>
+          <div class="v2-stats-grid">
+            <div class="v2-stat">
+              <div class="v2-stat-label">🧾 Receipts</div>
+              <div class="v2-stat-value" id="dashboardReceipts">0</div>
+              <div class="v2-stat-sub" id="dashboardReceiptsSub">0 total event</div>
+            </div>
+            <div class="v2-stat">
+              <div class="v2-stat-label">📦 Items Sold</div>
+              <div class="v2-stat-value" id="dashboardItemsSold">0</div>
+              <div class="v2-stat-sub" id="dashboardItemsSub">0 total event</div>
+            </div>
+            <div class="v2-stat">
+              <div class="v2-stat-label">💳 Average Bill</div>
+              <div class="v2-stat-value" id="dashboardAvgBill">THB 0.00</div>
+              <div class="v2-stat-sub" id="dashboardAvgSub">0.0 items/bill</div>
+            </div>
+            <div class="v2-stat">
+              <div class="v2-stat-label">💰 Total Sale</div>
+              <div class="v2-stat-value" id="dashboardTotalSales">THB 0.00</div>
+              <div class="v2-stat-sub">event-wide</div>
+            </div>
+          </div>
+          <div class="v2-pay-head">
+            <div class="v2-pay-title">Payment split · today</div>
+            <div class="v2-pay-hint">Cash count must match booth float</div>
+          </div>
+          <div class="v2-pay-bar" id="dashboardPaySplitBar"></div>
+          <div class="v2-pay-tiles" id="dashboardPaySplitTiles"></div>
         </div>
       </div>
     </div>
@@ -1567,7 +1605,7 @@ const state = {
 const els = {};
 
 function $(id){return document.getElementById(id);}
-function cacheElements(){["tabBar","productGrid","inventoryAccessBtn","preorderAccessBtn","developerAccessBtn","correctionAccessBtn","inventoryViewOverlay","inventoryViewCloseBtn","inventoryViewDaySwitch","inventoryViewStartingTotal","inventoryViewAddedTotal","inventoryViewSoldTotal","inventoryViewRemainingTotal","inventoryViewDayStatus","inventoryViewCloseDayNote","inventoryViewCloseDayBtn","inventoryViewTableBody","inventoryViewAddLogSummary","inventoryViewAddLogList","preorderOverlay","preorderCloseBtn","preorderForm","preorderDaySelect","preorderQtyInput","preorderSkuSelect","preorderCustomerInput","preorderPhoneInput","preorderEmailInput","preorderLineIdInput","preorderReceiveLocationInput","preorderPaymentStatusSelect","preorderNoteInput","preorderStockHint","preorderSaveBtn","preorderSummary","preorderSignals","preorderQueueNote","preorderExportBtn","clearPendingSendLaterBtn","preorderTableBody","preorderEmptyState","inventoryOverlay","inventoryLockScreen","inventoryPanel","inventoryCloseBtn","inventoryPinDot1","inventoryPinDot2","inventoryPinDot3","inventoryPinText","inventoryPinError","inventoryNumpad","inventoryControlList","dashboardAccessBtn","dashboardOverlay","dashboardLockScreen","dashboardPanel","dashboardCloseBtn","dashboardPinDot1","dashboardPinDot2","dashboardPinDot3","dashboardPinText","dashboardPinError","dashboardNumpad","dashboardHero","dashboardStatusEmoji","dashboardStatusText","dashboardGoalGauge","dashboardProgressFill","dashboardGoalCurrent","dashboardGoalTarget","dashboardGoalPercent","dashboardGoalRemaining","dashboardGoalOverage","dashboardTotalSales","dashboardTodaySales","dashboardReceipts","dashboardItemsSold","dashboardAvgBill","dashboardDayCards","correctionOverlay","correctionLockScreen","correctionPanel","correctionCloseBtn","correctionPinDot1","correctionPinDot2","correctionPinDot3","correctionPinText","correctionPinError","correctionNumpad","billCorrectionTab","inventoryCorrectionTab","inventoryCorrectionSkuSelect","inventoryCorrectionFieldSelect","inventoryCorrectionQtyInput","inventoryCorrectionReasonInput","inventoryCorrectionReviewBtn","inventoryCorrectionConfirmBtn","inventoryCorrectionReviewText","inventoryCorrectionHistory","correctionBillList","correctionBillTitle","correctionBillMeta","correctionHistoryMeta","correctionItemPreview","correctionCustomerEmailInput","correctionReceiptRequestedInput","correctionPaymentMethodSelect","correctionPaymentReferenceInput","correctionOperatorSelect","correctionTagsInput","correctionReasonInput","correctionSaveBtn","correctionStatusText","correctionReviewBox","correctionReviewOriginal","correctionReviewCorrected","correctionReviewChanges","correctionReviewInventoryImpact","correctionReviewDayRealignment","correctionReviewBackBtn","correctionReviewConfirmBtn","resetSalesNowBtn","purgeReceiptDataBtn","confirmResetSalesOverlay","cancelResetSalesBtn","confirmResetSalesBtn","resetPasscodeDot1","resetPasscodeDot2","resetPasscodeDot3","resetPasscodeError","resetPasscodeNumpad","confirmInventoryAddOverlay","confirmInventoryAddTitle","confirmInventoryAddMessage","cancelInventoryAddBtn","confirmInventoryAddBtn","confirmFreeGiftOverlay","confirmFreeGiftTitle","confirmFreeGiftMessage","cancelFreeGiftBtn","confirmFreeGiftBtn","confirmPaymentReminderOverlay","confirmPaymentReminderTitle","confirmPaymentReminderMessage","confirmPaymentReminderBtn","confirmReceiptEmailOverlay","confirmReceiptEmailTitle","confirmReceiptEmailMessage","confirmReceiptEmailBtn","invalidReceiptEmailOverlay","invalidReceiptEmailTitle","invalidReceiptEmailMessage","invalidReceiptEmailBtn","confirmCorrectionAccessOverlay","confirmCorrectionAccessTitle","confirmCorrectionAccessMessage","confirmCorrectionAccessBtn","closeDayPasscodeOverlay","closeDayPinDot1","closeDayPinDot2","closeDayPinDot3","closeDayPinText","closeDayPinError","closeDayNumpad","cartOperatorRow","cartStockToast","cartList","cartMeta","summaryItems","summarySubtotal","summaryDiscount","summaryCardSurchargeRow","summaryCardSurcharge","summaryTotal","paymentGrid","transferBox","transferModeToggle","transferQrImage","qrCanvas","transferAmountText","transferInfoText","transferSourceText","transferHintText","transferNoteText","transferPayloadText","completeSaleBtn","clearCartBtn","freeGiftBtn","clearCartOverlay","clearCartTitle","clearCartMessage","cancelClearCartBtn","confirmClearCartBtn","successOverlay","backToSaleBtn","receiptDateText","receiptBillIdText","receiptCustomerNameText","receiptCustomerPhoneText","receiptStaffText","receiptPaymentText","receiptItems","receiptSubtotalText","receiptDiscountText","receiptCardSurchargeRow","receiptCardSurcharge","receiptTotal","receiptReceivedText","receiptChangeText","preorderCustomerCard","customerNameInput","customerPhoneInput","receiptEmailOptInInput","receiptEmailInput","customerLineIdInput","customerReceiveLocationInput","preorderReviewSummary","receiptEmailValidationNote","reviewPaymentMethodCard","reviewPaymentMethodGrid","paymentConfirmedInput","paymentConfirmTitle","paymentConfirmNote","paymentReferenceInput","tagGrid","finishHint","saveSaleBtn","pendingTransferBox","pendingTransferStatus","pendingTransferQrImage","pendingQrCanvas","pendingTransferAmountText","pendingTransferPromptPayText","pendingTransferAccountNameText","pendingTransferInfoText","pendingTransferSourceText","pendingTransferHintText","pendingTransferNoteText","pendingTransferPayloadText","inventorySetupToggle","inventoryDailyView","inventoryAllocationView","allocationTableBody","saveAllocationBtn","allocationNote","loginOverlay","loginNameGrid","loginPinText","loginPinError","loginNumpad","loginHint","correctionVoidBillBtn","confirmVoidBillOverlay","confirmVoidBillTitle","confirmVoidBillMessage","confirmVoidBillReasonInput","cancelVoidBillBtn","confirmVoidBillBtn","voidAuditList","exportVoidAuditBtn"].forEach(id=>els[id]=$(id));}
+function cacheElements(){["tabBar","productGrid","inventoryAccessBtn","preorderAccessBtn","developerAccessBtn","correctionAccessBtn","inventoryViewOverlay","inventoryViewCloseBtn","inventoryViewDaySwitch","inventoryViewStartingTotal","inventoryViewAddedTotal","inventoryViewSoldTotal","inventoryViewRemainingTotal","inventoryViewDayStatus","inventoryViewCloseDayNote","inventoryViewCloseDayBtn","inventoryViewTableBody","inventoryViewAddLogSummary","inventoryViewAddLogList","preorderOverlay","preorderCloseBtn","preorderForm","preorderDaySelect","preorderQtyInput","preorderSkuSelect","preorderCustomerInput","preorderPhoneInput","preorderEmailInput","preorderLineIdInput","preorderReceiveLocationInput","preorderPaymentStatusSelect","preorderNoteInput","preorderStockHint","preorderSaveBtn","preorderSummary","preorderSignals","preorderQueueNote","preorderExportBtn","clearPendingSendLaterBtn","preorderTableBody","preorderEmptyState","inventoryOverlay","inventoryLockScreen","inventoryPanel","inventoryCloseBtn","inventoryPinDot1","inventoryPinDot2","inventoryPinDot3","inventoryPinText","inventoryPinError","inventoryNumpad","inventoryControlList","dashboardAccessBtn","dashboardOverlay","dashboardLockScreen","dashboardPanel","dashboardCloseBtn","dashboardPinDot1","dashboardPinDot2","dashboardPinDot3","dashboardPinText","dashboardPinError","dashboardNumpad","dashboardHero","dashboardStatusEmoji","dashboardStatusText","dashboardGoalGauge","dashboardProgressFill","dashboardGoalCurrent","dashboardGoalTarget","dashboardGoalPercent","dashboardGoalRemaining","dashboardGoalOverage","dashboardTotalSales","dashboardTodaySales","dashboardReceipts","dashboardItemsSold","dashboardAvgBill","dashboardDayCards","dashboardDaysLeft","dashboardPaceNeeded","dashboardGoalScaleEnd","dashboardTodayTitle","dashboardReceiptsSub","dashboardItemsSub","dashboardAvgSub","dashboardPaySplitBar","dashboardPaySplitTiles","correctionOverlay","correctionLockScreen","correctionPanel","correctionCloseBtn","correctionPinDot1","correctionPinDot2","correctionPinDot3","correctionPinText","correctionPinError","correctionNumpad","billCorrectionTab","inventoryCorrectionTab","inventoryCorrectionSkuSelect","inventoryCorrectionFieldSelect","inventoryCorrectionQtyInput","inventoryCorrectionReasonInput","inventoryCorrectionReviewBtn","inventoryCorrectionConfirmBtn","inventoryCorrectionReviewText","inventoryCorrectionHistory","correctionBillList","correctionBillTitle","correctionBillMeta","correctionHistoryMeta","correctionItemPreview","correctionCustomerEmailInput","correctionReceiptRequestedInput","correctionPaymentMethodSelect","correctionPaymentReferenceInput","correctionOperatorSelect","correctionTagsInput","correctionReasonInput","correctionSaveBtn","correctionStatusText","correctionReviewBox","correctionReviewOriginal","correctionReviewCorrected","correctionReviewChanges","correctionReviewInventoryImpact","correctionReviewDayRealignment","correctionReviewBackBtn","correctionReviewConfirmBtn","resetSalesNowBtn","purgeReceiptDataBtn","confirmResetSalesOverlay","cancelResetSalesBtn","confirmResetSalesBtn","resetPasscodeDot1","resetPasscodeDot2","resetPasscodeDot3","resetPasscodeError","resetPasscodeNumpad","confirmInventoryAddOverlay","confirmInventoryAddTitle","confirmInventoryAddMessage","cancelInventoryAddBtn","confirmInventoryAddBtn","confirmFreeGiftOverlay","confirmFreeGiftTitle","confirmFreeGiftMessage","cancelFreeGiftBtn","confirmFreeGiftBtn","confirmPaymentReminderOverlay","confirmPaymentReminderTitle","confirmPaymentReminderMessage","confirmPaymentReminderBtn","confirmReceiptEmailOverlay","confirmReceiptEmailTitle","confirmReceiptEmailMessage","confirmReceiptEmailBtn","invalidReceiptEmailOverlay","invalidReceiptEmailTitle","invalidReceiptEmailMessage","invalidReceiptEmailBtn","confirmCorrectionAccessOverlay","confirmCorrectionAccessTitle","confirmCorrectionAccessMessage","confirmCorrectionAccessBtn","closeDayPasscodeOverlay","closeDayPinDot1","closeDayPinDot2","closeDayPinDot3","closeDayPinText","closeDayPinError","closeDayNumpad","cartOperatorRow","cartStockToast","cartList","cartMeta","summaryItems","summarySubtotal","summaryDiscount","summaryCardSurchargeRow","summaryCardSurcharge","summaryTotal","paymentGrid","transferBox","transferModeToggle","transferQrImage","qrCanvas","transferAmountText","transferInfoText","transferSourceText","transferHintText","transferNoteText","transferPayloadText","completeSaleBtn","clearCartBtn","freeGiftBtn","clearCartOverlay","clearCartTitle","clearCartMessage","cancelClearCartBtn","confirmClearCartBtn","successOverlay","backToSaleBtn","receiptDateText","receiptBillIdText","receiptCustomerNameText","receiptCustomerPhoneText","receiptStaffText","receiptPaymentText","receiptItems","receiptSubtotalText","receiptDiscountText","receiptCardSurchargeRow","receiptCardSurcharge","receiptTotal","receiptReceivedText","receiptChangeText","preorderCustomerCard","customerNameInput","customerPhoneInput","receiptEmailOptInInput","receiptEmailInput","customerLineIdInput","customerReceiveLocationInput","preorderReviewSummary","receiptEmailValidationNote","reviewPaymentMethodCard","reviewPaymentMethodGrid","paymentConfirmedInput","paymentConfirmTitle","paymentConfirmNote","paymentReferenceInput","tagGrid","finishHint","saveSaleBtn","pendingTransferBox","pendingTransferStatus","pendingTransferQrImage","pendingQrCanvas","pendingTransferAmountText","pendingTransferPromptPayText","pendingTransferAccountNameText","pendingTransferInfoText","pendingTransferSourceText","pendingTransferHintText","pendingTransferNoteText","pendingTransferPayloadText","inventorySetupToggle","inventoryDailyView","inventoryAllocationView","allocationTableBody","saveAllocationBtn","allocationNote","loginOverlay","loginNameGrid","loginPinText","loginPinError","loginNumpad","loginHint","correctionVoidBillBtn","confirmVoidBillOverlay","confirmVoidBillTitle","confirmVoidBillMessage","confirmVoidBillReasonInput","cancelVoidBillBtn","confirmVoidBillBtn","voidAuditList","exportVoidAuditBtn"].forEach(id=>els[id]=$(id));}
 function loadSales(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]").map(sale=>{const discountSummary=saleExtraDiscountSummary(sale);return{...sale,operatingDay:EVENT_DAYS.some(day=>day.id===sale.operatingDay)?sale.operatingDay:"day1",receiptEmail:sale.receiptEmail??sale.email??"",receiptEmailRequested:Boolean(sale.receiptEmailRequested),hasExtraDiscount:Boolean(sale.hasExtraDiscount??discountSummary.hasExtraDiscount),extraDiscountItemCount:clampCount(sale.extraDiscountItemCount??discountSummary.extraDiscountItemCount),extraDiscountAmount:roundMoney(sale.extraDiscountAmount??discountSummary.extraDiscountAmount),correctionHistory:Array.isArray(sale.correctionHistory)?sale.correctionHistory.map(entry=>({...entry,changedFields:Array.isArray(entry?.changedFields)?entry.changedFields:[],inventoryImpact:Array.isArray(entry?.inventoryImpact)?entry.inventoryImpact:[]})):[]};});}catch(_){return[];}}
 function saveSales(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.sales));return true;}catch(error){alert("Could not save this sale on this device. Please copy the receipt and check storage settings before continuing.");console.error(error);return false;}}
 function loadVoidedSales(){try{const raw=JSON.parse(localStorage.getItem(VOIDED_SALES_STORAGE_KEY)||"[]");return Array.isArray(raw)?raw.filter(entry=>entry&&typeof entry==="object"):[];}catch(_){return[];}}
@@ -1757,8 +1795,9 @@ function isCurrentDayClosed(){return Boolean(getInventoryDay(currentDayId()).clo
 function getNextDayId(dayId){const index=EVENT_DAYS.findIndex(day=>day.id===dayId);return index>=0&&index<EVENT_DAYS.length-1?EVENT_DAYS[index+1].id:null;}
 function realignInventoryCarryForward(startDayId,{persist=true}={}){const startIndex=EVENT_DAYS.findIndex(day=>day.id===startDayId);if(startIndex<0)return true;let changed=false;for(let index=startIndex+1;index<EVENT_DAYS.length;index++){const previousDayId=EVENT_DAYS[index-1].id;const dayId=EVENT_DAYS[index].id;const dayRecord=getInventoryDay(dayId);if(!dayRecord)continue;const nextStartingStock=getDayRemainingMap(previousDayId);if(!skuMapsEqual(dayRecord.startingStock,nextStartingStock)){dayRecord.startingStock=cloneSkuMap(nextStartingStock);changed=true;}}return !changed||!persist?true:saveInventory();}
 function dashboardMood(percent){if(percent>=100)return{key:"goal",emoji:"\uD83C\uDF89",text:"Goal reached. Event is flying.",color:"#239b5b"};if(percent>=60)return{key:"strong",emoji:"\uD83D\uDE80",text:"Strong momentum. Keep pushing.",color:"#4c9a2a"};if(percent>=25)return{key:"building",emoji:"\uD83C\uDF24\uFE0F",text:"Sales are building nicely.",color:"#c28a1d"};return{key:"slow",emoji:"\uD83D\uDC22",text:"Early pace. More sales to unlock.",color:"#c15d3f"};}
-function dashboardMetrics(){const today=dateKey(new Date());const receipts=state.sales.length;const totalSale=roundMoney(state.sales.reduce((sum,sale)=>sum+Number(sale.total||0),0));const todaySalesList=state.sales.filter(sale=>dateKey(sale.datetime)===today);const todaySale=roundMoney(todaySalesList.reduce((sum,sale)=>sum+Number(sale.total||0),0));const itemsSold=state.sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isPreorder)?0:Number(item.qty||0)),0),0);const freeItemsGiven=state.sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isFreeGift)?Number(item.qty||0):0),0),0);const extraDiscountTotal=roundMoney(state.sales.reduce((sum,sale)=>sum+saleExtraDiscountSummary(sale).extraDiscountAmount,0));const avgBill=receipts?roundMoney(totalSale/receipts):0;const goal=EVENT_SALES_GOAL;const rawGoalPercent=goal>0?(totalSale/goal)*100:0;const gaugePercent=Math.max(0,Math.min(rawGoalPercent,100));const goalRemaining=roundMoney(Math.max(0,goal-totalSale));const goalOverage=roundMoney(Math.max(0,totalSale-goal));const dayBreakdown=EVENT_DAYS.map(day=>{const sales=getDaySales(day.id);const total=roundMoney(sales.reduce((sum,sale)=>sum+Number(sale.total||0),0));const receipts=sales.length;const items=sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isPreorder)?0:Number(item.qty||0)),0),0);const freeItems=sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isFreeGift)?Number(item.qty||0):0),0),0);const extraDiscountAmount=roundMoney(sales.reduce((sum,sale)=>sum+saleExtraDiscountSummary(sale).extraDiscountAmount,0));return{id:day.id,label:day.label,total,receipts,items,freeItems,extraDiscountAmount,closed:getInventoryDay(day.id).closed};});return{totalSale,todaySale,receipts,itemsSold,freeItemsGiven,extraDiscountTotal,avgBill,goal,rawGoalPercent,gaugePercent,goalRemaining,goalOverage,dayBreakdown};}
-function renderDashboard(){const metrics=dashboardMetrics();const mood=dashboardMood(metrics.rawGoalPercent);els.dashboardHero.className=`dashboard-hero is-${mood.key}`;els.dashboardStatusEmoji.textContent=mood.emoji;els.dashboardStatusText.textContent=mood.text;els.dashboardGoalCurrent.textContent=formatCurrency(metrics.totalSale);els.dashboardGoalTarget.textContent=`Goal: ${formatCurrency(metrics.goal)}`;els.dashboardTodaySales.textContent=`Today ${formatCurrency(metrics.todaySale)}`;els.dashboardGoalPercent.textContent=`${Math.round(metrics.rawGoalPercent)}%`;els.dashboardGoalRemaining.textContent=`Remaining ${formatCurrency(metrics.goalRemaining)}`;els.dashboardGoalOverage.textContent=`Over Goal ${formatCurrency(metrics.goalOverage)}`;els.dashboardGoalGauge.style.setProperty("--progress",`${Math.round(metrics.gaugePercent*3.6)}deg`);els.dashboardGoalGauge.style.setProperty("--gauge-color",mood.color);els.dashboardProgressFill.style.width=`${metrics.gaugePercent}%`;els.dashboardProgressFill.style.background=mood.color;els.dashboardTotalSales.innerHTML=`${escapeHtml(formatCurrency(metrics.totalSale))}${saleDiscountFlagHtml(metrics.extraDiscountTotal)}`;els.dashboardTotalSales.title=metrics.extraDiscountTotal>0?`Extra discount given above guideline: ${formatCurrency(metrics.extraDiscountTotal)}.`:"";els.dashboardReceipts.textContent=String(metrics.receipts);els.dashboardItemsSold.textContent=formatInventorySoldDisplay(metrics.itemsSold,metrics.freeItemsGiven);els.dashboardAvgBill.textContent=formatCurrency(metrics.avgBill);els.dashboardDayCards.innerHTML=metrics.dayBreakdown.map(day=>`<article class="dashboard-day-card"><div class="dashboard-day-head"><div class="dashboard-day-title">${escapeHtml(day.label)}</div><span class="dashboard-day-badge ${day.closed?"closed":""}">${day.closed?"Closed":"Open"}</span></div><div class="dashboard-day-total" title="${escapeHtml(day.extraDiscountAmount>0?`Extra discount given above guideline on ${day.label}: ${formatCurrency(day.extraDiscountAmount)}.`:"")}">${escapeHtml(formatCurrency(day.total))}${saleDiscountFlagHtml(day.extraDiscountAmount)}</div><div class="dashboard-day-meta"><span>Receipts<strong>${day.receipts}</strong></span><span>Items Sold<strong title="${escapeHtml(day.freeItems>0?`${formatInventorySoldDisplay(day.items,day.freeItems)} = ${Math.max(0,day.items-day.freeItems)} paid + ${day.freeItems} free gift`:"")}">${formatInventorySoldDisplay(day.items,day.freeItems)}</strong></span></div></article>`).join("");}
+function currentDayLabel(){return dayLabel(currentDayId());}
+function dashboardMetrics(){const today=dateKey(new Date());const receipts=state.sales.length;const totalSale=roundMoney(state.sales.reduce((sum,sale)=>sum+Number(sale.total||0),0));const todaySalesList=state.sales.filter(sale=>dateKey(sale.datetime)===today);const todaySale=roundMoney(todaySalesList.reduce((sum,sale)=>sum+Number(sale.total||0),0));const todayReceipts=todaySalesList.length;const todayItems=todaySalesList.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isPreorder)?0:Number(item.qty||0)),0),0);const todayFreeItems=todaySalesList.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isFreeGift)?Number(item.qty||0):0),0),0);const todayAvgBill=todayReceipts?roundMoney(todaySale/todayReceipts):0;const paySplit={cash:0,transfer:0,card:0,cashCount:0,transferCount:0,cardCount:0};todaySalesList.forEach(sale=>{const method=String(sale.payment||"cash").toLowerCase();const amount=Number(sale.total||0);if(method==="transfer"){paySplit.transfer+=amount;paySplit.transferCount+=1;}else if(method==="card"){paySplit.card+=amount;paySplit.cardCount+=1;}else{paySplit.cash+=amount;paySplit.cashCount+=1;}});paySplit.cash=roundMoney(paySplit.cash);paySplit.transfer=roundMoney(paySplit.transfer);paySplit.card=roundMoney(paySplit.card);const itemsSold=state.sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isPreorder)?0:Number(item.qty||0)),0),0);const freeItemsGiven=state.sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isFreeGift)?Number(item.qty||0):0),0),0);const extraDiscountTotal=roundMoney(state.sales.reduce((sum,sale)=>sum+saleExtraDiscountSummary(sale).extraDiscountAmount,0));const avgBill=receipts?roundMoney(totalSale/receipts):0;const goal=EVENT_SALES_GOAL;const rawGoalPercent=goal>0?(totalSale/goal)*100:0;const gaugePercent=Math.max(0,Math.min(rawGoalPercent,100));const goalRemaining=roundMoney(Math.max(0,goal-totalSale));const goalOverage=roundMoney(Math.max(0,totalSale-goal));const dayBreakdown=EVENT_DAYS.map(day=>{const sales=getDaySales(day.id);const total=roundMoney(sales.reduce((sum,sale)=>sum+Number(sale.total||0),0));const receipts=sales.length;const items=sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isPreorder)?0:Number(item.qty||0)),0),0);const freeItems=sales.reduce((sum,sale)=>sum+sale.items.reduce((itemSum,item)=>itemSum+(Boolean(item.isFreeGift)?Number(item.qty||0):0),0),0);const extraDiscountAmount=roundMoney(sales.reduce((sum,sale)=>sum+saleExtraDiscountSummary(sale).extraDiscountAmount,0));return{id:day.id,label:day.label,total,receipts,items,freeItems,extraDiscountAmount,closed:getInventoryDay(day.id).closed};});const openDays=Math.max(1,dayBreakdown.filter(day=>!day.closed).length);const paceNeeded=roundMoney(goalRemaining/openDays);return{totalSale,todaySale,todayReceipts,todayItems,todayFreeItems,todayAvgBill,paySplit,receipts,itemsSold,freeItemsGiven,extraDiscountTotal,avgBill,goal,rawGoalPercent,gaugePercent,goalRemaining,goalOverage,openDays,paceNeeded,dayBreakdown};}
+function renderDashboard(){const metrics=dashboardMetrics();const mood=dashboardMood(metrics.rawGoalPercent);els.dashboardHero.className=`dashboard-hero is-${mood.key}`;els.dashboardHero.style.setProperty("--mood-color",mood.color);els.dashboardStatusEmoji.textContent=mood.emoji;els.dashboardStatusText.textContent=mood.text;els.dashboardGoalCurrent.textContent=formatCurrency(metrics.totalSale);els.dashboardGoalTarget.textContent=`of ${formatCurrency(metrics.goal)}`;els.dashboardGoalPercent.textContent=`${Math.round(metrics.rawGoalPercent)}%`;els.dashboardGoalScaleEnd.textContent=formatCurrency(metrics.goal).replace(/\.00$/,"");els.dashboardGoalRemaining.textContent=formatCurrency(metrics.goalRemaining);els.dashboardDaysLeft.textContent=`${metrics.openDays} day${metrics.openDays===1?"":"s"}`;els.dashboardPaceNeeded.textContent=`${formatCurrency(metrics.paceNeeded)}/day`;els.dashboardGoalOverage.hidden=metrics.goalOverage<=0;els.dashboardGoalOverage.textContent=`Over Goal ${formatCurrency(metrics.goalOverage)}`;els.dashboardProgressFill.style.width=`${metrics.gaugePercent}%`;els.dashboardProgressFill.style.background=mood.color;els.dashboardTodayTitle.textContent=`Today · ${currentDayLabel()}`;els.dashboardTodaySales.textContent=formatCurrency(metrics.todaySale);els.dashboardTotalSales.innerHTML=`${escapeHtml(formatCurrency(metrics.totalSale))}${saleDiscountFlagHtml(metrics.extraDiscountTotal)}`;els.dashboardTotalSales.title=metrics.extraDiscountTotal>0?`Extra discount given above guideline: ${formatCurrency(metrics.extraDiscountTotal)}.`:"";els.dashboardReceipts.textContent=String(metrics.todayReceipts);els.dashboardReceiptsSub.textContent=`${metrics.receipts} total event`;els.dashboardItemsSold.textContent=formatInventorySoldDisplay(metrics.todayItems,metrics.todayFreeItems);els.dashboardItemsSub.textContent=`${formatInventorySoldDisplay(metrics.itemsSold,metrics.freeItemsGiven)} total event`;els.dashboardAvgBill.textContent=formatCurrency(metrics.todayAvgBill);els.dashboardAvgSub.textContent=metrics.todayReceipts?`${(metrics.todayItems/metrics.todayReceipts).toFixed(1)} items/bill`:"0.0 items/bill";const payTotal=metrics.paySplit.cash+metrics.paySplit.transfer+metrics.paySplit.card;const paySegments=[{key:"cash",label:"Cash",amount:metrics.paySplit.cash,count:metrics.paySplit.cashCount,color:"#3a8a4d"},{key:"transfer",label:"Transfer",amount:metrics.paySplit.transfer,count:metrics.paySplit.transferCount,color:"#3066b3"},{key:"card",label:"Card",amount:metrics.paySplit.card,count:metrics.paySplit.cardCount,color:"#8d6236"}];els.dashboardPaySplitBar.innerHTML=paySegments.map(segment=>`<div class="v2-pay-segment" title="${escapeHtml(segment.label)} ${escapeHtml(formatCurrency(segment.amount))}" style="width:${payTotal?Math.max(2,(segment.amount/payTotal)*100):100/3}%;background:${segment.color}"></div>`).join("");els.dashboardPaySplitTiles.innerHTML=paySegments.map(segment=>`<div class="v2-pay-tile"><div class="v2-pay-label"><span class="v2-pay-dot" style="background:${segment.color}"></span>${escapeHtml(segment.label)}</div><div class="v2-pay-value">${escapeHtml(formatCurrency(segment.amount))}</div><div class="v2-pay-count">${segment.count} receipt${segment.count===1?"":"s"}</div></div>`).join("");const activeDay=currentDayId();els.dashboardDayCards.innerHTML=metrics.dayBreakdown.map(day=>{const live=day.id===activeDay&&!day.closed;const badge=day.closed?"Closed":live?"Live":"Open";const badgeClass=day.closed?"closed":live?"live":"";return`<article class="dashboard-day-card ${live?"live":""}"><div class="dashboard-day-head"><div class="dashboard-day-title">${escapeHtml(day.label)}</div><span class="dashboard-day-badge ${badgeClass}">${badge}</span></div><div class="dashboard-day-total" title="${escapeHtml(day.extraDiscountAmount>0?`Extra discount given above guideline on ${day.label}: ${formatCurrency(day.extraDiscountAmount)}.`:"")}">${escapeHtml(formatCurrency(day.total))}${saleDiscountFlagHtml(day.extraDiscountAmount)}</div><div class="dashboard-day-meta"><span>Receipts<strong>${day.receipts}</strong></span><span>Items Sold<strong title="${escapeHtml(day.freeItems>0?`${formatInventorySoldDisplay(day.items,day.freeItems)} = ${Math.max(0,day.items-day.freeItems)} paid + ${day.freeItems} free gift`:"")}">${formatInventorySoldDisplay(day.items,day.freeItems)}</strong></span></div></article>`;}).join("");}
 function renderDashboardPin(){const dots=[els.dashboardPinDot1,els.dashboardPinDot2,els.dashboardPinDot3];dots.forEach((dot,index)=>dot.classList.toggle("filled",index<state.dashboardPin.length));els.dashboardPinText.textContent=state.dashboardPin?"Enter passcode":"Passcode";}
 function resetDashboardLock(){state.dashboardPin="";els.dashboardPinError.textContent="";els.dashboardLockScreen.classList.remove("hidden");els.dashboardPanel.classList.add("hidden");renderDashboardPin();}
 function unlockDashboard(){renderDashboard();els.dashboardLockScreen.classList.add("hidden");els.dashboardPanel.classList.remove("hidden");}

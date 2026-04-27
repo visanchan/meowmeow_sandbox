@@ -368,6 +368,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
   - The value should be the extra discount money given above the default discount guideline, shown in compact number-only form such as `(120)` or `(1,360)`.
   - That red amount should read as a smaller secondary note, but stay on the same line level as the main total.
   - Show that both on the overall total sales value and on each daily sales total card.
+- Internal Dashboard uses a manager-focused cream/brown layout: event total vs goal, goal progress bar, remaining pace, 4-day pace, today stats, and today payment split.
+- Dashboard payment split is for booth checking only; it does not change saved sales or CSV export.
 - Keep selling actions obvious and low-friction.
 - Keep confirmation and reminder dialogs in-app and visually consistent.
 - When refining the receipt wordmark, preserve the stacked logo direction the user has been iterating on.
@@ -432,6 +434,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - **Apr 2026 (Batch Q — Destructive Reset Passcode & Severity)** — `Reset Data` is now visually severe (🚨 icon, hazard banner, deeper crimson button) and gated behind a 3-digit reset passcode (`888`). The confirm button stays disabled until the correct passcode is entered; wrong passcodes show an in-app error and clear the entry. Cancelling the dialog or closing the app resets the passcode state. The smoke test now covers the gate.
 - **Apr 2026 (Batch T — Smoke Coverage for PIN-Gated Workflows)** — Test-only batch. The smoke test now drives the operator login overlay, Dashboard lock, Inventory lock, and Correction lock through both wrong-PIN and correct-PIN paths, asserting overlay state, error text, and PIN clearing. No app behavior changed.
 - **Apr 2026 (Batch R — Manual Event Start Count)** — Day 1 `Event Start` no longer auto-defaults to `Global - Online`; it starts unconfirmed so staff must physically count booth stock and enter it in Stock & Allocation Setup. Unconfirmed cells render with a red outline, empty input, `count` placeholder, `Count needed` hint, and `Not counted` warning beside Remaining Event. `addToCart` is blocked for unconfirmed SKUs with a stock toast pointing staff to the setup page. Saving an Event Start through `Confirm Stock Setup` confirms the SKU and unblocks selling. Closing a day auto-confirms the next day's Event Start (carry-forward is the source of truth). Smoke test extended.
+- **Apr 2026 (Batch U — Internal Dashboard Redesign)** — Internal Dashboard now uses the cream/brown redesign with a larger event-total goal bar, remaining pace, 4-day pace cards, today-focused stats, and a cash/transfer/card payment split for manager checks.
 - **Apr 2026 (Batch G - Stock Setup Clarity)** - Stock & Allocation Setup now treats `Added Today` as a temporary top-up field that resets to `0`, and hides idle warehouse/sold helper text.
 - **Apr 2026 (Stabilization docs)** - Added pre-event verification and shared-device data hygiene checklists for safer event setup.
 

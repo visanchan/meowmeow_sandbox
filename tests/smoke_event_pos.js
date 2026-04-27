@@ -76,6 +76,12 @@ async function main() {
     locked: !dashboardLockScreen.classList.contains("hidden"),
     panelHidden: dashboardPanel.classList.contains("hidden"),
     totalText: dashboardTotalSales.textContent,
+    goalScaleText: dashboardGoalScaleEnd.textContent,
+    paceText: dashboardPaceNeeded.textContent,
+    dashboardText: dashboardPanel.textContent,
+    paySplitRendered: dashboardPaySplitTiles.textContent.includes("Cash") &&
+      dashboardPaySplitTiles.textContent.includes("Transfer") &&
+      dashboardPaySplitTiles.textContent.includes("Card"),
   }));
   await page.evaluate(() => closeDashboard());
 
@@ -547,8 +553,12 @@ async function main() {
   assert(
     !pinFlows.dashboardAcceptsCorrect.locked &&
       !pinFlows.dashboardAcceptsCorrect.panelHidden &&
-      pinFlows.dashboardAcceptsCorrect.totalText.includes("THB"),
-    "Correct dashboard PIN must reveal the panel and render a THB currency total",
+      pinFlows.dashboardAcceptsCorrect.totalText.includes("THB") &&
+      pinFlows.dashboardAcceptsCorrect.goalScaleText.includes("THB") &&
+      pinFlows.dashboardAcceptsCorrect.paceText.includes("/day") &&
+      !pinFlows.dashboardAcceptsCorrect.dashboardText.includes("NaN") &&
+      pinFlows.dashboardAcceptsCorrect.paySplitRendered,
+    "Correct dashboard PIN must reveal the redesigned panel with THB total, goal pace, and payment split",
     pinFlows.dashboardAcceptsCorrect
   );
   assert(
