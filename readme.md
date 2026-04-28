@@ -187,7 +187,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - On first load after upgrade, the prior global sample quantity is migrated into Day 1's sample stock; Days 2-4 start at zero.
 - After the first saved sale exists, normal Stock & Allocation Setup locks `Global`, `Online`, and `Event Start` so opening inventory cannot be casually changed mid-selling.
 - After sales begin, staff can still edit `Added Today`, `Sample`, and `Low Alert`; controlled fixes to locked fields belong in `Correction Center > Inventory Correction`.
-- Public inventory flow is read-only.
+- Public inventory flow is read-only except for reversing same-day top-up log entries.
+- Reversing a stock top-up from Inventory Flow requires correction passcode `888` first, then a required reversal reason, before stock is reduced.
 - Day 1 starting stock is editable only before Day 1 has sales and before Day 1 is closed.
 - Low-stock alerts remain editable in developer mode.
 - End-of-day export and stock carry-forward should keep working without requiring staff to understand the internal data model.
@@ -388,7 +389,7 @@ Passcodes are grouped in a single `ACCESS_CONTROL` config block in the POS sourc
 - `345` — Stock & Allocation Setup (Developer Tools)
 - `987` — Internal Dashboard
 - `123` — Close Day & Export CSV
-- `888` — Correction Center
+- `888` — Correction Center, Inventory Flow stock top-up reversal
 
 ## Event-Day Verification Checklist
 

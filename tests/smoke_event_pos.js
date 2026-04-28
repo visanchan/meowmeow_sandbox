@@ -551,6 +551,73 @@ async function main() {
     };
   });
 
+  const reversePasscodeStart = await page.evaluate(() => {
+    localStorage.clear();
+    closeLoginOverlay();
+    state.sales = [];
+    invalidateSalesDerivedData();
+    state.preorders = [];
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    const sku = "002A";
+    state.inventory.currentDay = "day1";
+    state.inventory.viewDay = "day1";
+    state.inventory.days.day1.startingStock[sku] = 10;
+    state.inventory.days.day1.addedStock[sku] = 5;
+    state.inventory.days.day1.addLog = [
+      {
+        sku,
+        qty: 2,
+        at: "SMOKE-TOPUP-AT",
+        dayId: "day1",
+        type: "stock_setup",
+        reason: "Smoke top-up",
+      },
+    ];
+    PRODUCTS.forEach((product) => {
+      state.inventory.days.day1.eventStartConfirmed[product.sku] = true;
+    });
+    renderInventoryView();
+    openInventoryReverseDialog(sku, 2, "SMOKE-TOPUP-AT");
+    return {
+      title: appPromptTitle.textContent,
+      label: appPromptLabel.textContent,
+      addedBefore: state.inventory.days.day1.addedStock[sku],
+      overlayOpen: appPromptOverlay.classList.contains("open"),
+    };
+  });
+  await page.fill("#appPromptInput", "999");
+  await page.click("#appPromptConfirmBtn");
+  await page.waitForFunction(() => appPromptError.textContent.includes("Incorrect passcode"));
+  const reversePasscodeWrong = await page.evaluate(() => ({
+    title: appPromptTitle.textContent,
+    errorShown: appPromptError.textContent.includes("Incorrect passcode"),
+    inputCleared: appPromptInput.value === "",
+    addedStillFive: state.inventory.days.day1.addedStock["002A"] === 5,
+  }));
+  await page.fill("#appPromptInput", "888");
+  await page.click("#appPromptConfirmBtn");
+  await page.waitForFunction(() => appPromptTitle.textContent === "Reverse stock top-up");
+  const reverseReasonStep = await page.evaluate(() => ({
+    title: appPromptTitle.textContent,
+    label: appPromptLabel.textContent,
+    addedStillFive: state.inventory.days.day1.addedStock["002A"] === 5,
+  }));
+  await page.fill("#appPromptInput", "Automated reverse gate smoke test");
+  await page.click("#appPromptConfirmBtn");
+  await page.waitForFunction(() => !appPromptOverlay.classList.contains("open"));
+  const reversePasscodeFinal = await page.evaluate(() => ({
+    addedAfterReverse: state.inventory.days.day1.addedStock["002A"],
+    reversalLogged: state.inventory.days.day1.addLog.some(
+      (entry) =>
+        entry.sku === "002A" &&
+        entry.qty === -2 &&
+        entry.reason === "Automated reverse gate smoke test" &&
+        entry.reversedLogAt === "SMOKE-TOPUP-AT"
+    ),
+    browserPromptClosed: !appPromptOverlay.classList.contains("open"),
+  }));
+
   assert(pageErrors.length === 0, "Page errors were reported", pageErrors);
   assert(browserDialogs.length === 0, "Browser alert/prompt/confirm dialogs should not appear in smoke flows", browserDialogs);
   assert(!uiVoidResult.overlayOpen, "Void confirmation dialog stayed open after UI click", uiVoidResult);
@@ -608,6 +675,36 @@ async function main() {
   assert(result.clearPendingDialogOpens, "Clear Pending must open an in-app disabled passcode dialog", result);
   assert(result.clearPendingRejectsWrong, "Wrong Clear Pending passcode must show in-app error and keep pending orders", result);
   assert(result.clearPendingClearsPendingOnly, "Correct Clear Pending passcode must remove pending orders only", result);
+  assert(
+    reversePasscodeStart.overlayOpen &&
+      reversePasscodeStart.title === "Manager passcode required" &&
+      reversePasscodeStart.label === "Correction passcode" &&
+      reversePasscodeStart.addedBefore === 5,
+    "Inventory Flow reverse action must open a passcode gate before the reason dialog",
+    reversePasscodeStart
+  );
+  assert(
+    reversePasscodeWrong.errorShown &&
+      reversePasscodeWrong.inputCleared &&
+      reversePasscodeWrong.addedStillFive &&
+      reversePasscodeWrong.title === "Manager passcode required",
+    "Wrong reverse passcode must keep stock unchanged and stay on the passcode step",
+    reversePasscodeWrong
+  );
+  assert(
+    reverseReasonStep.title === "Reverse stock top-up" &&
+      reverseReasonStep.label === "Reason for reversal" &&
+      reverseReasonStep.addedStillFive,
+    "Correct reverse passcode must continue to the reason step before changing stock",
+    reverseReasonStep
+  );
+  assert(
+    reversePasscodeFinal.addedAfterReverse === 3 &&
+      reversePasscodeFinal.reversalLogged &&
+      reversePasscodeFinal.browserPromptClosed,
+    "Reverse stock top-up must apply only after passcode and reason are both submitted",
+    reversePasscodeFinal
+  );
 
   // Batch S - app dialogs must close before their parent panels on Escape.
   const appDialogStackFlow = await page.evaluate(() => {
