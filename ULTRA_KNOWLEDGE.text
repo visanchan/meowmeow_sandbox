@@ -1,0 +1,1847 @@
+ULTRA KNOWLEDGE - Lessons from the MeowMeow POS Project
+=======================================================
+
+Purpose
+-------
+
+This file captures the practical knowledge we gained from building the MeowMeow event POS app as a three-part team:
+
+- Owner / business user: real workflow, business priorities, event constraints, final judgment.
+- Codex: planning, review, risk discovery, workflow design, task shaping, smoke-test design.
+- Claude: primary implementation executor for approved batches, especially when the work was well-scoped.
+
+Read this file before the next project's README. The next project will be larger, more complex, more structured, higher-security, and more professional than this POS app. The main lesson is not "copy the POS architecture." The main lesson is how to turn real business operations into software safely, quickly, and with enough structure to scale.
+
+How To Read This File
+---------------------
+
+This file is long on purpose. It is a knowledge base, not a one-page memo. Use it by role:
+
+Owner / business user should read first:
+- 1. The Biggest Lesson
+- 2. Business Knowledge We Gained
+- 12. Owner / Business User Lessons
+- 13. Method to Start the Next Huge Project
+- 21. Practical Next Action
+- 24. Material Folders
+- 27.6 Pre-flight checklist
+- 28. Codex Final Full Review Additions
+
+Codex should read first:
+- 8. Documentation Knowledge
+- 9. Multi-Agent Workflow Knowledge
+- 10. Codex Opinion
+- 13. Method to Start the Next Huge Project
+- 14. Recommended Next-Project Team Protocol
+- 15. Exact Purpose of Each Agent / Project File
+- 16. Exact Two-Agent Mechanical Protocol We Used
+- 25. Agent Configuration Surfaces
+- 28. Codex Final Full Review Additions
+
+Claude should read first:
+- 11. Claude Opinion
+- 16. Exact Two-Agent Mechanical Protocol We Used
+- 17. Batch Template
+- 23. Claude's Direct Additions
+- 24. Material Folders
+- 27. Claude Final Review Pass
+- 28. Codex Final Full Review Additions
+
+For the next project kickoff, do not read this file as inspiration only. Convert it into actual files: README.md, TASKS.md, AGENTS.md, codex.md, CLAUDE.md, ARCHITECTURE.md, DATA_MODEL.md, SECURITY.md, TESTING.md, OPERATIONS.md, DECISIONS.md, MATERIALS_MANIFEST.md, and a first vertical-slice batch.
+
+
+1. The Biggest Lesson
+---------------------
+
+The project worked because we treated the POS as an operations tool, not just a coding task.
+
+Every good feature answered five questions:
+
+1. What business problem does this solve?
+2. Who uses it during a real work moment?
+3. What mistake does it prevent?
+4. What data does it create or protect?
+5. How will we verify it before real use?
+
+For the next project, keep this rule:
+
+Do not start from screens or code. Start from workflows, decisions, risks, and data ownership.
+
+
+2. Business Knowledge We Gained
+-------------------------------
+
+Small-business software succeeds when it reduces staff thinking at the busiest moment.
+
+Good internal tools should:
+
+- reduce repeated data entry
+- make the next action obvious
+- keep critical numbers visible
+- prevent common mistakes before they happen
+- preserve human review for dangerous actions
+- export to CSV or Excel-compatible formats
+- work even when the process is partly manual
+- match the real vocabulary staff already use
+
+The POS needed simple controls because staff would use it under pressure. The next project may be more complex, but the same rule applies: complex system, simple operating surface.
+
+Important business patterns from the POS:
+
+- Inventory is not one number. It has states: global stock, online allocation, event stock, warehouse stock, sample stock, sold stock, free-gift movement, send-later reservation, top-up, reversal, and correction.
+- Sales are not just totals. They are operational records: payment method, confirmation state, customer details, fulfillment type, discounts, delivery fee, operator, tags, audit history, and CSV export.
+- Corrections are not normal edits. They are exception workflows and should require reason, review, and audit trail.
+- Reset and destructive cleanup are not normal buttons. They need clear copy, passcode gate, severity styling, and specific statement of what is cleared and what stays.
+- Dashboards should support decisions, not decoration. The useful dashboard showed goal progress, pace, payment split, top sellers, low-stock alerts, and hourly rhythm.
+
+
+3. Product Design Knowledge
+---------------------------
+
+The best UI decisions came from booth reality:
+
+- Staff need speed more than visual novelty.
+- Managers need control and visibility.
+- Admin needs clean follow-up data.
+- Customers need accurate payment and receipt information.
+
+Useful UI principles we learned:
+
+- Put the primary workflow on the first screen.
+- Keep product cards compact and scannable.
+- Use visual status chips for stock, count-needed, low stock, free gift, and closed states.
+- Keep sensitive controls out of the normal selling path.
+- Prefer in-app dialogs over browser alerts because they are more consistent, easier to test, and less jarring.
+- For dangerous actions, use severity styling and disabled-confirm-until-authorized behavior.
+- For manager views, use dense but readable information, not a marketing-style layout.
+- Avoid explanatory text inside high-frequency UI rows. Put explanations in confirmation dialogs, README, or tooltips when needed.
+
+For the next project:
+
+The UI should be role-based. Different users should see different tools:
+
+- operator / staff
+- manager
+- admin
+- owner
+- finance
+- system administrator
+
+
+4. Technical Architecture Lessons
+---------------------------------
+
+The POS was intentionally lightweight:
+
+- single HTML file
+- vanilla JavaScript
+- localStorage
+- embedded base64 images
+- no backend
+- no build step
+- CSV export as backup
+
+This was correct for the event POS because:
+
+- deployment had to be simple
+- offline usage mattered
+- cost had to stay low
+- the data scale was small
+- the app had one main device/workflow
+
+For the next huge project, do not reuse the single-file architecture. Reuse the thinking:
+
+- start simple, but choose architecture that fits data scale and security
+- keep workflows clear
+- keep exports and audits strong
+- protect dangerous actions
+- test high-risk flows early
+- document behavior as it changes
+
+Recommended architecture direction for a larger professional project:
+
+- frontend: React / Next.js or another structured frontend framework
+- backend: API server with clear service boundaries
+- database: Postgres
+- auth: real role-based authentication, not hardcoded passcodes
+- audit logs: server-side append-only audit tables
+- file/export layer: CSV/Excel/PDF exports with access control
+- background jobs: for email, reporting, sync, imports, and scheduled tasks
+- environment separation: local, staging, production
+- deployment: versioned releases, rollback plan, backups
+- testing: unit tests, integration tests, smoke tests, and selected end-to-end tests
+
+
+5. Data Lessons
+---------------
+
+The POS taught that most business bugs are data-shape bugs.
+
+Examples:
+
+- A sale total must match cart, receipt, saved sale, dashboard, transfer QR amount, and CSV.
+- A stock correction must realign future days, not just the current number.
+- A free gift can still affect inventory even when price is zero.
+- A Send Later item can affect warehouse stock but not event booth stock.
+- A delivery fee can affect payment total, card surcharge, receipt, saved sale, and CSV.
+- A voided bill must disappear from sales but remain in audit history.
+
+For the next project, define data contracts before implementation:
+
+- entity names
+- required fields
+- optional fields
+- status values
+- who can change each field
+- audit events
+- import/export formats
+- migration strategy
+- legacy compatibility rules
+
+Recommended core data practices:
+
+- Use database constraints for important rules.
+- Use enums or controlled status values.
+- Store money carefully, preferably as integer minor units when possible.
+- Keep derived totals reproducible.
+- Avoid editing historical records without audit trail.
+- Prefer append-only event logs for financial, inventory, and approval flows.
+- Treat CSV/Excel import/export as a formal interface, not a side feature.
+- Protect spreadsheet exports against formula injection.
+- Preserve leading-zero SKUs and IDs in exports.
+
+
+6. Security Lessons
+-------------------
+
+The POS passcodes were local workflow controls, not true security.
+
+That was acceptable because:
+
+- the POS was local-only
+- the risk was accidental misuse, not hostile attack
+- the app had no backend or shared account system
+- speed and simplicity mattered for an event
+
+For the next professional project, this is not enough.
+
+Next-project security requirements should include:
+
+- real login
+- hashed passwords or single sign-on
+- role-based access control
+- permission checks on the server, not only the UI
+- audit logs for sensitive actions
+- session expiry
+- secure password reset or admin invite flow
+- least-privilege roles
+- encrypted transport
+- database backups
+- environment secret management
+- production/staging separation
+- access review process
+
+Sensitive actions that should always be protected:
+
+- delete / void / reset
+- stock correction
+- price change
+- discount override
+- payment confirmation override
+- user permission change
+- export of customer data
+- import that changes records in bulk
+- financial close / day close / month close
+
+Pattern to reuse:
+
+Sensitive action = permission gate + clear warning + reason + preview + confirm + audit log.
+
+
+7. Testing Knowledge
+--------------------
+
+The smoke test became one of the most valuable project assets.
+
+It was useful because it tested business-critical workflows, not just page load:
+
+- operator login
+- passcode gates
+- stock top-up reset
+- void and carry-forward
+- inventory sample visibility
+- Send Later delivery fee
+- sticker promo
+- card surcharge
+- CSV shape
+- browser error/dialog regression
+- final combined high-risk sale flow
+
+For the next project, create testing layers:
+
+- Unit tests: pure functions, calculations, validators.
+- Integration tests: API + database + permissions.
+- Smoke tests: highest-risk business workflows.
+- End-to-end tests: core user journeys through the UI.
+- Manual checklists: physical or operational steps that automation cannot fully prove.
+
+Testing rule:
+
+Every feature touching money, inventory, permissions, customer data, or export files needs a test or a manual acceptance checklist.
+
+Good smoke tests should:
+
+- run fast
+- use isolated data
+- fail with clear messages
+- cover historical bugs
+- avoid depending on real external services
+- check no console/page errors
+- check no unexpected native browser dialogs
+
+
+8. Documentation Knowledge
+--------------------------
+
+The README became the product memory.
+
+It worked because it documented:
+
+- current behavior
+- constraints
+- passcodes
+- workflow rules
+- CSV shape
+- verification checklist
+- recent changes
+- future continuation rules
+
+The task board worked because it documented:
+
+- business objective
+- expected benefit
+- implementation difficulty
+- cost/complexity tradeoff
+- touched files/functions
+- acceptance checks
+- risks/assumptions
+- owner/status/branch
+
+For the next project, use three levels of documentation:
+
+1. Product README
+   - what the system does
+   - who uses it
+   - major workflows
+   - deployment and operations
+
+2. Technical architecture docs
+   - modules
+   - data model
+   - API boundaries
+   - permissions
+   - background jobs
+   - error handling
+
+3. Live task board
+   - current work
+   - owner
+   - branch
+   - acceptance checks
+   - risks
+   - review status
+
+Documentation rule:
+
+If behavior changes, docs change in the same batch.
+
+
+9. Multi-Agent Workflow Knowledge
+---------------------------------
+
+The strongest pattern was:
+
+- Codex plans and reviews.
+- Claude implements approved batches.
+- Owner provides business reality and final judgment.
+
+Why this worked:
+
+- Codex reduced ambiguity before implementation.
+- Claude got smaller, clearer execution tasks.
+- The owner stayed in control of business direction.
+- The task board reduced context loss.
+- Acceptance checks made review concrete.
+- Review caught workflow bugs, not only code bugs.
+
+Common failure risks:
+
+- two agents editing the same file at the same time
+- unclear ownership
+- starting implementation before reading current docs
+- solving a technical symptom but missing the business workflow
+- forgetting README/TASKS updates
+- adding new behavior without smoke coverage
+- letting old localStorage/legacy data break new logic
+
+Rules to keep:
+
+- Read README and task board first.
+- Claim before editing.
+- One implementation owner per overlapping code area.
+- Split large work into batches.
+- Keep each batch small enough to review.
+- State "Do not change" boundaries.
+- Add acceptance checks before implementation.
+- Review from the user's business workflow, not only from code style.
+- If a bug is found during review, fix only the blocking issue and log unrelated improvements separately.
+
+
+10. Codex Opinion
+-----------------
+
+Codex's opinion: the main value of this project was not the final HTML file. The main value was learning how to transform messy real operations into controlled software workflows.
+
+What worked best:
+
+- starting each batch with business objective and expected benefit
+- using README as product memory
+- using TASKS as execution control
+- protecting risky actions with passcode/reason/audit
+- adding smoke tests for the most fragile flows
+- keeping the POS simple because the event needed low deployment cost
+- listening to screenshots and real usage feedback
+
+What should change for the next big project:
+
+- move away from single-file app architecture
+- introduce real auth and permissions early
+- design database schema before heavy UI work
+- separate frontend, backend, database, exports, and background jobs
+- create staging data and staging deployment
+- treat migrations and audit logs as first-class features
+- use stronger automated testing from the start
+- keep the same business-first batch format
+
+Codex recommendation for the next project:
+
+Start with a discovery and architecture phase before writing production code. Build a small vertical slice after that, not the whole system at once.
+
+
+11. Claude Opinion, Reconstructed from Execution Notes
+------------------------------------------------------
+
+This is not a live quote from Claude. It is a practical reconstruction from the execution handoffs, implementation notes, and the way Claude's batches succeeded or needed review.
+
+Claude's likely execution lessons:
+
+- Clear batches are much easier to implement correctly.
+- "Touches" and "Do not change" sections prevent accidental scope expansion.
+- Acceptance checks reduce guessing.
+- Single-file apps become risky as features accumulate.
+- Legacy compatibility matters because localStorage data survives upgrades.
+- UI changes need smoke coverage when they affect core flows.
+- Encoding and file-writing method matter; the UTF-8 repair batch proved this.
+- Tests should cover not only the happy path but also wrong PINs, blocked actions, empty exports, and old data.
+- When product rules change late, like delivery fee or sticker promo, isolate the change and verify all downstream surfaces.
+
+Claude recommendation for the next project:
+
+Give implementation agents smaller modules with clear ownership and stable contracts. A larger system should be split by bounded areas, not edited as one giant file.
+
+
+12. Owner / Business User Lessons
+---------------------------------
+
+The owner's role was essential because many important corrections came from real use:
+
+- screenshot-based issue discovery
+- final workflow judgment
+- deciding which complexity was worth it
+- spotting missing protection on stock reversal
+- confirming the promo behavior
+- deciding the app was ready
+
+For the next project, the owner should continue to provide:
+
+- real examples
+- screenshots
+- sample spreadsheets
+- expected outputs
+- edge cases from staff behavior
+- business priority ranking
+- acceptance of tradeoffs
+
+The best owner feedback is concrete:
+
+- "This action is too easy to do by mistake."
+- "Staff will not understand this label."
+- "This number must match the spreadsheet."
+- "This should require manager approval."
+- "This export must be usable in Excel."
+
+
+13. Method to Start the Next Huge Project
+-----------------------------------------
+
+Do not begin the next project by coding screens.
+
+Use this sequence:
+
+Phase 0 - Business Discovery
+
+- What problem are we solving?
+- Who are the users?
+- What decisions will the system improve?
+- What data exists today?
+- What spreadsheets/manual processes exist?
+- What are the biggest risks?
+- What must be secure?
+- What must be exportable?
+- What must work on day one?
+
+Phase 1 - Workflow Map
+
+- user roles
+- core workflows
+- exception workflows
+- approval workflows
+- import/export workflows
+- reporting workflows
+- failure/recovery workflows
+
+Phase 2 - Data Model
+
+- entities
+- fields
+- relationships
+- statuses
+- audit events
+- permissions
+- retention rules
+- import/export formats
+
+Phase 3 - Architecture Decision
+
+- frontend framework
+- backend framework
+- database
+- auth model
+- hosting
+- backups
+- CI/testing
+- logging
+- deployment process
+
+Phase 4 - Vertical Slice
+
+Build one complete end-to-end slice:
+
+- login
+- one core workflow
+- database save
+- permission check
+- audit log
+- export
+- basic dashboard/report
+- tests
+- README update
+
+Phase 5 - Batch Expansion
+
+Only after the first slice works, expand by batches.
+
+
+14. Recommended Next-Project Team Protocol
+------------------------------------------
+
+Use this role split:
+
+Owner:
+
+- business direction
+- process examples
+- priority
+- final acceptance
+
+Codex:
+
+- discovery questions
+- architecture options
+- task design
+- data model review
+- security review
+- acceptance criteria
+- code review
+- smoke-test design
+- documentation alignment
+
+Claude:
+
+- implementation of approved batches
+- focused refactors
+- test additions
+- UI buildout
+- API/database implementation
+- bug fixes inside owned batch scope
+
+Suggested repository docs:
+
+- README.md
+- TASKS.md
+- ARCHITECTURE.md
+- DATA_MODEL.md
+- SECURITY.md
+- OPERATIONS.md
+- TESTING.md
+- DECISIONS.md
+- AGENTS.md
+- codex.md
+- CLAUDE.md
+
+
+15. Exact Purpose of Each Agent / Project File
+----------------------------------------------
+
+This POS project used a layered documentation structure. The important idea is that not every document has the same job.
+
+README.md / readme.md
+
+Purpose:
+- Product memory and continuation guide.
+- Explains what the app does, who uses it, current behavior, workflow rules, passcodes, exports, verification checklist, and recent changes.
+- Should be read before starting work because it describes the actual business system, not just code.
+
+What belongs here:
+- current product behavior
+- user roles and workflows
+- business rules
+- UI/UX direction
+- data/export behavior
+- event-day or deployment checklist
+- "how to continue next time"
+
+What does not belong here:
+- every low-level implementation detail
+- temporary task ownership
+- agent-specific instructions
+
+TASKS.md
+
+Purpose:
+- Live source of truth for active and planned work.
+- Coordinates Codex and Claude so they do not overwrite each other.
+- Records owner, status, branch, blockers, acceptance checks, and risks for each batch.
+
+What belongs here:
+- batches
+- owner
+- status
+- branch
+- claimed time
+- blockers
+- business objective
+- expected benefit
+- touched areas
+- acceptance checks
+- risks and assumptions
+- completion notes
+
+What does not belong here:
+- broad product explanation already covered by README
+- permanent architecture docs
+- long code explanations unless needed for implementation handoff
+
+AGENTS.md
+
+Purpose:
+- Cross-agent entry point and auto-load pointer.
+- In this project, it tells Codex to read codex.md first and points to TASKS.md as the live source of truth.
+- Useful because different agent tools may auto-load AGENTS.md by default.
+
+What belongs here:
+- short universal instructions
+- pointers to deeper tool-specific files
+- project-level expectations that every agent must know
+
+What does not belong here:
+- long batch plans
+- detailed product documentation
+- tool-specific deep protocol if it belongs in codex.md or CLAUDE.md
+
+codex.md
+
+Purpose:
+- Codex-specific operating protocol.
+- Defines Codex as planner, reviewer, workflow analyst, and batch designer.
+- Explains when Codex should not implement, when Codex may claim work, how Codex should design batches, and how Codex should review Claude's work.
+
+What belongs here:
+- Codex role
+- planning rules
+- review checklist
+- Claude handoff template
+- coordination rules from Codex perspective
+- when Codex may execute
+
+What does not belong here:
+- Claude's detailed execution habits
+- full product behavior
+- current task status, which belongs in TASKS.md
+
+CLAUDE.md
+
+Purpose:
+- Claude-specific execution protocol.
+- Should tell Claude how to claim implementation work, respect TASKS.md, follow batch scope, avoid unrelated edits, update docs when behavior changes, and hand back for review.
+
+What belongs here:
+- Claude role as primary implementation executor
+- claim-before-editing rule
+- implementation hygiene
+- testing expectations
+- handoff expectations
+- documentation update expectations
+
+What does not belong here:
+- Codex review-only behavior
+- permanent product reference that belongs in README
+- live task status that belongs in TASKS.md
+
+ARCHITECTURE.md
+
+Purpose for next project:
+- Permanent technical map of the system.
+- Explains frontend, backend, database, services, integrations, deployment, and module boundaries.
+
+DATA_MODEL.md
+
+Purpose for next project:
+- Defines entities, fields, relationships, statuses, derived totals, audit records, import/export shapes, and migration rules.
+
+SECURITY.md
+
+Purpose for next project:
+- Defines roles, permissions, authentication, session rules, sensitive actions, audit requirements, backup expectations, and security assumptions.
+
+OPERATIONS.md
+
+Purpose for next project:
+- Explains how to run, deploy, backup, restore, monitor, and support the system.
+
+TESTING.md
+
+Purpose for next project:
+- Explains how to run unit, integration, smoke, and end-to-end tests; also lists manual checks for business workflows.
+
+DECISIONS.md
+
+Purpose for next project:
+- Records major architecture and product decisions with date, context, decision, tradeoff, and consequence.
+- Prevents the team from re-litigating old decisions without new evidence.
+
+Rule for all docs:
+
+If a behavior changes, update the product docs in the same batch. If an operating rule changes, update the agent/protocol docs in the same batch.
+
+
+16. Exact Two-Agent Mechanical Protocol We Used
+-----------------------------------------------
+
+This is the operational rulebook from the POS project. Reuse it as the default for future Codex + Claude work, then adjust for the next project's larger architecture.
+
+Core roles:
+
+- Owner gives business direction, priorities, examples, screenshots, and final acceptance.
+- Codex plans, reviews, analyzes workflow risk, designs batches, writes acceptance checks, and updates planning/protocol docs.
+- Claude is the default implementation executor for approved batches.
+
+Read order at the start of every session:
+
+1. README.md / readme.md for product behavior and current rules.
+2. TASKS.md for live ownership, status, blockers, and next work.
+3. Agent-specific protocol file: codex.md for Codex, CLAUDE.md for Claude.
+4. The relevant source files or code regions before making assumptions.
+
+Claim before editing:
+
+- Before implementation work, the executor updates TASKS.md.
+- Set Owner to the executing agent.
+- Set Status to in-progress.
+- Set Branch to the chosen branch name.
+- Set Claimed to the current date/time.
+- Commit the claim update before touching implementation files when using branch workflow.
+
+Planning status:
+
+- Codex may set Owner: codex and Status: planning for batches being designed.
+- When planning is complete, Codex clears Owner, sets Status: ready-for-claude, and leaves enough detail for Claude to execute.
+
+Default implementation ownership:
+
+- Claude owns implementation by default.
+- Codex should not claim implementation unless the user explicitly assigns Codex, the change is documentation/protocol/planning only, or Claude is unavailable and the user asks Codex to proceed.
+
+One implementation batch at a time for overlapping files:
+
+- In the POS, meowmeow_pos_event.html was a single-file app, so only one executor could safely edit it at a time.
+- For the next larger project, the same rule should apply by ownership boundary: only one executor owns the same module, API, table migration, or UI area at a time.
+
+Branch naming:
+
+- Branch per batch.
+- Format used: batch/<letter-or-id>-<short-slug>.
+- Example: batch/h-void-bill.
+- Never push directly to main.
+- Branch from the latest main unless the task explicitly requires another base.
+
+Commit / PR convention:
+
+- Commit messages should identify the batch when useful.
+- POS example: [batch H] add void bill flow.
+- PR title should identify the batch.
+- POS example: Batch H: add void bill flow.
+
+Merge rule:
+
+- Merge back into main only after user confirmation or delegated Codex review confirms no blocking issue.
+- After merge, update TASKS.md: clear Owner and Branch, set Status to done, and add notes or merge commit if useful.
+
+Blockers:
+
+- If a batch depends on another batch, set BlockedBy.
+- Do not start a blocked batch until the blocker is done.
+- If a new overlap or dependency is discovered, stop and update TASKS.md instead of forcing work forward.
+
+Stale claim recovery:
+
+- If Claimed is older than 24 hours and there is no branch activity, another agent may mark Status: stale.
+- The recovering agent should announce the stale claim in the next session.
+- Reassign only when safe and clear.
+
+Conflict prevention:
+
+- Do not edit files owned by another agent's in-progress batch.
+- Do not make drive-by code edits while reviewing another agent's implementation.
+- If Codex finds unrelated improvements during review, log them as future batches instead of mixing them into the current fix.
+
+Documentation rule:
+
+- README.md is updated when user-facing behavior, workflow, passcodes, CSV shape, correction logic, or operational rules change.
+- TASKS.md is updated when ownership, status, blockers, acceptance checks, or completion notes change.
+- Protocol files are updated when the team workflow changes.
+
+Review rule:
+
+- Codex review starts with findings, ordered by severity.
+- Review focuses on bugs, workflow risks, data risks, missing tests, and documentation drift.
+- If no blocking issue is found, say that clearly and list remaining manual checks or residual risk.
+
+Batch design rule:
+
+Every implementation batch should include:
+
+- Business objective
+- Expected benefit
+- Implementation difficulty
+- Cost/complexity tradeoff
+- Scope
+- Do not change
+- Likely touched areas
+- Acceptance checks
+- Risks/assumptions
+
+For the next larger project, also include:
+
+- Data/security impact
+- Automated tests
+- Manual checks
+- Rollback plan
+
+Handoff rule from Codex to Claude:
+
+- Give Claude a concrete, bounded task.
+- Identify files/modules likely touched.
+- Identify what not to change.
+- Include acceptance checks.
+- Include risks and assumptions.
+- Keep the task small enough that implementation and review are realistic.
+
+Execution rule for Claude:
+
+- Read README, TASKS, and CLAUDE.md first.
+- Claim the batch before editing.
+- Stay inside the batch scope.
+- Do not change unrelated behavior.
+- Add or update tests when the batch touches risky behavior.
+- Update README when behavior changes.
+- Hand back with changed files, summary, and verification.
+
+Emergency solo-Codex exception:
+
+- During the POS project, the user temporarily paused the two-agent protocol and asked Codex to finish implementation after Claude hit a limit.
+- This was acceptable because the user explicitly assigned Codex execution.
+- Afterward, the protocol was resumed and recorded in TASKS.md.
+
+Security note:
+
+- The POS used local passcodes as workflow guards only.
+- For the next project, the protocol should require real permission checks and security review for sensitive actions.
+
+
+17. Batch Template for the Next Project
+---------------------------------------
+
+Use this for every important batch:
+
+Batch <ID> - <Title>
+
+Business objective:
+Expected benefit:
+Implementation difficulty:
+Cost/complexity tradeoff:
+
+Scope:
+- 
+
+Do not change:
+- 
+
+Likely touched areas:
+- 
+
+Data/security impact:
+- 
+
+Acceptance checks:
+- 
+
+Automated tests:
+- 
+
+Manual checks:
+- 
+
+Risks/assumptions:
+- 
+
+Rollback plan:
+- 
+
+
+18. Final Knowledge Extraction Batch for Claude
+-----------------------------------------------
+
+Optional final Claude batch if we want a second-agent review of this knowledge file.
+
+Batch ULTRA - Review Final Project Knowledge
+
+Business objective:
+Turn the POS project experience into a reusable team playbook for the next larger system.
+
+Expected benefit:
+Better project start, fewer repeated mistakes, clearer agent roles, stronger security/data planning, and faster onboarding for future sessions.
+
+Implementation difficulty:
+Low. Documentation review only.
+
+Cost/complexity tradeoff:
+No code changes. A second-agent review is cheap and useful because this document will influence the next larger project.
+
+Scope:
+- Read ULTRA_KNOWLEDGE.text.
+- Compare it against readme.md, TASKS.md, codex.md, and CLAUDE.md.
+- Add missing lessons from implementation details if any.
+- Flag anything that is too POS-specific and should not be reused for a larger secure system.
+- Keep the file readable for the owner, not only for engineers.
+
+Do not change:
+- POS app behavior.
+- Product data.
+- Passcodes.
+- Smoke tests unless a documentation claim is clearly false.
+
+Likely touched areas:
+- ULTRA_KNOWLEDGE.text only.
+- Optional: README.md only if the owner wants a pointer to this file.
+
+Acceptance checks:
+- File clearly separates POS-specific lessons from next-project recommendations.
+- File includes business, technical, data, security, testing, documentation, and multi-agent workflow lessons.
+- File includes Codex and Claude perspectives, with Claude perspective clearly marked as reconstructed unless Claude directly edits it.
+- File is readable before README.md for the next project.
+
+Risks/assumptions:
+- Claude's opinion is inferred unless Claude directly reviews and edits the document.
+- Avoid turning this into a long philosophical memo; keep it practical and reusable.
+
+
+19. What Not To Repeat
+----------------------
+
+For the next big project, avoid:
+
+- one giant file
+- hardcoded passcodes as real security
+- localStorage as the only source of truth
+- manual-only backups
+- no role-based access control
+- no server-side audit logs
+- unclear ownership between agents
+- vague batches
+- UI work before data model decisions
+- dashboards without business decisions attached
+- exports treated as afterthoughts
+- tests added only at the end
+
+
+20. What To Repeat
+------------------
+
+Repeat these:
+
+- business-first planning
+- clear batch ownership
+- acceptance checks before implementation
+- README as product memory
+- TASKS as live coordination board
+- smoke tests for high-risk workflows
+- review from real staff workflow
+- protect destructive/sensitive actions
+- reason-required corrections
+- audit trail thinking
+- Excel/CSV compatibility
+- screenshot-based UI review
+- final readiness pass before real use
+
+
+21. Practical Next Action
+-------------------------
+
+For the next project, start with a project charter, not code.
+
+The first working session should produce:
+
+- problem statement
+- user roles
+- top 5 workflows
+- top 5 risks
+- required data entities
+- security requirements
+- first vertical slice
+- first 3 implementation batches
+- definition of done
+
+Then Codex should turn that into README.md, TASKS.md, ARCHITECTURE.md, DATA_MODEL.md, SECURITY.md, and the first Claude-ready implementation batch.
+
+
+22. Final Team Principle
+------------------------
+
+The best software from this team will come from combining:
+
+- the owner's real business judgment
+- Codex's workflow and risk planning
+- Claude's implementation speed
+- continuous testing
+- honest review
+- clear documentation
+
+Build the next project like a real operating system for the business, not just an app.
+
+
+23. Claude's Direct Additions (added by Claude, not reconstructed)
+------------------------------------------------------------------
+
+The earlier "Claude opinion" section was reconstructed by Codex from execution notes. This section is added by Claude directly after reviewing the file. It captures concrete execution-side lessons that the rest of the document does not cover, or covers only at a high level.
+
+23.1 Single-file editing is a coordination tax, not just a deployment choice
+   - In the POS, almost every batch touched meowmeow_pos_event.html. Even batches that did not textually overlap still serialized through one file, which is why the protocol enforced "one implementation batch in flight" instead of trying to run two at once.
+   - String-replacement edits become harder as a file grows: identifiers like renderProducts, addToCart, and getCartAwareInventorySnapshot get referenced in many places, and a naive find/replace can hit the wrong region. Always anchor edits with surrounding context (a few lines above and below), not just the function name.
+   - For the next project, splitting code into modules is not only an architecture decision; it is also what makes parallel agent work possible.
+
+23.2 localStorage is a migration surface, not just storage
+   - Real users carry old data forward across upgrades. The sampleQty per-day migration (Batch D) and the Send Later / pre-order removal (Batch C) both had to handle data shapes that no current code path would ever write.
+   - Treat every localStorage key as a versioned contract: read in defensively (tolerate missing fields, old shapes, legacy keys), write out cleanly, and run the migration once at load time, not lazily in the render path.
+   - For the next project on a real database, the same instinct maps to schema migrations, default values for new columns, and backfill jobs.
+
+23.3 Encoding correctness is a real risk for non-ASCII content
+   - The repo had a UTF-8 repair pass because Windows tooling (PowerShell defaults, certain editors) can write UTF-16 LE with BOM and silently corrupt files that other tools then read as UTF-8.
+   - Rules that prevented repeats: prefer the Edit/Write tools over shell heredocs, never round-trip a file through Get-Content / Set-Content without explicit -Encoding utf8, and grep for replacement characters (U+FFFD) before committing.
+   - For the next project, lock encoding in CI: a pre-commit or CI check that rejects non-UTF-8 files and BOMs is cheap and prevents an entire class of "it works on my machine" bugs.
+
+23.4 Smoke tests that drive the real HTML caught more than unit tests would have
+   - tests/smoke_event_pos.js loads the actual app and exercises operator login, passcode gates, void/carry-forward, sample visibility, Send Later delivery fee, sticker promo, card surcharge, CSV shape, and a final combined high-risk sale. That suite caught regressions that pure-function tests would have missed because the bugs lived in the seams between rendering, storage, and state.
+   - Lesson: for high-risk workflows, prefer a small number of end-to-end-style tests that touch real I/O over a large number of mocked unit tests. Mocked tests pass while real workflows break.
+   - For the next project, build the smoke layer alongside the first vertical slice, not at the end. Once it exists, every new high-risk batch can add one scenario to it.
+
+23.5 Acceptance checks should be falsifiable, not aspirational
+   - "Void Bill works correctly" is not testable. "After void, the sale disappears from state.sales, an audit row is written to meowseum_event_voided_sales_v1, and realignInventoryCarryForward(saleDay(sale)) runs" is.
+   - The batches that went smoothly all had acceptance checks written this way. The batches that needed rework usually had vague checks.
+   - For the next project, every batch should pass this test: can a reviewer disprove the claim of "done" using only the acceptance checks and the diff? If not, the checks need rewriting before implementation starts.
+
+23.6 Scope discipline beats cleverness
+   - The biggest implementation risks were not algorithmic; they were "while I'm here, let me also fix...". Even small drive-by edits expanded review surface and slowed merges.
+   - The "Do not change" section in batches was load-bearing. It let the implementer say no to themselves.
+   - For the next project, keep "Do not change" mandatory in every batch, and treat any in-flight discovery of unrelated bugs as a new TASKS.md entry, not a same-batch fix.
+
+23.7 Read-before-write is non-negotiable for the executor
+   - Every successful batch started by reading the relevant code region first, even when the task description seemed clear. Code regions in a long-lived file accumulate constraints that the task description cannot capture: a shared helper, a render-pass cache, a legacy state key.
+   - The Read tool is cheap. Reading 100 lines of context costs less than one wrong edit that the test suite then has to catch.
+
+23.8 The "stop midway" failure mode and how to prevent it
+   - In an earlier session, Claude stopped a batch partway and the user had to bring in Codex to finish. The root cause was usually one of: (a) hitting an ambiguity and going silent instead of asking, (b) discovering hidden scope and not raising a new batch, or (c) treating "tests pass" as "done" without updating TASKS.md and readme.md.
+   - Prevention rules for the next project:
+     - "Done" means code merged-ready, TASKS.md updated, behavior docs updated, handoff written. All four.
+     - Ambiguity is a stop-and-ask signal, not a guess-and-continue signal.
+     - Discovered scope becomes a new batch entry in the same commit, then the original batch resumes inside its original scope.
+
+23.9 Money, inventory, and audit trails need invariants, not just tests
+   - The POS had several places where the same number had to agree across surfaces: cart total, receipt, saved sale, transfer-QR amount, dashboard, CSV.
+   - Tests catch the cases you thought of. Invariants catch the cases you did not. For the next project, prefer assertions like "sum of line totals + delivery fee + surcharge - discounts == saved sale total" enforced at write time over relying purely on test coverage.
+   - Same idea for inventory: derived values (remaining event stock, sold count, send-later reserved) should be reproducible from a base snapshot plus an event log. If they cannot be reproduced, the audit log is missing something.
+
+23.10 Documentation as a same-batch deliverable
+   - readme.md stayed accurate because behavior changes and doc changes shipped together. The moment we let docs lag, the README would have become a lie within a few batches.
+   - For the next project, enforce this at the PR level: a PR that changes user-visible behavior without updating the relevant doc is not mergeable. This is cheaper to enforce than to recover from.
+
+23.11 Practical additions to the next-project checklist
+   - Add a "data ownership" column to the data model: for each entity, who can create, read, update, delete, export. Most security bugs hide in the gap between "who can read" and "who can export".
+   - Add a "what happens when this is wrong" column to acceptance checks for any batch touching money, stock, or permissions. If the answer is "nothing visible until end-of-day reconciliation", the batch needs additional logging or alerting.
+   - Add a one-page runbook per high-risk workflow (void, refund, stock correction, manual override). It should answer: who can do this, what gets logged, how to undo, who to notify.
+   - Treat CSV/Excel exports as a public API. Column order, header names, date format, and number format are all breaking changes once anyone outside the team consumes them.
+
+23.12 Agent collaboration: what worked, what to keep, what to upgrade
+   - What worked: Codex preparing batches with business objective + acceptance checks + "do not change" lets Claude execute without re-deriving context. This is the single highest-leverage practice from the project.
+   - What to keep: branch-per-batch, claim-before-edit, README/TASKS updates as part of the same batch.
+   - What to upgrade for the next project:
+     - Replace "one batch in flight" with "one batch per ownership boundary". A modular codebase should let two batches run in parallel as long as they touch different modules and different migrations.
+     - Replace ad-hoc passcode gating with real role checks, and have Codex review the role matrix before any sensitive batch ships.
+     - Add a lightweight DECISIONS.md from day one. Most rework in the POS came from re-deciding things we had already decided informally.
+
+23.13 Claude's recommendation for the next project's first week
+   - Day 1-2: owner-led discovery, written down as a one-page charter (problem, users, top workflows, top risks, must-have exports, must-have security).
+   - Day 3: Codex turns the charter into README.md, ARCHITECTURE.md (skeleton), DATA_MODEL.md (entities + key fields), SECURITY.md (roles + sensitive actions), and TASKS.md with the first three batches.
+   - Day 4-5: Claude executes the first vertical slice (login + one workflow + one entity + audit log + one export + one smoke test). Codex reviews against acceptance checks.
+   - End of week 1: a working slice in staging, not a half-built broad surface. Everything else expands from there.
+
+This section is Claude's direct contribution. It does not replace anything Codex wrote earlier; it adds the execution-side perspective that the reconstructed section in part 11 could only approximate.
+
+
+24. Material Folders — The Owner's Real-World Input Channel
+-----------------------------------------------------------
+
+This is one of the most underrated practices from the POS project, and it deserves its own section because the next project will rely on it even more.
+
+24.1 What it is
+
+The owner created plain-named folders alongside the code and dropped real work assets into them. The agents (Codex and Claude) read those folders directly during planning and implementation. No separate spec document was needed — the material was the spec.
+
+Concrete examples from this project:
+
+- product/             contains "product list-event price.xlsx" — the real product catalog with SKUs, names, and event prices.
+- product image/       contains the actual PNG/JPG images for every SKU, named with the SKU prefix (e.g. "002A Cat Curator (Blue).png"). These were embedded as base64 directly into the single-file POS.
+- inventory/           contains "inventory_default.xlsx" — the real opening stock numbers per SKU per day.
+- dashboard re-design task/  contains a reference HTML mockup, JSX design canvases, and a references/ subfolder with screenshots of how the redesigned dashboard should look.
+
+24.2 Why this worked
+
+- Real data beats described data. A spreadsheet with the actual SKUs, names, and prices removes an entire class of "what should this be called?" ambiguity.
+- Naming matches reality. Filenames like "022 Sticker Modern (Black).jpg" carry the SKU, the product name, and the variant in one string — the agents can parse them mechanically and still match what staff call the product.
+- Visual references are unambiguous. A reference screenshot ends arguments about layout faster than three paragraphs of UI description.
+- Folders are durable. Unlike chat messages, they survive across sessions, get listed by `ls`, and are easy for any agent to discover without being told where to look.
+- Low-friction for the owner. Dropping a file into a folder is faster than writing a spec, and the owner already had these assets from real business operations.
+
+24.3 The pattern, generalized
+
+Material folders work as a one-way communication channel from owner to agents:
+
+owner work assets  →  named folder in repo  →  agent reads during planning/implementation
+
+The agent's job is to:
+1. Notice when a folder exists that matches the current task topic.
+2. List its contents before assuming anything.
+3. Treat the material as the source of truth where it overlaps with described requirements.
+4. Ask the owner only when the material is silent or contradictory, not when it is merely informal.
+
+24.4 Conventions worth keeping
+
+- Name folders after the work topic, not the file type. "product image" beats "images". "dashboard re-design task" beats "designs".
+- Use plain spaces and lowercase when possible. The owner is the audience too, not just the agents.
+- Keep one canonical asset per concept. If "product list-event price.xlsx" is the truth, do not also keep "products_v2.csv" without marking which is current.
+- Put a tiny README.txt inside the folder only when the material is not self-explanatory. Most of the time the filenames are enough.
+- For images, encode the SKU or ID in the filename so agents can map image to record without an index file.
+- For spreadsheets, keep column headers stable. Agents will lock onto column names; renaming a column silently breaks downstream parsing.
+- For reference designs, separate "what we want it to look like" (references/ subfolder with screenshots) from "what we are exploring" (working files like .jsx canvases). The agent should know which is binding.
+
+24.5 How agents should treat material folders
+
+Codex (planning side):
+- Inventory the material before writing a batch. List every folder relevant to the topic and read the spreadsheets, view the images, look at the reference screenshots.
+- Lift concrete values from the material into the batch's acceptance checks (real SKU codes, real prices, real dashboard panel names from the screenshot). Vague checks come from skipping this step.
+- Flag missing material explicitly. "There is no reference for the empty state" is a planning gap the owner can fill before Claude starts.
+
+Claude (execution side):
+- Re-read the material folder at implementation time, even if Codex already summarized it. Spreadsheets and images carry detail that prose summaries flatten.
+- Match real-world labels exactly. If the spreadsheet says "Cat Curator (Blue)", the UI should say "Cat Curator (Blue)" — not "Cat Curator Blue" or "Curator (Blue Cat)".
+- When embedding assets (like base64 images), preserve filename metadata in a comment or data attribute so the link from asset back to source is not lost.
+
+24.6 Limits and risks
+
+- Material folders are not version-controlled the way code is. A spreadsheet update overwrites history unless the owner keeps dated copies. For the next project, consider a /materials/<topic>/<YYYY-MM-DD>/ pattern when the data evolves.
+- Binary files (xlsx, png) bloat the repo over time. For the larger next project, consider git-lfs or a separate assets repo, but keep the same folder-as-spec mental model.
+- Material can drift from code silently. If the spreadsheet adds a new SKU and no one runs a batch to import it, the app and the material disagree. A periodic "material vs. code" reconciliation check is worth building once data scale grows.
+- Sensitive material (real customer data, real financials) should not live in a public repo. For the next project, separate "shape examples" (safe to commit) from "real data" (kept outside the repo or in a protected location).
+
+24.7 Recommended folder layout for the next project
+
+Adapt the pattern to a larger system:
+
+- /materials/product-catalog/      canonical product data, real spreadsheets, images keyed by SKU.
+- /materials/inventory/            opening stock, top-up history examples, reorder-point data.
+- /materials/customers/            shape examples only, never real PII; real data stays in a protected store.
+- /materials/workflows/            screenshots and reference flows for each major workflow.
+- /materials/designs/<feature>/    reference mockups, with a references/ subfolder for the binding visuals and a working/ subfolder for exploration.
+- /materials/reports/              sample exports the owner expects to be able to reproduce (CSV/Excel with the exact column shape).
+- /materials/decisions/            scanned notes, meeting captures, or one-page rationale documents that justify a non-obvious choice.
+
+Rule of thumb: if the owner would naturally hand you a file to explain something, that file belongs in /materials/, and the agents are expected to look there.
+
+24.7b Sub-pattern — In-Repo Task Folders (e.g. "dashboard re-design task")
+
+A folder named like a task (the POS had "dashboard re-design task/") is a hybrid: it carries materials AND signals that a batch is being scoped around that topic. It works as a lightweight pre-batch staging area before TASKS.md formally claims the work.
+
+Conventions worth keeping:
+
+- Name the folder after the work, not the deliverable: "dashboard re-design task" beats "new dashboard files".
+- Put binding references in a references/ subfolder (the POS used a reference screenshot here). Put exploratory work (jsx canvases, mockup HTML) at the top level of the folder.
+- When the batch lands in TASKS.md, link to the folder from the batch entry's Notes or Touches section so the executor knows where to look.
+- After the batch ships, decide explicitly whether the folder is archived (kept for history) or removed (already absorbed into the codebase). Drift between code and a stale task folder is its own bug.
+
+24.8 Why this section matters for the next project
+
+The next project is described as larger, more secure, more structured, and with more data. That means more decisions, more entities, and more places where ambiguity can creep in. Material folders are the cheapest, fastest mechanism the owner has to inject ground truth into the agents' planning loop without writing long specs.
+
+Keep the pattern. Formalize the naming. Make the agents responsible for checking material folders before asking the owner to re-state things the folders already answer.
+
+
+25. Agent Configuration Surfaces — Where Behavior Is Actually Set
+-----------------------------------------------------------------
+
+Most of what each agent is "willing to do" without prompting comes from configuration files outside the project repo. This section documents the files that shaped Codex and Claude in this project, what each one controls, and how to handle them in the next project.
+
+Two important framings before the details:
+
+- These files are configuration, not memory. They change behavior at the harness level (permissions, model choice, sandbox, auto-load instructions) and persist across all sessions and projects unless scoped narrowly.
+- Some of these files contain content the owner has tuned over time. Treat them as the owner's tools — agents may suggest changes, but should not silently rewrite them.
+
+25.1 Project-level: <repo>/.claude/settings.local.json
+
+What it is:
+- A per-project allowlist for Bash/PowerShell commands and tool patterns that Claude can run without re-prompting.
+- Created over time by approving specific commands during a session ("yes, allow this exact command pattern always").
+
+What this project's file contained (illustrative, not exhaustive):
+- Specific node -e parse-checks for meowmeow_pos_event.html (verifying the inline <script> still parses).
+- where.exe lookups for node and deno.
+- One git commit pattern.
+
+Why it mattered:
+- Reduced friction during high-iteration batches. Without the allowlist, every parse-check or node lookup would prompt.
+- Stayed scoped to this project — not user-wide — because the parse-check command embeds the project's file path.
+
+Risks:
+- Allowlist entries are exact-match patterns. Once added, they fire silently. A too-broad pattern (e.g., "Bash(node *)") is effectively a blanket trust for that tool.
+- It is easy to accumulate stale entries that no longer reflect current workflows. Periodic pruning is healthy.
+
+For the next project:
+- Keep this file in .gitignore unless the team explicitly wants to share allowlists. The POS project did commit it; for a larger team that is a policy decision.
+- Prefer narrow patterns (full command with args) over wildcards.
+- Review the file at the end of each major batch and remove entries that were one-off.
+
+25.2 User-level: C:\Users\USER\.claude\settings.json
+
+What it is:
+- The user-wide Claude Code configuration. Applies to every project unless overridden by a project-level file.
+- In this project's setup it contained: a long Bash/PowerShell allowlist (largely from the UTF-8 repair pass and the smoke-test runs), an additionalDirectories entry, model = "opus", and effortLevel = "high".
+
+Why it mattered:
+- model = "opus" and effortLevel = "high" set Claude's default behavior across all projects to the most capable but slowest profile. That is the right default for this kind of work but is not free.
+- The allowlist absorbed the long tail of forensic PowerShell/Node commands used during the UTF-8 byte-level audits. Without it, those sessions would have been a constant stream of permission prompts.
+
+Risks:
+- User-level allowlists leak across projects. A pattern allowed for the POS will also fire silently in an unrelated project. For commands that read/write files, this matters.
+- Hand-edited entries are easy to break. A single missing comma turns the file into an invalid JSON and Claude falls back to defaults silently.
+
+For the next project:
+- Promote project-specific patterns to the project-level settings.local.json instead of the user-level file. Keep user-level entries truly cross-cutting (git, gh, basic tooling).
+- Keep model and effortLevel at user level — they are personal defaults, not project policy.
+- Consider a periodic audit: open settings.json, read every allowlist entry, ask "would I be fine with this firing in a fresh repo I just opened?" If not, move it to a project-level file or delete it.
+
+25.3 User-level: C:\Users\USER\.codex\config.toml
+
+What it is:
+- Codex's user-wide configuration. In this project's setup it specified:
+  - model = "gpt-5.5", model_reasoning_effort = "medium"
+  - sandbox_mode = "workspace-write" (and sandbox = "elevated" on Windows)
+  - Several enabled Codex plugins (github, build-ios-apps, build-web-apps, notion).
+  - A [projects.*] block marking specific paths (including the POS sandbox) as trust_level = "trusted".
+
+Why it mattered:
+- trust_level = "trusted" for the project path is what let Codex operate without per-action confirmations inside this repo. Without it, Codex is much more cautious.
+- The enabled plugins shaped what Codex could do out of the box (e.g., the github plugin for PR/issue work).
+
+Risks:
+- "trusted" is a strong grant. Anything Codex runs in a trusted project is treated as authorized. Granting trust to the wrong path (especially something broad like a parent directory) widens the blast radius of every future session in that path.
+- Enabling plugins user-wide means they are present in every project, even ones that should not use them.
+
+For the next project:
+- Trust the new project's exact path, not a parent directory. Keep older trusted entries pruned when projects retire.
+- Audit enabled plugins when starting a new project. Disable ones that do not fit the project's risk profile.
+- If the new project is higher-security, consider lowering sandbox_mode for that path or revisiting whether "elevated" is appropriate on Windows.
+
+25.4 User-level: C:\Users\USER\.codex\AGENTS.md
+
+What it is:
+- A personal, cross-project instruction file that Codex auto-loads. In this owner's setup it defines:
+  - Owner profile (MBA student + family manufacturing business).
+  - Preferred output style (summary → approach → code → test plan → risks → next improvement).
+  - Coding principles (lightweight first, simple architecture, Excel-compatible workflows).
+  - UI/UX preferences (clean, practical, staff-usable).
+  - Decision style (Quick fix / Balanced / Scalable options for tradeoff calls).
+  - Behavior expectations (proactive on edge cases, progress over perfection).
+
+Why it mattered:
+- This file is the reason Codex consistently produced batch-style outputs with business objective + benefit + difficulty + tradeoff + next action. That format was not invented inside the POS project — it came from this file and was reinforced by every batch.
+- It also explains why the POS leaned toward single-file, low-deployment, Excel-compatible solutions. Those preferences are written down here.
+
+Risks:
+- Cross-project leak. Preferences that suit "small business internal tool" do not all suit "large secure professional system". For example, "Prefer simple, maintainable architecture over fancy architecture" is a great default but should not be read as "avoid frameworks" in a large-scale project that genuinely needs them.
+- The file is invisible from inside any single project. New collaborators looking at the POS repo cannot tell that this file is shaping the agent's outputs.
+
+For the next project:
+- Re-read this file at the start of the new project and decide which sections still apply. Add a "next project" addendum or keep a separate AGENTS.md scoped per project if the harness supports it.
+- Tell future agents (in the project's own AGENTS.md or codex.md) when the new project's context overrides a personal preference. Example: "AGENTS.md says 'avoid unnecessary frameworks'; for this project, React/Next.js and Postgres are required from day one — that decision is final."
+
+25.5 User-level: C:\Users\USER\.claude (other contents)
+
+The directory also contains:
+- backups/, file-history/ — local file-history snapshots Claude keeps for safety.
+- ide/, mcp-needs-auth-cache.json — IDE integration and MCP auth state.
+- plans/ — saved plan documents from past sessions (this project's source plan lived here: read-all-code-in-polymorphic-kahn.md, referenced by TASKS.md).
+- plugins/ — installed Claude Code plugins.
+- projects/ — per-project state, including memory. The POS's auto-memory directory lives at projects/c--Users-USER-Desktop-meowmeow-sandbox/memory/.
+- session-env/, sessions/, shell-snapshots/, telemetry/ — session/runtime state and telemetry.
+
+Why this matters:
+- The plans/ directory is durable across sessions. The POS's TASKS.md explicitly cites a plan file in this directory as the source plan. For the next project, keep the originating plan file in plans/ and reference it from the project's TASKS.md so the lineage is visible.
+- The projects/<slug>/memory/ directory is where auto-memory lives. It survives across sessions, is project-scoped, and is the right place for "feedback we want to remember next time we open this project". Do not put cross-project preferences here — those go in user-level AGENTS.md.
+
+For the next project:
+- Decide at project kickoff which auto-memory entries to seed (owner profile pointer, project-specific feedback rules, key reference URLs).
+- Treat plans/ as a durable bookshelf: keep the originating plan, link it from TASKS.md, and do not delete it after the project ships — the next similar project benefits from it.
+
+25.6 The Whole Configuration Stack, From Most Specific to Most General
+
+For Claude:
+1. <repo>/.claude/settings.local.json   — project-only allowlist
+2. <repo>/CLAUDE.md                     — project-only execution protocol
+3. C:\Users\USER\.claude\projects\<slug>\memory\ — per-project auto-memory
+4. C:\Users\USER\.claude\settings.json  — user-wide settings (model, allowlist)
+5. C:\Users\USER\.claude\plans\         — durable plan documents
+
+For Codex:
+1. <repo>/codex.md or <repo>/AGENTS.md  — project-only protocol
+2. <repo>/.codex/                       — project-level Codex state if present
+3. C:\Users\USER\.codex\config.toml     — user-wide model + sandbox + trust + plugins
+4. C:\Users\USER\.codex\AGENTS.md       — user-wide personal instructions
+5. C:\Users\USER\.codex\sessions\, memories\, plugins\, etc. — runtime/state
+
+Reading rule: more specific layers should override more general ones. If a project's CLAUDE.md says "do not use opus for this project" and the user-level settings.json says model = "opus", the project file wins for that project. Document the override explicitly so it does not look like a bug.
+
+25.7 Lessons for the Next Project
+
+- Keep project-level protocol in the repo (./CLAUDE.md, ./codex.md, ./AGENTS.md). Treat project-level permission allowlists such as ./.claude/settings.local.json as a security policy choice: commit them only if the team wants shared, reviewed allowlists; otherwise keep them local and ignored. Keep user-level configuration off the repo. The boundary should be obvious to anyone joining the project.
+- When a permission is approved during a session, decide in the moment: does this belong project-only or user-wide? The default should be project-only.
+- Audit the user-level allowlist at the end of each project. The POS allowlist accumulated forensic UTF-8 commands that no longer need to be trusted.
+- Document the agent stack in the project's own README or AGENTS.md so a new collaborator understands which behaviors come from where. Hidden config is a debugging trap.
+- For the larger next project, treat user-level AGENTS.md as a "default I may need to override" rather than a fixed law. Add a project-scoped override note when the next project's needs differ — for example, when "lightweight first" gives way to "real auth, Postgres, and CI from day one."
+
+25.8 Quick Reference Card (Owner-friendly)
+
+If you want to change…                  | Edit this file
+----------------------------------------|--------------------------------------------------
+Which commands Claude can run silently  | <repo>/.claude/settings.local.json (this project)
+                                        | or C:\Users\USER\.claude\settings.json (everywhere)
+Claude's default model / effort         | C:\Users\USER\.claude\settings.json
+How Claude behaves in this project      | <repo>/CLAUDE.md
+Which projects Codex trusts             | C:\Users\USER\.codex\config.toml ([projects.*])
+Codex's model / sandbox / plugins       | C:\Users\USER\.codex\config.toml
+Codex's personal instructions (all projects) | C:\Users\USER\.codex\AGENTS.md
+How Codex behaves in this project       | <repo>/codex.md (and/or <repo>/AGENTS.md)
+What Claude remembers about this project| C:\Users\USER\.claude\projects\<slug>\memory\
+Saved plans for this or a future project| C:\Users\USER\.claude\plans\
+
+The single most important takeaway: agent behavior is a stack, not a single file. When something feels wrong ("why did Claude run that without asking?" / "why did Codex assume X?"), check the stack from most specific to most general until you find the layer that set the behavior.
+
+
+26. Codex Review Notes on Claude's Additions
+--------------------------------------------
+
+Codex review result:
+- No blocking issue. Claude's additions are useful and worth keeping.
+- The strongest additions are section 23 (direct execution lessons), section 24 (material folders as owner input channel), and section 25 (agent configuration stack).
+- These additions make the document more practical for the next project because they explain not only what we built, but how the working environment shaped the result.
+
+Important clarification:
+- Configuration paths in section 25 are machine-specific examples from this project. They are valuable as a map of how this setup worked, but the next project should not assume every teammate has the same paths, model settings, plugins, or trust rules.
+- For a higher-security project, permission allowlists should be reviewed like code. A local allowlist can silently expand what an agent may run. Shared allowlists should be narrow, intentional, and documented.
+
+What Claude added that Codex strongly agrees with:
+- Single-file apps are a coordination bottleneck. Modular architecture is not only cleaner code; it enables safe parallel agent work.
+- Material folders are a real specification channel. Spreadsheets, images, reference screenshots, and sample reports carry business truth that prose often loses.
+- Acceptance checks must be falsifiable.
+- "Done" must include code, tests, docs, task-board status, and handoff.
+- Data ownership should be explicit: create, read, update, delete, export.
+
+Extra Codex recommendation for the next project:
+- Add a short AGENT_CONFIG.md or an "Agent Stack" section inside AGENTS.md at project kickoff. It should explain which agent behavior comes from project files, which comes from user-level config, and which permissions are intentionally shared.
+- Add a MATERIALS_MANIFEST.md for large material folders. It should list which spreadsheet/image/report is canonical, when it was last refreshed, and whether it contains sensitive data.
+- Add a SECURITY_CLASSIFICATION.md or a table in SECURITY.md that labels data as public, internal, confidential, or restricted. This matters before agents touch customer data, financial data, supplier pricing, or employee information.
+- Add a "permission review" checklist to PR review for any batch that changes roles, exports, destructive actions, imports, or audit logs.
+
+Do not over-apply the POS lesson:
+- The POS needed a low-cost local workflow; the next project needs stronger structure.
+- Keep the business-first method, not the single-file/localStorage architecture.
+- Keep the two-agent protocol, but upgrade from "one implementation batch at a time" to "one implementation owner per module/boundary" once the new codebase has real module boundaries.
+
+
+27. Claude — Final Review Pass (gaps the rest of the document does not cover)
+-----------------------------------------------------------------------------
+
+This is a final pass added by Claude after reading the whole document end-to-end. The earlier sections cover business, architecture, data, security, testing, docs, agent protocol, agent config, material folders, and what to repeat / not repeat. This section adds the remaining gaps that came up in real execution and are not addressed elsewhere.
+
+27.1 Git and branch mechanics that actually mattered
+
+The protocol files describe branch-per-batch and PR-into-main, but several mechanical details are worth recording:
+
+- Commit-message prefix: every commit was prefixed with the batch letter, e.g. "[batch H] add void bill flow". This single rule made `git log --oneline` readable as a project history. Recommend keeping it for the next project, with the batch ID instead of just a letter.
+- Branch name format: `batch/<letter>-<short-slug>`. The short slug should be a verb phrase ("void-bill", "render-memo-correction-stock"), not a noun.
+- The alphabet ran out. The POS reached `[batch Z]` and then `[batch FINAL_REVIEW]`. For a larger project, use numeric IDs (`batch/042-void-bill`) from day one — alphabetical IDs imply an artificial cap.
+- `main` was the integration branch; the legacy `start` branch was retired mid-project. Decide the integration-branch name before the first batch and do not change it later — the migration created confusion in TASKS.md history.
+- PR title mirrored the batch entry: "Batch H: add void bill flow". This made PRs trivially mappable to TASKS.md entries during review.
+- Smoke test runs were re-recorded in PR descriptions, not just in chat. Future reviewers (human or agent) need the evidence to live in the durable artifact, not in a transient session.
+
+27.2 Cost, time, and context awareness
+
+The document never names a real constraint: agent sessions are not free, and they are not infinite.
+
+- Session context fills. Long sessions begin to lose detail from earlier in the conversation. Two practical responses: (a) commit and update TASKS.md frequently so progress survives a session restart, (b) end sessions cleanly with a written handoff inside TASKS.md or readme.md instead of relying on session memory.
+- Model choice has cost. Running Opus at high effort is the right default for risky implementation, but it is not the right default for read-only triage, log-grepping, or doc edits. For the next project, name a default-model policy: which model for planning, which for implementation, which for review, which for low-risk doc work.
+- Long forensic loops (the UTF-8 byte-level audit) are expensive. They were necessary, but a CI check that fails the build on non-UTF-8 or BOM would have prevented most of that pass. Move repeated forensic work into automation as soon as it happens twice.
+- Plan around session boundaries. A batch that fits inside one session is much safer than one that spans three sessions. If a batch is too big to fit, split it before starting, not midway.
+
+27.3 What code review actually caught vs. missed in this project
+
+Worth recording, because it tells the next project where to invest review effort:
+
+What review reliably caught:
+- Workflow holes (e.g., no way to delete a wrongly-saved bill before the void-bill batch).
+- Data-shape inconsistency across surfaces (cart vs. receipt vs. CSV).
+- Missing audit trail on destructive actions.
+- README drift after behavior changes.
+- "Items must remain" guards being applied to the wrong code path.
+
+What review was less reliable at catching:
+- Encoding regressions (UTF-8 / BOM / CRLF). These needed bytewise tooling, not eyeballs.
+- Silent localStorage migrations going wrong on long-running user data.
+- UI regressions outside the smoke-tested flows. Visual diffs and screenshot tests would help next time.
+- Cross-batch interaction bugs where two recently-merged batches together changed a third surface.
+
+Lesson: structured review is for workflow and data correctness. Encoding, visual regressions, and cross-batch interactions need automation. Plan both layers.
+
+27.4 The screenshot-first feedback loop
+
+Section 12 mentions screenshots in passing, but in practice this was one of the highest-bandwidth communication channels in the project.
+
+What worked:
+- The owner sent a screenshot of the actual UI with the issue circled or described in one line.
+- The agent could read it, locate the matching code region, and propose a fix without re-deriving context.
+- This was much faster than a written description like "the chip on the top right is misaligned when the cart is empty".
+
+How to make this more reliable for the next project:
+- Encourage screenshots over prose for any UI bug or design change.
+- Owner should annotate (red circle, arrow, short note) when the issue is not obvious from the image alone.
+- Agents should read screenshots before searching code: the image often names the screen and state directly.
+- For the next project's web stack, consider Playwright-based screenshot tests so regressions in known screens fail CI before the owner has to take a screenshot at all.
+
+27.5 Anti-patterns specific to AI-agent workflows
+
+These came up in this project. Naming them helps avoid them in the next:
+
+- Vague prompts produce vague work. "Clean up the cart code" produces drift; "in renderCart, replace the inline style on the total row with the existing .cart-total class without changing markup order" produces a clean diff.
+- Plausible-but-wrong details. Agents will confidently produce code that references a function name that does not exist, a column header that is not in the spreadsheet, or an import path that is wrong. Counter: ground the agent in real material (read the file, list the folder, run the parser) before asking for code.
+- Drive-by edits. An agent finishing a batch will sometimes "fix" a nearby unrelated thing. This expands review surface and risks regressions. Counter: keep "Do not change" enforced and treat unrelated discoveries as new TASKS.md entries.
+- Silent context loss across sessions. The agent that starts the next session does not know what the previous session knew. Counter: write the handoff into a durable file (TASKS.md notes, readme.md changes, a short PR description) before the session ends, not after.
+- Fake-completion: declaring "done" when tests pass but TASKS.md and readme.md are still stale. Counter: definition-of-done has four parts (code, tests, task-board, docs), not one.
+- Over-confidence on encoding, locale, and platform. Windows + PowerShell + Node + Bash + Git all have different default encodings and line-ending behaviors. The agent should treat this as a known hazard and not assume.
+
+27.6 Pre-flight checklist for the next project's Day 1
+
+A short, owner-readable list of what should exist before any code is written. Each line is a yes/no the owner can answer.
+
+Project shape:
+- [ ] One-page charter exists (problem, users, top 5 workflows, top 5 risks).
+- [ ] Owner profile and personal instructions are reviewed (~/.codex/AGENTS.md and equivalents) and a project-level override note is written if any preference does not apply.
+- [ ] Project repo is initialized; integration branch is named and will not change.
+- [ ] AGENTS.md, codex.md, CLAUDE.md, README.md, TASKS.md skeletons exist in the repo.
+
+Material:
+- [ ] /materials/ root folder exists with subfolders for catalog, inventory, workflows, designs, reports.
+- [ ] At least one canonical spreadsheet (real or sample) for the core entity.
+- [ ] At least one reference screenshot for the primary screen.
+- [ ] A note in /materials/ identifying which files are canonical vs. exploratory.
+
+Architecture:
+- [ ] Frontend, backend, database, auth model, and hosting are decided and recorded in DECISIONS.md.
+- [ ] Data model has at least the core entities, fields, statuses, and audit events listed in DATA_MODEL.md.
+- [ ] Roles and the matrix of "who can read / write / export" are listed in SECURITY.md.
+
+Agent protocol:
+- [ ] Branch naming, commit prefix, PR title format are written down.
+- [ ] One batch in flight per ownership boundary (not "per file" once modules exist).
+- [ ] A "definition of done" with four parts (code, tests, task-board, docs) is written into CLAUDE.md and codex.md.
+
+Automation:
+- [ ] CI runs on every PR; minimum: encoding check, lint, unit tests, smoke test on critical workflow.
+- [ ] A way to run the smoke test locally exists and is documented.
+- [ ] A backup or snapshot strategy for the database is written down before the first user touches the system.
+
+Trust and config:
+- [ ] User-level Codex trust is granted to the new project path only, not a parent path.
+- [ ] Any user-level Claude allowlist entries that no longer apply have been pruned.
+- [ ] Project-level permission allowlist is intentional and reviewed.
+
+If any line is "no" at the moment the first batch is claimed, that line is the first batch.
+
+27.7 What we would do differently if we restarted the POS today
+
+Brief, honest, no rewriting of history:
+
+- Use numeric batch IDs from the start.
+- Add a CI encoding check on day one.
+- Build the smoke test alongside the first batch, not at the end.
+- Keep one canonical localStorage version field and bump it on every shape change, instead of adding ad-hoc compatibility code.
+- Write a one-line product charter before the first feature, even when the product seems obvious.
+- Treat readme.md as a rolling product log from day one, not a document we later realized we needed.
+
+These six are not regrets — they are upgrades the next project should adopt without re-learning the same lessons.
+
+This concludes the final review pass.
+
+
+28. Codex Final Full Review Additions
+-------------------------------------
+
+Full review result:
+- No blocking issue. The file is strong enough to use as the starting playbook for the next project.
+- Claude's added sections materially improved the document.
+- The biggest remaining risk is not missing knowledge; it is that the next project team may read the file but fail to convert it into concrete project artifacts.
+
+What Codex would still add before calling the knowledge base "fully operational":
+
+- a project charter template
+- a risk register template
+- a role and permission matrix template
+- a data classification and retention template
+- an incident / rollback / backup runbook template
+- a first-week execution checklist
+
+Those templates are below.
+
+
+28.1 Project Charter Template
+
+Create this before the first implementation batch.
+
+Project name:
+
+Business objective:
+- What business outcome should improve?
+
+Why now:
+- What pain, opportunity, cost, delay, or risk makes this worth building now?
+
+Primary users:
+- Role:
+- What they do today:
+- What should become easier:
+
+Top 5 workflows:
+1.
+2.
+3.
+4.
+5.
+
+Top 5 risks:
+1.
+2.
+3.
+4.
+5.
+
+Data involved:
+- customer data:
+- financial data:
+- inventory / operational data:
+- supplier or pricing data:
+- employee or permission data:
+
+Must-have exports / reports:
+-
+
+Security requirements:
+-
+
+What success looks like:
+-
+
+What is out of scope for version 1:
+-
+
+First vertical slice:
+- login:
+- one workflow:
+- one database entity:
+- one audit event:
+- one export/report:
+- one smoke test:
+
+
+28.2 Risk Register Template
+
+Use this from day one. A big project without a risk register will hide problems until they become expensive.
+
+Risk ID:
+Risk title:
+Business area:
+Description:
+Impact if it happens:
+Likelihood: low / medium / high
+Severity: low / medium / high
+Owner:
+Mitigation:
+Early warning signal:
+Fallback / rollback:
+Status: open / watching / mitigated / accepted / closed
+
+Example risks for the next project:
+- Wrong permission lets staff export confidential customer data.
+- Import file creates duplicate inventory records.
+- Sales total does not match finance report.
+- Dashboard encourages the wrong business decision.
+- Agent changes a shared module without updating dependent tests.
+- Backup exists but restore has never been tested.
+
+
+28.3 Role and Permission Matrix Template
+
+For every entity and action, answer who can create, read, update, delete, approve, export, and audit.
+
+Roles:
+- owner
+- admin
+- manager
+- staff
+- finance
+- viewer
+- system
+
+Entity:
+
+Action matrix:
+
+Action | Owner | Admin | Manager | Staff | Finance | Viewer | System | Notes
+------ | ----- | ----- | ------- | ----- | ------- | ------ | ------ | -----
+Create |       |       |         |       |         |        |        |
+Read   |       |       |         |       |         |        |        |
+Update |       |       |         |       |         |        |        |
+Delete |       |       |         |       |         |        |        |
+Approve|       |       |         |       |         |        |        |
+Export |       |       |         |       |         |        |        |
+Audit  |       |       |         |       |         |        |        |
+
+Rules:
+- Server must enforce permissions. UI hiding is not enough.
+- Export permission is separate from read permission.
+- Delete should usually mean soft-delete plus audit, not physical removal.
+- Sensitive actions require reason, preview, confirm, and audit.
+- Permission changes themselves must be audited.
+
+
+28.4 Data Classification and Retention Template
+
+Use this before agents touch real customer, supplier, employee, or financial data.
+
+Data category:
+- public
+- internal
+- confidential
+- restricted
+
+Dataset / entity:
+
+Classification:
+
+Examples of fields:
+-
+
+Who can access:
+-
+
+Who can export:
+-
+
+Where stored:
+-
+
+Retention period:
+-
+
+Backup requirement:
+-
+
+Deletion / anonymization rule:
+-
+
+Allowed in repo materials:
+- yes / no / shape-only sample
+
+Allowed in agent prompts:
+- yes / no / redacted only
+
+Notes:
+-
+
+Default rule for the next project:
+- Real customer data, real financials, supplier pricing, employee information, and credentials do not belong in public repo files or casual chat.
+- Use sample data that preserves shape but removes sensitive values.
+
+
+28.5 Incident, Rollback, and Backup Runbook Template
+
+For a professional system, "we can fix it later" is not a plan. Write this early.
+
+Incident type:
+- bad deploy
+- bad import
+- permission leak
+- wrong financial report
+- data corruption
+- failed background job
+- unavailable system
+
+Detection:
+- How do we know it happened?
+
+Immediate owner:
+- Who responds first?
+
+Business impact:
+- Who is affected?
+- What work must pause?
+
+Containment:
+- What do we turn off, disable, or freeze?
+
+Rollback:
+- Which version can we safely roll back to?
+- Who approves rollback?
+
+Data restore:
+- Which backup?
+- Restore target: production / staging / local copy
+- Has restore been tested before?
+
+Communication:
+- Who must be told?
+- What do we say?
+
+Audit:
+- What logs must be preserved?
+
+After-action:
+- Root cause:
+- Fix:
+- Test added:
+- Documentation updated:
+- Process change:
+
+Minimum rule:
+- Backups are not real until restore has been tested.
+
+
+28.6 First-Week Execution Checklist
+
+Day 1 - Owner and Codex:
+- Project charter written.
+- Top workflows mapped.
+- Top risks listed.
+- Material folders created.
+- Initial data samples collected.
+
+Day 2 - Codex:
+- README.md skeleton.
+- TASKS.md skeleton.
+- AGENTS.md / codex.md / CLAUDE.md skeletons.
+- ARCHITECTURE.md skeleton.
+- DATA_MODEL.md skeleton.
+- SECURITY.md skeleton with role matrix.
+- DECISIONS.md started.
+
+Day 3 - Owner + Codex + Claude:
+- First vertical slice chosen.
+- Batch 001 written with acceptance checks.
+- Do-not-change boundaries written.
+- Test expectations written.
+
+Day 4 - Claude:
+- Claim Batch 001.
+- Implement only the vertical slice.
+- Add first smoke test.
+- Update docs.
+- Hand back for review.
+
+Day 5 - Codex + Owner:
+- Review against acceptance checks.
+- Confirm business workflow.
+- Decide next 2-3 batches.
+- Record any architecture decisions.
+
+End of week target:
+- One working vertical slice in staging.
+- Real auth started.
+- One entity persisted.
+- One audit event stored.
+- One export/report generated.
+- One smoke test passing.
+- Docs updated.
+
+
+28.7 Final Codex Recommendation
+
+For the next project, start by creating the documents and templates above, not by building screens.
+
+The right first milestone is not "nice UI." The right first milestone is:
+
+- one real user role
+- one real workflow
+- one real database record
+- one real permission check
+- one real audit log
+- one real export
+- one real smoke test
+- one reviewed handoff
+
+That gives the team a professional skeleton. After that, we can scale safely.

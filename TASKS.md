@@ -4,6 +4,8 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 
 > **Two-agent protocol RESUMED as of 2026-04-27 20:25** — Codex is back as planner/reviewer/workflow analyst and Claude is the default implementation executor for approved batches. Claim/release, branch-per-batch, and Codex review rules are active again unless the user explicitly assigns Codex implementation work.
 
+> **Protocol refresh, 2026-04-28:** after the final Codex readiness fixes, the two-agent protocol is active again. Codex owns planning/review/workflow alignment; Claude is the default implementation executor unless the user explicitly assigns Codex execution.
+
 ## Protocol (read before editing)
 
 0. **Integration branch is `main`.** All batch branches start from `main` and merge back into `main`. The legacy `start` branch is retired (its history is fully merged into `main` as of 2026-04-26).
