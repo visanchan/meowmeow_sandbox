@@ -7,6 +7,10 @@ import type { Product, PaymentMethod } from "@/lib/pos/types";
 import { CartLine } from "./CartLine";
 import { PaymentPicker } from "./PaymentPicker";
 import { ReviewModal } from "./ReviewModal";
+import { PromptPayDisplay } from "./PromptPayDisplay";
+
+// Demo PromptPay proxy. Real workspace value comes from workspace settings (DD-100ish).
+const DEMO_PROMPTPAY_PHONE = "0812345678";
 
 const METHODS: PaymentMethod[] = [
   "cash",
@@ -121,6 +125,13 @@ export function CartPanel({
             dispatch({ type: "SET_PAYMENT_METHOD", method: m })
           }
         />
+
+        {cart.paymentMethod === "promptpay" && total > 0 && (
+          <PromptPayDisplay
+            proxy={{ kind: "phone", value: DEMO_PROMPTPAY_PHONE }}
+            amountSatang={total}
+          />
+        )}
 
         <button
           type="button"
