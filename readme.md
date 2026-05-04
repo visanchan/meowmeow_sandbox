@@ -181,7 +181,8 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - Staff should use the `+` and `-` buttons for stock edits, with number inputs kept as backup.
 - Stock setup changes are staged across many products and saved with one `Confirm Stock Setup` review action.
 - In Stock & Allocation Setup, `Added Today` is a temporary `Top up now` input. Enter only the quantity being added in this moment; after confirm, the stored added-stock total increases and the input resets to `0`.
-- Warehouse stock is calculated as global stock minus online stock, event starting stock, added-today stock, and committed Send Later quantity.
+- Warehouse stock is derived from a cumulative-allocated invariant: `warehouse = global − online − cumulativeAllocated − committed`, where `cumulativeAllocated = day 1 starting stock + sum of every day's added-today stock`. This means warehouse decreases only when stock physically moves from the warehouse to the booth (initial allocation or a top-up). Day rollover, sales, samples, voids, and corrections do not move stock between warehouse and booth, so they must not change warehouse — the cumulative formula guarantees that. The earlier per-day formula (`global − online − dayN.startingStock − dayN.addedToday − committed`) drifted on day 2+ because it treated carry-forward as a fresh allocation; the cumulative formula is invariant to carry-forward.
+- Sample stock is reserved at the booth (taken from event booth inventory), so it reduces remaining event stock and sellable quantity but does not decrease warehouse stock — the units are still attributed to the booth allocation.
 - Sample stock is taken from event booth inventory, so it reduces remaining event stock and sellable quantity.
 - Sample stock is tracked per event day, so each day can record its own sample quantity without polluting the other days.
 - On first load after upgrade, the prior global sample quantity is migrated into Day 1's sample stock; Days 2-4 start at zero.
@@ -429,6 +430,16 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - Do not clear data during live selling unless a manager confirms the current device is only holding test data.
 - `🚨 Reset Data` is a destructive developer/admin action. It does not log who reset, so it should be used before live selling, not during.
 
+## Inventory Reconciliation
+
+- Developer Tools includes a `🧮 Reconcile Inventory` button (next to bulk CSV export) that runs a per-SKU integrity check on the inventory ledgers.
+- The reconciler verifies, per SKU:
+  - `cumulativeAllocated == booth remaining + sold + samples` (allocated balance equation; holds across day rollover by construction)
+  - `global − online − cumulativeAllocated − committed ≥ 0` (warehouse non-negative)
+- A clean run shows `✅ Inventory reconciled · All N SKUs reconcile cleanly`. A run with drift lists the offending SKUs with the delta, the cumulative count, the expected count (booth + sold + samples), and a hint that the most likely cause is a manual correction touching `startingStock` for a non-day-1 day; the suggested fix is to record a top-up via `Inventory Correction → addedStock`.
+- The button is gated by the existing Developer Tools passcode (`345`); no separate passcode.
+- Inventory Correction now also runs `realignInventoryCarryForward` after corrections to `startingStock`, `addedStock`, or `sampleQty`, so day 2/3/4 starting stocks stay consistent with a corrected earlier day.
+
 ## Bulk Day-CSV Export
 
 - Developer Tools includes a `📤 Export All Day CSVs` button beside the Reset and Clear Emails actions.
@@ -439,6 +450,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 
 ## Recently Changed
 
+- **May 2026 (Batch CC — Inventory Accounting Overhaul)** — Fixes the warehouse-drift bug observed at the live event. The warehouse formula is now `global − online − cumulativeAllocated − committed`, where `cumulativeAllocated = day 1 starting stock + Σ every day's added-today stock`. The previous per-day formula (`global − online − dayN.startingStock − dayN.addedToday − committed`) drifted on day 2+ because it conflated carry-forward with fresh allocation; in a typical event-day-rollover scenario it could spuriously change warehouse by tens of units after a correction or void. The new formula is invariant to carry-forward. Also: (a) `confirmInventoryCorrection` now runs `realignInventoryCarryForward` after `startingStock`/`addedStock`/`sampleQty` corrections so downstream day starting stocks stay consistent; (b) Developer Tools gains a `🧮 Reconcile Inventory` button that asserts `cumulativeAllocated == booth remaining + sold + samples` per SKU and surfaces any drift; (c) the smoke test now includes a scripted day-rollover scenario that reproduces the original drift and asserts the fix, plus a deliberate-corruption check that the reconciler detects and reports the gap. No localStorage shape changes; the legacy `gi.eventAllocated` field stays for backwards-compat but is no longer read.
 - **May 2026 (Batch BB — Dashboard Historical Day View)** — Internal Dashboard gains a Day View picker tab strip with live/closed status indicators. Picking a non-current day swaps every today-labeled widget (Today header, Today By Hour, Payment split, Receipts/Items/Avg Bill tiles, Low Stock Alerts) to that day's snapshot, while cumulative widgets (Event total, 4-Day Pace timeline, Top Sellers · Event) stay event-wide. Default = current operating day, so live behavior is unchanged on first open. Internal change: dashboard "today" filtering is now operating-day-based (`sale.operatingDay`) rather than calendar-date-based, fixing the edge case where a sale saved at 23:59 on the operator's day was attributed to the calendar-next-day. The picker selection is in-memory only and resets to live on page reload. Smoke test extended.
 - **May 2026 (Batch AA — Bulk Day-CSV Export)** — Developer Tools gains an `📤 Export All Day CSVs` button that re-emits one sales CSV per event day with saved sales (skipping days with no sales). Uses the existing `meowseum-{dayId}-sales.csv` shape and the same `daySalesToCsv()` source as the per-day close export, so corrections made to past days after their original close-day export are picked up at end-of-event reconciliation. Smoke test extended.
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.

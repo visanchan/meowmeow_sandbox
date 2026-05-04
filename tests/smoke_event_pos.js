@@ -2038,6 +2038,201 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch BB day picker flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch BB day picker flow", browserDialogs);
 
+  // Batch CC: warehouse formula must NOT drift across day rollover, and the
+  // reconciliation report must flag intentional drift. The headline bug pre-CC
+  // was: warehouse = global - online - dayN.startingStock - dayN.addedStock -
+  // committed jumped after carry-forward because dayN.startingStock = day1
+  // remaining, not allocation. After CC: warehouse derives from
+  // cumulativeAllocatedQty = day1.startingStock + sum(addedStock).
+  const driftFlow = await page.evaluate(() => {
+    // Save current state so we can restore after this destructive test.
+    const stateBackup = {
+      sales: JSON.parse(JSON.stringify(state.sales)),
+      voidedSales: JSON.parse(JSON.stringify(state.voidedSales)),
+      preorders: JSON.parse(JSON.stringify(state.preorders)),
+      inventory: JSON.parse(JSON.stringify(state.inventory)),
+      globalInventory: JSON.parse(JSON.stringify(state.globalInventory)),
+      dashboardViewDay: state.dashboardViewDay
+    };
+
+    // Reset to a clean known state: pick a real SKU; assert global/online/start.
+    const testSku = PRODUCTS[0].sku;
+    state.sales = [];
+    state.voidedSales = [];
+    state.preorders = [];
+    invalidateSalesDerivedData();
+
+    // Hand-build inventory.days with a clean numeric scenario.
+    EVENT_DAYS.forEach((d, i) => {
+      const r = state.inventory.days[d.id];
+      r.startingStock = buildSkuMap(() => 0);
+      r.addedStock = buildSkuMap(() => 0);
+      r.sampleQty = buildSkuMap(() => 0);
+      r.eventStartConfirmed = buildSkuMap(() => false);
+      r.addLog = [];
+      r.closed = false;
+      r.closedAt = "";
+      r.exportedAt = "";
+    });
+    state.inventory.currentDay = "day1";
+    state.inventory.viewDay = "day1";
+    state.dashboardViewDay = null;
+    PRODUCTS.forEach(p => {
+      state.globalInventory.global[p.sku] = 0;
+      state.globalInventory.onlineAllocated[p.sku] = 0;
+      state.globalInventory.eventAllocated[p.sku] = 0;
+    });
+    // Apply the canonical scenario only to testSku; leave others at 0.
+    state.globalInventory.global[testSku] = 200;
+    state.globalInventory.onlineAllocated[testSku] = 50;
+    state.inventory.days.day1.startingStock[testSku] = 100;
+    state.inventory.days.day1.eventStartConfirmed[testSku] = true;
+
+    const warehouseDay1Initial = stockSetupSnapshot(testSku, "day1").warehouse;
+    const cumulativeDay1Initial = stockSetupSnapshot(testSku, "day1").cumulativeAllocated;
+
+    // Top-up 10 on day 1 via the same code path as Stock & Allocation Setup.
+    state.inventory.days.day1.addedStock[testSku] = 10;
+    const warehouseDay1AfterTopUp = stockSetupSnapshot(testSku, "day1").warehouse;
+
+    // Inject a synthetic sale of 30 on day 1.
+    const fakeSale = {
+      id: "smoke-cc-1",
+      billId: "smoke-cc-1",
+      datetime: new Date().toISOString(),
+      timestamp: Date.now(),
+      operatingDay: "day1",
+      operator: "Zamm",
+      payment: "cash",
+      paymentStatus: "confirmed",
+      total: 100,
+      subtotal: 100,
+      discount: 0,
+      items: [{
+        sku: testSku,
+        qty: 30,
+        basePrice: 100,
+        lineSubtotal: 100,
+        finalUnitPrice: 100,
+        lineTotal: 100,
+        discountPerItem: 0,
+        discountAmount: 0,
+        category: "test",
+        isFreeGift: false,
+        isPreorder: false
+      }],
+      tags: []
+    };
+    state.sales.push(fakeSale);
+    invalidateSalesDerivedData();
+    const warehouseDay1AfterSale = stockSetupSnapshot(testSku, "day1").warehouse;
+
+    // Close day 1 → advance to day 2; warehouse must remain stable.
+    state.inventory.days.day1.closed = true;
+    state.inventory.days.day1.closedAt = new Date().toISOString();
+    state.inventory.days.day2.startingStock = getDayRemainingMap("day1");
+    state.inventory.days.day2.addedStock = buildSkuMap(() => 0);
+    state.inventory.days.day2.eventStartConfirmed = buildSkuMap(() => true);
+    realignInventoryCarryForward("day1", { persist: false });
+    state.inventory.currentDay = "day2";
+    state.inventory.viewDay = "day2";
+    invalidateSalesDerivedData();
+    const warehouseDay2 = stockSetupSnapshot(testSku, "day2").warehouse;
+    const day2StartingStock = state.inventory.days.day2.startingStock[testSku];
+
+    // Top-up 5 on day 2 → warehouse should drop by exactly 5.
+    state.inventory.days.day2.addedStock[testSku] = 5;
+    const warehouseDay2AfterTopUp = stockSetupSnapshot(testSku, "day2").warehouse;
+
+    // Reconcile must pass after this fully-correct sequence.
+    const reportClean = reconcileInventoryReport().filter(r => r.sku === testSku);
+
+    // Now corrupt day2.startingStock directly (simulating the legacy buggy path)
+    // — reconcile must DETECT the drift.
+    const beforeCorruption = state.inventory.days.day2.startingStock[testSku];
+    state.inventory.days.day2.startingStock[testSku] = beforeCorruption + 7;
+    const reportCorrupted = reconcileInventoryReport().filter(r => r.sku === testSku);
+    state.inventory.days.day2.startingStock[testSku] = beforeCorruption;
+
+    // Restore state from backup so subsequent smoke steps see normal data.
+    state.sales = stateBackup.sales;
+    state.voidedSales = stateBackup.voidedSales;
+    state.preorders = stateBackup.preorders;
+    state.inventory = stateBackup.inventory;
+    state.globalInventory = stateBackup.globalInventory;
+    state.dashboardViewDay = stateBackup.dashboardViewDay;
+    invalidateSalesDerivedData();
+
+    return {
+      testSku,
+      warehouseDay1Initial,
+      cumulativeDay1Initial,
+      warehouseDay1AfterTopUp,
+      warehouseDay1AfterSale,
+      warehouseDay2,
+      warehouseDay2AfterTopUp,
+      day2StartingStock,
+      reportClean,
+      reportCorrupted
+    };
+  });
+  assert(
+    driftFlow.warehouseDay1Initial === 50 &&
+      driftFlow.cumulativeDay1Initial === 100 &&
+      driftFlow.warehouseDay1AfterTopUp === 40 &&
+      driftFlow.warehouseDay1AfterSale === 40 &&
+      // Day 2 warehouse must EQUAL the day 1 post-top-up value: no drift.
+      driftFlow.warehouseDay2 === 40 &&
+      driftFlow.day2StartingStock === 80 &&
+      driftFlow.warehouseDay2AfterTopUp === 35,
+    "Batch CC: warehouse formula must NOT drift across day rollover, top-up, or sale",
+    driftFlow
+  );
+  assert(
+    driftFlow.reportClean.length === 1 &&
+      driftFlow.reportClean[0].isOk === true &&
+      driftFlow.reportClean[0].allocatedDelta === 0,
+    "Batch CC: reconcile must report isOk=true after a fully-correct sequence",
+    driftFlow.reportClean
+  );
+  assert(
+    driftFlow.reportCorrupted.length === 1 &&
+      driftFlow.reportCorrupted[0].isOk === false &&
+      driftFlow.reportCorrupted[0].allocatedDelta === -7,
+    "Batch CC: reconcile must DETECT a 7-unit allocated drift after manual startingStock corruption",
+    driftFlow.reportCorrupted
+  );
+
+  // Reconcile UI button must exist and runInventoryReconcile must run without
+  // mutating ledgers.
+  const reconcileButtonFlow = await page.evaluate(() => {
+    const buttonExists = !!document.getElementById("reconcileInventoryBtn");
+    const fnExists = typeof runInventoryReconcile === "function";
+    const beforeReport = reconcileInventoryReport();
+    runInventoryReconcile();
+    const afterReport = reconcileInventoryReport();
+    const reportSnapshotsMatch =
+      JSON.stringify(beforeReport) === JSON.stringify(afterReport);
+    return { buttonExists, fnExists, reportSnapshotsMatch };
+  });
+  assert(
+    reconcileButtonFlow.buttonExists &&
+      reconcileButtonFlow.fnExists &&
+      reconcileButtonFlow.reportSnapshotsMatch,
+    "Batch CC: Reconcile Inventory button + function must exist and runInventoryReconcile must NOT mutate the ledgers",
+    reconcileButtonFlow
+  );
+
+  // Drain any in-app notice opened by runInventoryReconcile so subsequent tests
+  // start with a clean overlay surface.
+  await page.evaluate(() => {
+    if (typeof closeAppNotice === "function") closeAppNotice();
+    document.querySelectorAll(".dialog-overlay.open, #appNoticeOverlay.open").forEach(el => el.classList.remove("open"));
+  });
+
+  assert(pageErrors.length === 0, "No page errors after Batch CC drift + reconcile flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch CC drift + reconcile flow", browserDialogs);
+
   // Batch AA: bulk export of all day sale CSVs. The button lives in Developer
   // Tools (passcode-gated already). Verify the function exists, the button is
   // present, and the function correctly counts eligible vs skipped days.
