@@ -1,0 +1,56 @@
+import { cn } from "@/lib/cn";
+
+export function Skeleton({
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "animate-pulse rounded-2xl border border-line/60 bg-soft/60",
+        className,
+      )}
+      {...rest}
+    />
+  );
+}
+
+export function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="panel flex flex-col items-center gap-3 px-6 py-10 text-center">
+      <p className="font-display text-xl text-accent-strong">{title}</p>
+      {body && <p className="max-w-sm text-sm text-muted">{body}</p>}
+      {action}
+    </div>
+  );
+}
+
+export function ErrorState({
+  title = "Something went wrong",
+  body,
+  action,
+}: {
+  title?: string;
+  body?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      role="alert"
+      className="rounded-2xl border border-[var(--color-danger-soft-fg)] bg-[var(--color-danger-soft-bg)] px-5 py-4 text-[var(--color-danger-soft-fg)]"
+    >
+      <p className="text-sm font-extrabold">{title}</p>
+      {body && <p className="mt-1 text-sm">{body}</p>}
+      {action && <div className="mt-3">{action}</div>}
+    </div>
+  );
+}
