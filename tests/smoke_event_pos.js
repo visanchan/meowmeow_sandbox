@@ -1980,6 +1980,8 @@ async function main() {
     const initialPayTitle = document.getElementById("dashboardPaySplitTitle")?.textContent || "";
 
     // Click a different day.
+    const initialTopSellersTitle = document.getElementById("dashboardTopSellersTitle")?.textContent || "";
+
     setDashboardViewDay(otherDay);
     const switchedMetrics = dashboardMetrics();
     const switchedActive = Array.from(document.querySelectorAll("[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
@@ -1987,6 +1989,7 @@ async function main() {
     const switchedTodayTitle = document.getElementById("dashboardTodayTitle")?.textContent || "";
     const switchedHourTitle = document.getElementById("dashboardHourCardTitle")?.textContent || "";
     const switchedPayTitle = document.getElementById("dashboardPaySplitTitle")?.textContent || "";
+    const switchedTopSellersTitle = document.getElementById("dashboardTopSellersTitle")?.textContent || "";
 
     // Click back to current operating day.
     setDashboardViewDay(operatingDay);
@@ -2004,12 +2007,14 @@ async function main() {
       initialTodayTitle,
       initialHourTitle,
       initialPayTitle,
+      initialTopSellersTitle,
       switchedMetricsViewDay: switchedMetrics.viewDayId,
       switchedActive,
       switchedHint,
       switchedTodayTitle,
       switchedHourTitle,
       switchedPayTitle,
+      switchedTopSellersTitle,
       restoredActive,
     };
   });
@@ -2021,6 +2026,7 @@ async function main() {
       dayPickerFlow.initialTodayTitle.startsWith("Today · ") &&
       dayPickerFlow.initialHourTitle === "Today By Hour" &&
       /^Payment split · today$/i.test(dayPickerFlow.initialPayTitle) &&
+      dayPickerFlow.initialTopSellersTitle === "Top Sellers · Event" &&
       /Showing live operating day/.test(dayPickerFlow.initialHint) &&
       dayPickerFlow.switchedMetricsViewDay === dayPickerFlow.otherDay &&
       dayPickerFlow.switchedActive === dayPickerFlow.otherDay &&
@@ -2029,9 +2035,11 @@ async function main() {
       dayPickerFlow.switchedHourTitle !== "Today By Hour" &&
       /^Payment split · /.test(dayPickerFlow.switchedPayTitle) &&
       dayPickerFlow.switchedPayTitle !== dayPickerFlow.initialPayTitle &&
+      /^Top Sellers · Day /.test(dayPickerFlow.switchedTopSellersTitle) &&
+      dayPickerFlow.switchedTopSellersTitle !== "Top Sellers · Event" &&
       /Viewing/.test(dayPickerFlow.switchedHint) &&
       dayPickerFlow.restoredActive === dayPickerFlow.operatingDay,
-    "Batch BB: dashboard day picker must default to current operating day, switch viewDayId on click, swap titles/hint, and restore on click-back",
+    "Batch BB: dashboard day picker must default to current operating day, switch viewDayId on click, swap titles/hint (incl. Top Sellers), and restore on click-back",
     dayPickerFlow
   );
 
@@ -2112,6 +2120,42 @@ async function main() {
 
     return { day2, day1 };
   });
+  // Iter 8: hour-by-hour ghost bar overlay on Today By Hour. When viewing day
+  // 2 with day 1 sales present, the chart must render ghost-bar elements
+  // referencing prior-day's same-hour totals; on day 1 view, no ghost bars.
+  const ghostBarsFlow = await page.evaluate(() => {
+    const m = dashboardMetrics();
+    renderDashboard();
+    const ghostBars = document.querySelectorAll("#dashboardHourChart .v3-hour-ghost-bar");
+    const peakNote = document.getElementById("dashboardHourPeakNote")?.textContent || "";
+    const totalGhostBars = ghostBars.length;
+    const anyGhostHasHeight = Array.from(ghostBars).some(el => parseFloat(el.style.height) > 0);
+    const buckets = m.priorDayByHour ? m.priorDayByHour.buckets : null;
+    const priorBucketHasTotal = buckets ? buckets.some(b => Number(b.total) > 0) : false;
+    return {
+      viewDay: m.viewDayId,
+      priorDayLabel: m.priorDayLabel,
+      hasPriorByHour: !!m.priorDayByHour,
+      priorBucketCount: buckets ? buckets.length : 0,
+      priorBucketHasTotal,
+      totalGhostBars,
+      anyGhostHasHeight,
+      peakNote
+    };
+  });
+  // Either we are viewing day 1 (no prior, no ghost bars) or day 2+ with
+  // prior data. In the day 2+ case, ghost bars must be present and at least
+  // one must have non-zero height (because the synthetic day-1 sales we
+  // created earlier in compareFlow planted day-1 data).
+  assert(
+    (ghostBarsFlow.viewDay === "day1" && ghostBarsFlow.hasPriorByHour === false && ghostBarsFlow.totalGhostBars === 0) ||
+      (ghostBarsFlow.hasPriorByHour === true &&
+        ghostBarsFlow.priorBucketCount > 0 &&
+        (ghostBarsFlow.priorBucketHasTotal === false || ghostBarsFlow.totalGhostBars > 0)),
+    "Iter 8: hour ghost bars must render when prior-day data exists, peak note must mention 'ghost = Day N-1', and day 1 view must omit ghost bars",
+    ghostBarsFlow
+  );
+
   // Day 2 view: prior day = Day 1, today=150 vs prior=300 → direction down,
   // diff -150, pct -50.
   assert(
@@ -2609,7 +2653,7 @@ async function main() {
       counts,
       voidEntry,
       voidAppended: afterCount === beforeCount + 1,
-      buttonExists: !!document.getElementById("exportMovementsCsvBtn"),
+      buttonExists: !!document.getElementById("movementsOpenBtn"),
       exported,
       downloadCount,
       downloadName,
@@ -2637,6 +2681,81 @@ async function main() {
       typeof movementsFlow.sampleMovement.type === "string",
     "Iter 5: movement audit log must contain hook entries from sales/correction/reverse, the VOID helper must produce a -qty entry referencing the bill, and the CSV must emit a date-stamped download",
     movementsFlow
+  );
+
+  // Iter 7: movement log in-app viewer overlay must render rows from
+  // state.movements, support type + SKU filters, and have a working close.
+  const movementsViewerFlow = await page.evaluate(() => {
+    const overlay = document.getElementById("movementsOverlay");
+    const list = document.getElementById("movementsList");
+    const typeFilter = document.getElementById("movementsTypeFilter");
+    const skuFilter = document.getElementById("movementsSkuFilter");
+    const summary = document.getElementById("movementsSummary");
+    const exportBtn = document.getElementById("movementsExportInOverlayBtn");
+    const closeBtn = document.getElementById("movementsCloseBtn");
+    if (!overlay || !list) return { exists: false };
+
+    openMovementsOverlay();
+    const opened = overlay.classList.contains("open");
+    const initialRowCount = list.querySelectorAll(".movements-row").length;
+    const initialSummary = summary?.textContent || "";
+    const typeOptionsAfterOpen = Array.from(typeFilter?.options || []).map(o => o.value);
+
+    // Filter to a type that exists.
+    const sampleType = state.movements.length ? state.movements[0].type : "";
+    typeFilter.value = sampleType;
+    renderMovementsList();
+    const filteredRowCount = list.querySelectorAll(".movements-row").length;
+    const summaryFiltered = summary?.textContent || "";
+
+    // Apply SKU filter on top.
+    skuFilter.value = state.movements.length ? state.movements[0].sku : "";
+    renderMovementsList();
+    const skuFilteredRowCount = list.querySelectorAll(".movements-row").length;
+
+    // Reset filters and close.
+    typeFilter.value = "";
+    skuFilter.value = "";
+    renderMovementsList();
+    const resetRowCount = list.querySelectorAll(".movements-row").length;
+    closeMovementsOverlay();
+    const closed = !overlay.classList.contains("open");
+
+    return {
+      exists: true,
+      opened,
+      closed,
+      initialRowCount,
+      initialSummary,
+      typeOptionsAfterOpen,
+      sampleType,
+      filteredRowCount,
+      summaryFiltered,
+      skuFilteredRowCount,
+      resetRowCount,
+      hasExportBtn: !!exportBtn,
+      hasCloseBtn: !!closeBtn,
+      totalMovements: state.movements.length
+    };
+  });
+  assert(
+    movementsViewerFlow.exists &&
+      movementsViewerFlow.opened === true &&
+      movementsViewerFlow.closed === true &&
+      movementsViewerFlow.initialRowCount > 0 &&
+      movementsViewerFlow.initialRowCount === Math.min(250, movementsViewerFlow.totalMovements) &&
+      /Showing .* of .* movement/.test(movementsViewerFlow.initialSummary) &&
+      movementsViewerFlow.typeOptionsAfterOpen.includes("") &&
+      movementsViewerFlow.typeOptionsAfterOpen.length > 1 &&
+      movementsViewerFlow.filteredRowCount > 0 &&
+      movementsViewerFlow.filteredRowCount <= movementsViewerFlow.initialRowCount &&
+      /Filter active/.test(movementsViewerFlow.summaryFiltered) &&
+      movementsViewerFlow.skuFilteredRowCount <= movementsViewerFlow.filteredRowCount &&
+      movementsViewerFlow.resetRowCount === movementsViewerFlow.initialRowCount &&
+      movementsViewerFlow.hasExportBtn &&
+      movementsViewerFlow.hasCloseBtn,
+    "Iter 7: movement log overlay must open, render rows, filter by type + SKU, reset filters, and close cleanly",
+    movementsViewerFlow
   );
 
   // Reset Data must wipe the movements log alongside sales / voided sales.
