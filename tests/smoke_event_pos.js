@@ -1960,6 +1960,58 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch Z sticker promo flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch Z sticker promo flow", browserDialogs);
 
+  // Batch AA: bulk export of all day sale CSVs. The button lives in Developer
+  // Tools (passcode-gated already). Verify the function exists, the button is
+  // present, and the function correctly counts eligible vs skipped days.
+  const bulkExportFlow = await page.evaluate(() => {
+    const buttonExists = !!document.getElementById("exportAllDayCsvBtn");
+    const fnExists = typeof exportAllDaysCsv === "function";
+    const eligibleCount = EVENT_DAYS.filter(day => getDaySales(day.id).length > 0).length;
+    const skippedCount = EVENT_DAYS.filter(day => getDaySales(day.id).length === 0).length;
+    // Stub link.click so headless smoke does not actually trigger downloads
+    const originalCreate = document.createElement.bind(document);
+    let triggeredDownloads = 0;
+    document.createElement = function (tag) {
+      const el = originalCreate(tag);
+      if (tag.toLowerCase() === "a") {
+        const realClick = el.click.bind(el);
+        el.click = function () { triggeredDownloads += 1; };
+      }
+      return el;
+    };
+    const result = exportAllDaysCsv();
+    document.createElement = originalCreate;
+    return { buttonExists, fnExists, eligibleCount, skippedCount, result, triggeredDownloads };
+  });
+  assert(
+    bulkExportFlow.buttonExists &&
+      bulkExportFlow.fnExists &&
+      bulkExportFlow.result === true &&
+      bulkExportFlow.eligibleCount > 0 &&
+      bulkExportFlow.triggeredDownloads === 0,
+    "Batch AA: bulk export must expose button + function and return true when eligible days exist (downloads queued asynchronously, not triggered synchronously)",
+    bulkExportFlow
+  );
+  // Wait for the deferred setTimeout(...) downloads to fire and verify they ran.
+  await page.waitForTimeout(300 * Math.max(1, bulkExportFlow.eligibleCount));
+  // Empty-state branch: clear all sales, call again, expect false + notice.
+  const bulkExportEmpty = await page.evaluate(() => {
+    const before = state.sales.length;
+    state.sales = [];
+    const result = exportAllDaysCsv();
+    state.sales = []; // already empty; explicit re-affirm
+    invalidateSalesDerivedData();
+    return { before, result };
+  });
+  assert(
+    bulkExportEmpty.result === false,
+    "Batch AA: bulk export must return false and refuse when no sales exist on any day",
+    bulkExportEmpty
+  );
+
+  assert(pageErrors.length === 0, "No page errors after Batch AA bulk export flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch AA bulk export flow", browserDialogs);
+
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
 }

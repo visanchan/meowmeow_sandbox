@@ -425,8 +425,17 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - Do not clear data during live selling unless a manager confirms the current device is only holding test data.
 - `🚨 Reset Data` is a destructive developer/admin action. It does not log who reset, so it should be used before live selling, not during.
 
+## Bulk Day-CSV Export
+
+- Developer Tools includes a `📤 Export All Day CSVs` button beside the Reset and Clear Emails actions.
+- The button re-emits one sales CSV per event day from current saved data, using the same shape and filename pattern as the day-close export (`meowseum-{dayId}-sales.csv`).
+- Days with no saved sales are skipped; the post-export notice lists which days were skipped so staff can confirm coverage.
+- Use this at the end of the event for reconciliation: if a past day was corrected after its original day-close export, this button regenerates that day's CSV with the corrected totals, so the saved files match the live Correction Center state.
+- The button is gated by the existing Developer Tools passcode (`345`); no separate passcode.
+
 ## Recently Changed
 
+- **May 2026 (Batch AA — Bulk Day-CSV Export)** — Developer Tools gains an `📤 Export All Day CSVs` button that re-emits one sales CSV per event day with saved sales (skipping days with no sales). Uses the existing `meowseum-{dayId}-sales.csv` shape and the same `daySalesToCsv()` source as the per-day close export, so corrections made to past days after their original close-day export are picked up at end-of-event reconciliation. Smoke test extended.
 - **Apr 2026** — global inventory, send later, stock reversal, queue rename, nav reorg.
 - **Apr 2026 (README restructure)** — readme.md reorganized into a navigable sectioned guide with table of contents; no behavior change.
 - **Apr 2026 (Batch A — Operator Gate Trio)** — sticky operator chip row in the cart panel with amber banner when no operator is selected; selected operator persists across sales and reloads via `localStorage`; `addToCart` and `Send Later` quick-add are gated on operator presence; stock validation runs at add-time and surfaces a non-blocking in-cart toast (also a polite `aria-live` announce); the `Save & New Sale` button switches to a red `Confirm payment first` blocked state while card/transfer payments are unconfirmed.
