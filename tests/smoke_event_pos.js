@@ -1960,6 +1960,84 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch Z sticker promo flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch Z sticker promo flow", browserDialogs);
 
+  // Batch BB: dashboard historical day view. The picker must default to the
+  // current operating day, let the manager click any day, drive
+  // dashboardMetrics.viewDayId, and update the today/hour/payment titles.
+  const dayPickerFlow = await page.evaluate(() => {
+    const initialMetrics = dashboardMetrics();
+    const operatingDay = currentDayId();
+    const allDays = EVENT_DAYS.map(d => d.id);
+    const otherDay = allDays.find(id => id !== operatingDay) || allDays[0];
+
+    // Force a render so the picker is populated with current state.
+    renderDashboard();
+    const pickerButtons = Array.from(document.querySelectorAll("[data-dashboard-day]"));
+    const buttonDayIds = pickerButtons.map(btn => btn.dataset.dashboardDay);
+    const initialActive = pickerButtons.find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
+    const initialHint = document.getElementById("dashboardDayPickerHint")?.textContent || "";
+    const initialTodayTitle = document.getElementById("dashboardTodayTitle")?.textContent || "";
+    const initialHourTitle = document.getElementById("dashboardHourCardTitle")?.textContent || "";
+    const initialPayTitle = document.getElementById("dashboardPaySplitTitle")?.textContent || "";
+
+    // Click a different day.
+    setDashboardViewDay(otherDay);
+    const switchedMetrics = dashboardMetrics();
+    const switchedActive = Array.from(document.querySelectorAll("[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
+    const switchedHint = document.getElementById("dashboardDayPickerHint")?.textContent || "";
+    const switchedTodayTitle = document.getElementById("dashboardTodayTitle")?.textContent || "";
+    const switchedHourTitle = document.getElementById("dashboardHourCardTitle")?.textContent || "";
+    const switchedPayTitle = document.getElementById("dashboardPaySplitTitle")?.textContent || "";
+
+    // Click back to current operating day.
+    setDashboardViewDay(operatingDay);
+    const restoredActive = Array.from(document.querySelectorAll("[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
+
+    return {
+      initialMetricsViewDay: initialMetrics.viewDayId,
+      operatingDay,
+      otherDay,
+      eventDaysLength: EVENT_DAYS.length,
+      buttonCount: pickerButtons.length,
+      buttonDayIds,
+      initialActive,
+      initialHint,
+      initialTodayTitle,
+      initialHourTitle,
+      initialPayTitle,
+      switchedMetricsViewDay: switchedMetrics.viewDayId,
+      switchedActive,
+      switchedHint,
+      switchedTodayTitle,
+      switchedHourTitle,
+      switchedPayTitle,
+      restoredActive,
+    };
+  });
+  assert(
+    dayPickerFlow.buttonCount === dayPickerFlow.eventDaysLength &&
+      dayPickerFlow.buttonDayIds.length === dayPickerFlow.buttonCount &&
+      dayPickerFlow.initialMetricsViewDay === dayPickerFlow.operatingDay &&
+      dayPickerFlow.initialActive === dayPickerFlow.operatingDay &&
+      dayPickerFlow.initialTodayTitle.startsWith("Today · ") &&
+      dayPickerFlow.initialHourTitle === "Today By Hour" &&
+      /^Payment split · today$/i.test(dayPickerFlow.initialPayTitle) &&
+      /Showing live operating day/.test(dayPickerFlow.initialHint) &&
+      dayPickerFlow.switchedMetricsViewDay === dayPickerFlow.otherDay &&
+      dayPickerFlow.switchedActive === dayPickerFlow.otherDay &&
+      dayPickerFlow.switchedTodayTitle.startsWith("Viewing · ") &&
+      dayPickerFlow.switchedHourTitle.endsWith("By Hour") &&
+      dayPickerFlow.switchedHourTitle !== "Today By Hour" &&
+      /^Payment split · /.test(dayPickerFlow.switchedPayTitle) &&
+      dayPickerFlow.switchedPayTitle !== dayPickerFlow.initialPayTitle &&
+      /Viewing/.test(dayPickerFlow.switchedHint) &&
+      dayPickerFlow.restoredActive === dayPickerFlow.operatingDay,
+    "Batch BB: dashboard day picker must default to current operating day, switch viewDayId on click, swap titles/hint, and restore on click-back",
+    dayPickerFlow
+  );
+
+  assert(pageErrors.length === 0, "No page errors after Batch BB day picker flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch BB day picker flow", browserDialogs);
+
   // Batch AA: bulk export of all day sale CSVs. The button lives in Developer
   // Tools (passcode-gated already). Verify the function exists, the button is
   // present, and the function correctly counts eligible vs skipped days.
