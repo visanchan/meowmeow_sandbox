@@ -2038,6 +2038,108 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch BB day picker flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch BB day picker flow", browserDialogs);
 
+  // Iter 4: day-over-day compare footers must appear under the today-tile
+  // values when a prior day exists, and must be hidden when viewing day 1
+  // (no prior day). The direction (up/down/flat) and prior reference value
+  // must match getDaySales totals.
+  const compareFlow = await page.evaluate(() => {
+    const stateBackup = {
+      sales: JSON.parse(JSON.stringify(state.sales)),
+      voidedSales: JSON.parse(JSON.stringify(state.voidedSales)),
+      preorders: JSON.parse(JSON.stringify(state.preorders)),
+      inventory: JSON.parse(JSON.stringify(state.inventory)),
+      globalInventory: JSON.parse(JSON.stringify(state.globalInventory)),
+      dashboardViewDay: state.dashboardViewDay
+    };
+
+    function makeFakeSale(billId, dayId, total, items) {
+      return {
+        id: billId,
+        billId,
+        datetime: new Date().toISOString(),
+        timestamp: Date.now() + Math.random(),
+        operatingDay: dayId,
+        operator: "Zamm",
+        payment: "cash",
+        paymentStatus: "confirmed",
+        total,
+        subtotal: total,
+        discount: 0,
+        items: items || [{ sku: PRODUCTS[0].sku, qty: 1, basePrice: total, lineSubtotal: total, finalUnitPrice: total, lineTotal: total, discountPerItem: 0, discountAmount: 0, category: "test", isFreeGift: false, isPreorder: false }],
+        tags: []
+      };
+    }
+
+    state.sales = [
+      makeFakeSale("d1-a", "day1", 100, [{ sku: PRODUCTS[0].sku, qty: 1, basePrice: 100, lineSubtotal: 100, finalUnitPrice: 100, lineTotal: 100, discountPerItem: 0, discountAmount: 0, category: "test", isFreeGift: false, isPreorder: false }]),
+      makeFakeSale("d1-b", "day1", 200, [{ sku: PRODUCTS[0].sku, qty: 2, basePrice: 100, lineSubtotal: 200, finalUnitPrice: 100, lineTotal: 200, discountPerItem: 0, discountAmount: 0, category: "test", isFreeGift: false, isPreorder: false }]),
+      makeFakeSale("d2-a", "day2", 150, [{ sku: PRODUCTS[0].sku, qty: 1, basePrice: 150, lineSubtotal: 150, finalUnitPrice: 150, lineTotal: 150, discountPerItem: 0, discountAmount: 0, category: "test", isFreeGift: false, isPreorder: false }])
+    ];
+    invalidateSalesDerivedData();
+    state.inventory.currentDay = "day2";
+
+    setDashboardViewDay("day2");
+    const m = dashboardMetrics();
+    const compareCard = document.getElementById("dashboardTodayCompare");
+    const receiptsSubText = document.getElementById("dashboardReceiptsSub")?.textContent || "";
+    const day2 = {
+      compareData: m.todayCompare,
+      priorDayLabel: m.priorDayLabel,
+      todaySale: m.todaySale,
+      todayReceipts: m.todayReceipts,
+      todayItems: m.todayItems,
+      compareHidden: compareCard ? compareCard.hidden : null,
+      compareText: compareCard ? compareCard.textContent : "",
+      receiptsSubText
+    };
+
+    setDashboardViewDay("day1");
+    const m1 = dashboardMetrics();
+    const day1 = {
+      compareData: m1.todayCompare,
+      priorDayLabel: m1.priorDayLabel,
+      compareHidden: compareCard ? compareCard.hidden : null
+    };
+
+    // Restore.
+    state.sales = stateBackup.sales;
+    state.voidedSales = stateBackup.voidedSales;
+    state.preorders = stateBackup.preorders;
+    state.inventory = stateBackup.inventory;
+    state.globalInventory = stateBackup.globalInventory;
+    state.dashboardViewDay = stateBackup.dashboardViewDay;
+    invalidateSalesDerivedData();
+
+    return { day2, day1 };
+  });
+  // Day 2 view: prior day = Day 1, today=150 vs prior=300 → direction down,
+  // diff -150, pct -50.
+  assert(
+    compareFlow.day2.compareData &&
+      compareFlow.day2.priorDayLabel === "Day 1" &&
+      compareFlow.day2.compareData.sales.prior === 300 &&
+      compareFlow.day2.compareData.sales.direction === "down" &&
+      compareFlow.day2.compareData.sales.pct === -50 &&
+      compareFlow.day2.compareData.receipts.prior === 2 &&
+      compareFlow.day2.compareData.receipts.direction === "down" &&
+      compareFlow.day2.compareData.items.prior === 3 &&
+      compareFlow.day2.compareData.items.direction === "down" &&
+      compareFlow.day2.compareHidden === false &&
+      compareFlow.day2.compareText.includes("Day 1") &&
+      compareFlow.day2.compareText.includes("300") &&
+      compareFlow.day2.receiptsSubText.includes("vs Day 1"),
+    "Iter 4: day-over-day compare must populate prior-day references and direction for day 2 view",
+    compareFlow.day2
+  );
+  // Day 1 view: no prior day → compareData null, today-compare hidden.
+  assert(
+    compareFlow.day1.compareData === null &&
+      compareFlow.day1.priorDayLabel === "" &&
+      compareFlow.day1.compareHidden === true,
+    "Iter 4: day 1 view has no prior day; compare element must be hidden",
+    compareFlow.day1
+  );
+
   // Batch CC: warehouse formula must NOT drift across day rollover, and the
   // reconciliation report must flag intentional drift. The headline bug pre-CC
   // was: warehouse = global - online - dayN.startingStock - dayN.addedStock -
