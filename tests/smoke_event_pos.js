@@ -1971,7 +1971,11 @@ async function main() {
 
     // Force a render so the picker is populated with current state.
     renderDashboard();
-    const pickerButtons = Array.from(document.querySelectorAll("[data-dashboard-day]"));
+    // After iter 11 the picker IS the 4-Day Pace timeline — both the dot
+    // (.v3-timeline-step) and the per-day cell (.v3-timeline-cell) carry
+    // data-dashboard-day so the manager has a wide tap target. Use the
+    // cell row as the canonical button list for counting.
+    const pickerButtons = Array.from(document.querySelectorAll(".v3-timeline-cell[data-dashboard-day]"));
     const buttonDayIds = pickerButtons.map(btn => btn.dataset.dashboardDay);
     const initialActive = pickerButtons.find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
     const initialHint = document.getElementById("dashboardDayPickerHint")?.textContent || "";
@@ -1984,7 +1988,7 @@ async function main() {
 
     setDashboardViewDay(otherDay);
     const switchedMetrics = dashboardMetrics();
-    const switchedActive = Array.from(document.querySelectorAll("[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
+    const switchedActive = Array.from(document.querySelectorAll(".v3-timeline-cell[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
     const switchedHint = document.getElementById("dashboardDayPickerHint")?.textContent || "";
     const switchedTodayTitle = document.getElementById("dashboardTodayTitle")?.textContent || "";
     const switchedHourTitle = document.getElementById("dashboardHourCardTitle")?.textContent || "";
@@ -1993,7 +1997,7 @@ async function main() {
 
     // Click back to current operating day.
     setDashboardViewDay(operatingDay);
-    const restoredActive = Array.from(document.querySelectorAll("[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
+    const restoredActive = Array.from(document.querySelectorAll(".v3-timeline-cell[data-dashboard-day]")).find(btn => btn.classList.contains("is-active"))?.dataset.dashboardDay;
 
     return {
       initialMetricsViewDay: initialMetrics.viewDayId,
