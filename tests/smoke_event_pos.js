@@ -2563,6 +2563,113 @@ async function main() {
     document.querySelectorAll(".dialog-overlay.open, #appNoticeOverlay.open").forEach(el => el.classList.remove("open"));
   });
 
+  // Iter 5: movement audit log. After the existing smoke flow saves sales,
+  // logs corrections, and reverses a top-up, state.movements must contain
+  // matching SELL/SELL_FREE/RESERVE/ADJUST/REVERSE_TOPUP entries. We also
+  // exercise appendVoidMovements directly (the existing smoke voids a bill
+  // BEFORE its mid-flow resetSavedSales(), so VOID rows are wiped), and
+  // confirm the CSV export emits a single download with the documented name.
+  const movementsFlow = await page.evaluate(() => {
+    const movements = Array.isArray(state.movements) ? state.movements.slice() : null;
+    const counts = {};
+    if (movements) movements.forEach(m => { counts[m.type] = (counts[m.type] || 0) + 1; });
+
+    // Direct test that appendVoidMovements fires the VOID type — the hook is
+    // a one-line call at the success path of confirmVoidSale, so verifying
+    // the function output here is sufficient coverage for the type itself.
+    const beforeCount = state.movements.length;
+    appendVoidMovements({
+      billId: "smoke-mv-void",
+      operatingDay: currentDayId(),
+      items: [{ sku: PRODUCTS[0].sku, qty: 3 }]
+    }, "smoke void test reason");
+    const afterCount = state.movements.length;
+    const voidEntry = state.movements[state.movements.length - 1];
+    // Roll back so the export below is reproducible.
+    state.movements.pop();
+
+    let downloadName = null;
+    let downloadCount = 0;
+    const originalCreate = document.createElement.bind(document);
+    document.createElement = function (tag) {
+      const el = originalCreate(tag);
+      if (tag.toLowerCase() === "a") {
+        el.click = function () {
+          downloadCount += 1;
+          downloadName = el.download;
+        };
+      }
+      return el;
+    };
+    const exported = exportMovementsCsv();
+    document.createElement = originalCreate;
+    return {
+      hasArray: Array.isArray(movements),
+      total: movements ? movements.length : 0,
+      counts,
+      voidEntry,
+      voidAppended: afterCount === beforeCount + 1,
+      buttonExists: !!document.getElementById("exportMovementsCsvBtn"),
+      exported,
+      downloadCount,
+      downloadName,
+      sampleMovement: movements && movements.length ? movements[movements.length - 1] : null
+    };
+  });
+  assert(
+    movementsFlow.hasArray &&
+      movementsFlow.total >= 5 &&
+      (movementsFlow.counts.SELL > 0 || movementsFlow.counts.SELL_FREE > 0 || movementsFlow.counts.RESERVE > 0) &&
+      (movementsFlow.counts.ADJUST_ADDEDSTOCK > 0 || movementsFlow.counts.ADJUST_SAMPLEQTY > 0) &&
+      movementsFlow.counts.REVERSE_TOPUP >= 1 &&
+      movementsFlow.voidAppended === true &&
+      movementsFlow.voidEntry &&
+      movementsFlow.voidEntry.type === "VOID" &&
+      movementsFlow.voidEntry.qty === -3 &&
+      movementsFlow.voidEntry.refId === "smoke-mv-void" &&
+      movementsFlow.buttonExists &&
+      movementsFlow.exported === true &&
+      movementsFlow.downloadCount === 1 &&
+      /^meowseum-movements-\d{4}-\d{2}-\d{2}\.csv$/.test(movementsFlow.downloadName) &&
+      movementsFlow.sampleMovement &&
+      typeof movementsFlow.sampleMovement.id === "string" &&
+      typeof movementsFlow.sampleMovement.ts === "string" &&
+      typeof movementsFlow.sampleMovement.type === "string",
+    "Iter 5: movement audit log must contain hook entries from sales/correction/reverse, the VOID helper must produce a -qty entry referencing the bill, and the CSV must emit a date-stamped download",
+    movementsFlow
+  );
+
+  // Reset Data must wipe the movements log alongside sales / voided sales.
+  const movementsResetFlow = await page.evaluate(() => {
+    const before = state.movements.length;
+    const stateBackup = {
+      sales: JSON.parse(JSON.stringify(state.sales)),
+      voidedSales: JSON.parse(JSON.stringify(state.voidedSales)),
+      movements: JSON.parse(JSON.stringify(state.movements)),
+      preorders: JSON.parse(JSON.stringify(state.preorders)),
+      inventory: JSON.parse(JSON.stringify(state.inventory)),
+      globalInventory: JSON.parse(JSON.stringify(state.globalInventory))
+    };
+    resetSavedSales();
+    const after = state.movements.length;
+    const lsAfter = localStorage.getItem("meowseum_event_movements_v1");
+    state.sales = stateBackup.sales;
+    state.voidedSales = stateBackup.voidedSales;
+    state.movements = stateBackup.movements;
+    state.preorders = stateBackup.preorders;
+    state.inventory = stateBackup.inventory;
+    state.globalInventory = stateBackup.globalInventory;
+    invalidateSalesDerivedData();
+    return { before, after, lsAfter };
+  });
+  assert(
+    movementsResetFlow.before > 0 &&
+      movementsResetFlow.after === 0 &&
+      movementsResetFlow.lsAfter === null,
+    "Iter 5: Reset Data must clear state.movements and remove the movements localStorage key",
+    movementsResetFlow
+  );
+
   // Reconcile CSV export button: the function exists, the button exists, and
   // calling exportReconcileReportCsv triggers a single download with a CSV
   // header that matches the report shape.
