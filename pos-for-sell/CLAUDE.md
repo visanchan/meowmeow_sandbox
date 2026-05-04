@@ -1,0 +1,77 @@
+# Claude — Execution Protocol (pos-for-sell)
+
+This is the **Cat Booth POS SaaS** project. It is co-located in the same git repo as `meowmeow_pos_event.html` but is a **distinct project** with its own protocol, batch namespace (`DD-XX`), and architecture.
+
+When working anywhere inside `pos-for-sell/`, **this file overrides the root `CLAUDE.md`**.
+
+## Read first, every session
+
+1. [docs/PROJECT_VISION.md](docs/PROJECT_VISION.md) — what we're building, for whom, why.
+2. [docs/BATCH_PLAN.md](docs/BATCH_PLAN.md) — all ~100 planned batches in order, by phase.
+3. [TASKS.md](TASKS.md) — live status board (which batch is claimed/in-progress/done).
+4. [docs/DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md) — meowmeow visual language carried over.
+5. [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) — table list and RLS approach.
+
+## Stack (do not change without batch)
+
+- Next.js 16 (App Router, src dir)
+- React 19, TypeScript 5
+- Tailwind CSS 4
+- Supabase (Postgres, Auth, Storage, RLS)
+- Resend (transactional email)
+- Vercel (hosting)
+- npm (package manager)
+
+## Hard rules
+
+1. **No localStorage for business data.** All orders, products, payments, inventory go to Supabase. localStorage is only allowed for ephemeral UI state (selected day, expanded panels, draft cart that has not been confirmed).
+2. **Every business table has `workspace_id`.** Every query and every RLS policy filters by it. Never write a SELECT/UPDATE/DELETE on a business table without a workspace filter.
+3. **RLS is on for every business table.** Even server-side queries use the user's session token, not the service role, unless an admin route explicitly opts in.
+4. **Service role key is server-only.** Never imported by anything in `src/app/` that renders on the client. Lives in `src/lib/supabase/admin.ts` and is used only inside Server Actions / Route Handlers / admin pages.
+5. **Money is integers, in the smallest unit (THB satang).** No floats for prices, totals, fees.
+6. **Orders are written through a Postgres function** that updates `orders`, `order_items`, `payment_records`, and `event_inventory` in one transaction. The client never decrements stock directly.
+7. **Audit log on every admin/correction/refund action.** `audit_logs` row written in the same transaction as the change.
+8. **Email goes through `lib/email/resend.ts`.** No direct fetch to Resend in components.
+9. **Visual language matches meowmeow.** Cream/brown palette, large radii, tabular numerics. See `docs/DESIGN_TOKENS.md`.
+
+## Batch flow
+
+- **Letters**: `DD-01`, `DD-02`, ... up to `DD-100`. After 100 we'll reset or extend the plan.
+- **Branch name**: `pos/DD-XX-short-slug` (the `pos/` prefix keeps the SaaS branches visually distinct from `batch/...` branches that target meowmeow_pos_event.html).
+- **Commit prefix**: `[DD-XX] one-line summary`.
+- **PR title**: `pos: DD-XX <one-line summary>`.
+- **One implementation batch at a time.** Finish or hand off before claiming another.
+- **Update [TASKS.md](TASKS.md) before editing.** Set `Owner: claude`, `Status: in-progress`, `Branch: ...`, `Claimed: <YYYY-MM-DD HH:MM>`.
+
+## Working rules
+
+- Server components by default. `"use client"` only when interactivity requires it.
+- Forms use Server Actions, not bespoke API routes, unless there's a reason (webhooks, third-party callbacks, signed URLs).
+- All public-facing forms must be rate-limited (Supabase Edge function or app-level check).
+- All admin pages live under `/admin/...` and are gated by an admin-role check in middleware.
+- Multi-tenant data must always render via the user's session — never via the service role on a client-facing page.
+- Tests live under `pos-for-sell/tests/`. Smoke first, unit later.
+- README is updated as part of any batch that changes externally-visible behavior.
+- Do not edit files outside `pos-for-sell/` from within this project's batches, except to add a pointer in the root README.
+
+## Handoff back to Codex/user
+
+At the end of a batch, report:
+
+- What changed (files + behavior).
+- Migrations or env additions required.
+- Manual checks performed.
+- Any risk or assumption still open.
+- Whether docs/TASKS were updated.
+
+For high-risk batches (anything touching auth, RLS, payments, money totals, inventory atomicity, refunds, or email sending), request review before merge.
+
+## When in doubt
+
+- If the implementation reveals a bigger structural issue, stop and add a new batch instead of expanding scope.
+- If a stale claim sits >24h with no branch activity, mark `Status: stale` and reassign with confirmation.
+- Merge conflicts: never auto-resolve heuristically. Surface and recommend.
+
+## Author note
+
+The initial 100-batch plan in `docs/BATCH_PLAN.md` was drafted by Claude in solo mode at the user's explicit request to plan and execute end-to-end. Codex review of phase boundaries (especially Phase 4 → Phase 5 → Phase 6 inventory atomicity) is welcome before those phases begin implementation.

@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* ============================================================
+   pos-for-sell theme (carried over from meowmeow_pos_event.html)
+   See docs/DESIGN_TOKENS.md.
+   Light mode only — booth lighting is unreliable.
+   ============================================================ */
+
+:root {
+  /* canvas */
+  --color-bg: #f6f0e6;
+  --color-bg-grad-from: #fbf7ef;
+  --color-bg-grad-to: #f1e7d6;
+
+  /* surfaces */
+  --color-panel: #fffaf3;
+  --color-panel-strong: #fffdf9;
+  --color-soft: #efe5d6;
+
+  /* text */
+  --color-text: #2b231d;
+  --color-muted: #736555;
+
+  /* accent (brand brown) */
+  --color-accent: #8d6236;
+  --color-accent-strong: #6e4b27;
+  --color-gold: #c59a54;
+
+  /* line / border */
+  --color-line: #ddcfbe;
+
+  /* status */
+  --color-danger: #b44b3f;
+  --color-danger-soft-bg: #f8e1de;
+  --color-danger-soft-fg: #8b3d34;
+  --color-warn-soft-bg: #fff2dd;
+  --color-warn-soft-fg: #9a641d;
+  --color-ok-soft-bg: #e4f0dc;
+  --color-ok-soft-fg: #3f6d34;
+
+  /* radii */
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* shadow */
+  --shadow-card: 0 22px 52px rgba(77, 53, 29, 0.1);
+
+  /* fonts */
+  --font-sans: "Aptos", "Segoe UI", Tahoma, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+}
+
+/* expose tokens to Tailwind's utility classes (bg-bg, text-accent, etc.) */
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-bg-grad-from: var(--color-bg-grad-from);
+  --color-bg-grad-to: var(--color-bg-grad-to);
+  --color-panel: var(--color-panel);
+  --color-panel-strong: var(--color-panel-strong);
+  --color-soft: var(--color-soft);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-strong: var(--color-accent-strong);
+  --color-gold: var(--color-gold);
+  --color-line: var(--color-line);
+  --color-danger: var(--color-danger);
+  --color-danger-soft-bg: var(--color-danger-soft-bg);
+  --color-danger-soft-fg: var(--color-danger-soft-fg);
+  --color-warn-soft-bg: var(--color-warn-soft-bg);
+  --color-warn-soft-fg: var(--color-warn-soft-fg);
+  --color-ok-soft-bg: var(--color-ok-soft-bg);
+  --color-ok-soft-fg: var(--color-ok-soft-fg);
+
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --shadow-card: var(--shadow-card);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+html,
+body {
+  background:
+    linear-gradient(180deg, var(--color-bg-grad-from) 0%, var(--color-bg-grad-to) 100%);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* tabular numerics for prices/totals */
+.num,
+.tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* meowmeow-style soft panel */
+.panel {
+  border: 1px solid color-mix(in oklch, var(--color-accent) 16%, transparent);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, var(--color-panel-strong) 0%, #fcf5e9 100%);
+  box-shadow: var(--shadow-card);
+}
+
+/* meowmeow-style active button */
+.btn-accent {
+  background: linear-gradient(180deg, #a9763f 0%, #7e552a 100%);
+  color: #fffdf8;
+  border: 1px solid color-mix(in oklch, var(--color-accent-strong) 24%, transparent);
+  box-shadow: 0 12px 24px rgba(141, 98, 54, 0.2);
+}
+.btn-accent:hover {
+  filter: brightness(1.04);
+}
+.btn-accent:disabled {
+  opacity: 0.55;
+  filter: grayscale(0.2);
+  cursor: not-allowed;
+}
