@@ -2789,6 +2789,107 @@ async function main() {
     movementsResetFlow
   );
 
+  // Iter 10: movement projection diagnostic. The reconcile report rows must
+  // expose journalSold + journalSoldDelta + journalConsistent. For a clean
+  // state, journalSold should equal soldSum; injecting a synthetic SELL
+  // movement breaks the consistency flag (without breaking the ledger
+  // invariant — they are independent integrity checks).
+  const journalProjectionFlow = await page.evaluate(() => {
+    const reportClean = reconcileInventoryReport();
+    const skuRow = reportClean.find(r => r.soldSum > 0);
+    if (!skuRow) {
+      return { skipped: true };
+    }
+    // Inject a phantom SELL movement that doesn't correspond to any sale.
+    const injectedQty = 5;
+    state.movements.push({
+      id: "mv-smoke-iter10-" + Math.random().toString(36).slice(2,8),
+      ts: new Date().toISOString(),
+      actor: "smoke",
+      type: "SELL",
+      sku: skuRow.sku,
+      qty: injectedQty,
+      dayId: "day1",
+      reason: "smoke iter10 injection",
+      refId: ""
+    });
+    const reportDirty = reconcileInventoryReport();
+    const dirtyRow = reportDirty.find(r => r.sku === skuRow.sku);
+    state.movements.pop();
+    const reportRestored = reconcileInventoryReport();
+    const restoredRow = reportRestored.find(r => r.sku === skuRow.sku);
+    return {
+      skipped: false,
+      hasFields: typeof skuRow.journalSold === "number" &&
+        typeof skuRow.journalSoldDelta === "number" &&
+        typeof skuRow.journalConsistent === "boolean",
+      cleanDelta: skuRow.journalSoldDelta,
+      dirtyDelta: dirtyRow.journalSoldDelta,
+      dirtyConsistent: dirtyRow.journalConsistent,
+      dirtyLedgerStillOk: dirtyRow.isOk,
+      restoredDelta: restoredRow.journalSoldDelta,
+    };
+  });
+  if (!journalProjectionFlow.skipped) {
+    // Smoke flow seeds state.sales by direct push (bypassing the
+    // appendSaleMovements hook) at many points, so the absolute clean delta
+    // is non-zero in this test environment. We assert *the change caused by
+    // the phantom SELL* — +5 — and confirm the pop restores the prior delta.
+    const injectionDelta = journalProjectionFlow.dirtyDelta - journalProjectionFlow.cleanDelta;
+    const restoredDeltaUnchanged = journalProjectionFlow.restoredDelta === journalProjectionFlow.cleanDelta;
+    assert(
+      journalProjectionFlow.hasFields &&
+        injectionDelta === 5 &&
+        journalProjectionFlow.dirtyConsistent === false &&
+        journalProjectionFlow.dirtyLedgerStillOk === true &&
+        restoredDeltaUnchanged,
+      "Iter 10: reconcileInventoryReport must expose journalSold/Delta/Consistent, react to a phantom +5 SELL movement (dirty - clean delta = +5, consistent = false), keep the ledger isOk independent, and revert when the injection is popped",
+      { ...journalProjectionFlow, injectionDelta, restoredDeltaUnchanged }
+    );
+  }
+
+  // Iter 9: One-click bulk Event Archive button. Triggers all five export
+  // streams. The day-CSV substream is staggered with setTimeout, so we keep
+  // the createElement stub active until past the bulk summary timeout.
+  const archiveFlow = await page.evaluate(() => new Promise(resolve => {
+    let downloadNames = [];
+    const originalCreate = document.createElement.bind(document);
+    document.createElement = function (tag) {
+      const el = originalCreate(tag);
+      if (tag.toLowerCase() === "a") {
+        el.click = function () { downloadNames.push(el.download || ""); };
+      }
+      return el;
+    };
+    const buttonExists = !!document.getElementById("exportEventArchiveBtn");
+    const fnExists = typeof exportEventArchive === "function";
+    const result = exportEventArchive();
+    setTimeout(() => {
+      document.createElement = originalCreate;
+      resolve({
+        buttonExists,
+        fnExists,
+        result,
+        downloadCount: downloadNames.length,
+        downloadNames,
+        hasReconcile: downloadNames.some(n => /reconcile/.test(n)),
+        hasMovements: downloadNames.some(n => /movements/.test(n)),
+        hasDayCsv: downloadNames.some(n => /day\d-sales/.test(n)),
+      });
+    }, 2500);
+  }));
+  assert(
+    archiveFlow.buttonExists &&
+      archiveFlow.fnExists &&
+      archiveFlow.result === true &&
+      archiveFlow.downloadCount >= 4 &&
+      archiveFlow.hasReconcile &&
+      archiveFlow.hasMovements &&
+      archiveFlow.hasDayCsv,
+    "Iter 9: Save Event Archive button must trigger at least 4 downloads including reconcile, movements, and per-day sales CSVs",
+    archiveFlow
+  );
+
   // Reconcile CSV export button: the function exists, the button exists, and
   // calling exportReconcileReportCsv triggers a single download with a CSV
   // header that matches the report shape.
