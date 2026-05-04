@@ -2203,6 +2203,237 @@ async function main() {
     driftFlow.reportCorrupted
   );
 
+  // Batch CC scenario set — every drift path the user listed in the post-event
+  // bug report (top-up, sample, correction, void) and a multi-day rollover.
+  // Each runs in an isolated state, asserts warehouse stability, and checks
+  // that reconcileInventoryReport reports isOk=true at every step.
+  const driftScenarios = await page.evaluate(() => {
+    const stateBackup = {
+      sales: JSON.parse(JSON.stringify(state.sales)),
+      voidedSales: JSON.parse(JSON.stringify(state.voidedSales)),
+      preorders: JSON.parse(JSON.stringify(state.preorders)),
+      inventory: JSON.parse(JSON.stringify(state.inventory)),
+      globalInventory: JSON.parse(JSON.stringify(state.globalInventory)),
+      dashboardViewDay: state.dashboardViewDay
+    };
+
+    function buildFakeSale(billId, sku, qty, dayId) {
+      return {
+        id: billId,
+        billId,
+        datetime: new Date().toISOString(),
+        timestamp: Date.now() + Math.random(),
+        operatingDay: dayId,
+        operator: "Zamm",
+        payment: "cash",
+        paymentStatus: "confirmed",
+        total: qty * 100,
+        subtotal: qty * 100,
+        discount: 0,
+        items: [{
+          sku, qty, basePrice: 100, lineSubtotal: qty * 100,
+          finalUnitPrice: 100, lineTotal: qty * 100,
+          discountPerItem: 0, discountAmount: 0, category: "test",
+          isFreeGift: false, isPreorder: false
+        }],
+        tags: []
+      };
+    }
+    function resetClean(globalQty, onlineQty, day1Start) {
+      state.sales = [];
+      state.voidedSales = [];
+      state.preorders = [];
+      EVENT_DAYS.forEach(d => {
+        const r = state.inventory.days[d.id];
+        r.startingStock = buildSkuMap(() => 0);
+        r.addedStock = buildSkuMap(() => 0);
+        r.sampleQty = buildSkuMap(() => 0);
+        r.eventStartConfirmed = buildSkuMap(() => false);
+        r.addLog = [];
+        r.closed = false;
+        r.closedAt = "";
+        r.exportedAt = "";
+      });
+      state.inventory.currentDay = "day1";
+      state.inventory.viewDay = "day1";
+      state.dashboardViewDay = null;
+      PRODUCTS.forEach(p => {
+        state.globalInventory.global[p.sku] = 0;
+        state.globalInventory.onlineAllocated[p.sku] = 0;
+        state.globalInventory.eventAllocated[p.sku] = 0;
+      });
+      const sku = PRODUCTS[0].sku;
+      state.globalInventory.global[sku] = globalQty;
+      state.globalInventory.onlineAllocated[sku] = onlineQty;
+      state.inventory.days.day1.startingStock[sku] = day1Start;
+      state.inventory.days.day1.eventStartConfirmed[sku] = true;
+      invalidateSalesDerivedData();
+      return sku;
+    }
+    function closeDay(activeDay, nextDay) {
+      state.inventory.days[activeDay].closed = true;
+      state.inventory.days[activeDay].closedAt = new Date().toISOString();
+      if (nextDay) {
+        state.inventory.days[nextDay].startingStock = getDayRemainingMap(activeDay);
+        state.inventory.days[nextDay].addedStock = buildSkuMap(() => 0);
+        state.inventory.days[nextDay].eventStartConfirmed = buildSkuMap(() => true);
+        realignInventoryCarryForward(activeDay, { persist: false });
+        state.inventory.currentDay = nextDay;
+        state.inventory.viewDay = nextDay;
+      }
+      invalidateSalesDerivedData();
+    }
+    function snapWh(sku, dayId) { return stockSetupSnapshot(sku, dayId).warehouse; }
+    function reconcileSku(sku) { return reconcileInventoryReport().find(r => r.sku === sku); }
+
+    const results = {};
+
+    // Scenario 1: void on day 1 — warehouse must NOT change (pre-CC drifted by
+    // sale.qty units after carry-forward changed in realign).
+    {
+      const sku = resetClean(200, 50, 100);
+      const wh0 = snapWh(sku, "day1");
+      state.sales.push(buildFakeSale("v1", sku, 30, "day1"));
+      invalidateSalesDerivedData();
+      const wh1 = snapWh(sku, "day1");
+      // Void via real path:
+      state.pendingVoidSale = state.sales[0];
+      // Stub to bypass UI:
+      state.sales = state.sales.filter(s => s.billId !== "v1");
+      const voidEntry = { type: "void", at: new Date().toISOString(), reason: "smoke", billId: "v1", operatingDay: "day1", saleSnapshot: { items: [{ sku, qty: 30 }] }, total: 3000, itemCount: 30 };
+      state.voidedSales = [voidEntry];
+      invalidateSalesDerivedData();
+      realignInventoryCarryForward("day1", { persist: false });
+      const wh2 = snapWh(sku, "day1");
+      const ok = reconcileSku(sku).isOk;
+      results.scenarioVoid = { wh0, wh1, wh2, ok, reconcile: reconcileSku(sku) };
+    }
+
+    // Scenario 2: sample on day 1 (booth-internal label) — warehouse must NOT
+    // change. Pre-CC: sample didn't enter the formula, so warehouse stayed
+    // correct on day 1; post-rollover it would still drift via carry-forward.
+    {
+      const sku = resetClean(200, 50, 100);
+      const wh0 = snapWh(sku, "day1");
+      state.inventory.days.day1.sampleQty[sku] = 5;
+      const wh1 = snapWh(sku, "day1");
+      closeDay("day1", "day2");
+      const wh2 = snapWh(sku, "day2");
+      const ok = reconcileSku(sku).isOk;
+      results.scenarioSample = { wh0, wh1, wh2, ok };
+    }
+
+    // Scenario 3: inventory correction to addedStock — must realign downstream
+    // and reconcile clean.
+    {
+      const sku = resetClean(200, 50, 100);
+      state.inventory.days.day1.addedStock[sku] = 10;
+      state.sales.push(buildFakeSale("c1", sku, 30, "day1"));
+      invalidateSalesDerivedData();
+      const wh0 = snapWh(sku, "day1");
+      closeDay("day1", "day2");
+      const wh1 = snapWh(sku, "day2");
+      const day2StartBefore = state.inventory.days.day2.startingStock[sku];
+      // Correct day 1's addedStock from 10 to 8 (reduce a prior top-up via the
+      // real correction path), then verify carry-forward realigns and warehouse
+      // moves by exactly the delta.
+      state.inventory.days.day1.closed = false; // unlock day 1 to allow correction
+      state.pendingInventoryCorrection = {
+        sku, productName: "test", field: "addedStock", before: 10, after: 8,
+        reason: "smoke test correction", dayId: "day1",
+        at: new Date().toISOString()
+      };
+      confirmInventoryCorrection();
+      state.inventory.days.day1.closed = true; // restore
+      const wh2 = snapWh(sku, "day2");
+      const day2StartAfter = state.inventory.days.day2.startingStock[sku];
+      const ok = reconcileSku(sku).isOk;
+      results.scenarioCorrection = {
+        wh0, wh1, wh2,
+        day2StartBefore, day2StartAfter,
+        ok, reconcile: reconcileSku(sku)
+      };
+    }
+
+    // Scenario 4: multi-day rollover — close day 1 → 2 → 3 with sales each
+    // day. Warehouse must stay constant unless physical top-ups happen.
+    {
+      const sku = resetClean(500, 100, 200);
+      const wh0 = snapWh(sku, "day1");
+      state.sales.push(buildFakeSale("md1", sku, 20, "day1"));
+      invalidateSalesDerivedData();
+      const wh1 = snapWh(sku, "day1");
+      closeDay("day1", "day2");
+      const wh2 = snapWh(sku, "day2");
+      state.inventory.days.day2.addedStock[sku] = 30; // top-up on day 2
+      state.sales.push(buildFakeSale("md2", sku, 25, "day2"));
+      invalidateSalesDerivedData();
+      const wh3 = snapWh(sku, "day2");
+      closeDay("day2", "day3");
+      const wh4 = snapWh(sku, "day3");
+      state.sales.push(buildFakeSale("md3", sku, 10, "day3"));
+      invalidateSalesDerivedData();
+      const wh5 = snapWh(sku, "day3");
+      const ok = reconcileSku(sku).isOk;
+      results.scenarioMultiRollover = { wh0, wh1, wh2, wh3, wh4, wh5, ok };
+    }
+
+    // Restore pre-test state.
+    state.sales = stateBackup.sales;
+    state.voidedSales = stateBackup.voidedSales;
+    state.preorders = stateBackup.preorders;
+    state.inventory = stateBackup.inventory;
+    state.globalInventory = stateBackup.globalInventory;
+    state.dashboardViewDay = stateBackup.dashboardViewDay;
+    invalidateSalesDerivedData();
+
+    return results;
+  });
+  // Scenario 1: void must NOT shift warehouse (was 150 - jumped pre-CC).
+  assert(
+    driftScenarios.scenarioVoid.wh0 === 50 &&
+      driftScenarios.scenarioVoid.wh1 === 50 &&
+      driftScenarios.scenarioVoid.wh2 === 50 &&
+      driftScenarios.scenarioVoid.ok === true,
+    "Batch CC scenario VOID: warehouse must stay 50 across sale + void; reconcile must be OK",
+    driftScenarios.scenarioVoid
+  );
+  // Scenario 2: sample is booth-internal — warehouse stays 50 across rollover.
+  assert(
+    driftScenarios.scenarioSample.wh0 === 50 &&
+      driftScenarios.scenarioSample.wh1 === 50 &&
+      driftScenarios.scenarioSample.wh2 === 50 &&
+      driftScenarios.scenarioSample.ok === true,
+    "Batch CC scenario SAMPLE: warehouse must stay 50 across sample reservation + day rollover; reconcile must be OK",
+    driftScenarios.scenarioSample
+  );
+  // Scenario 3: correcting addedStock from 10→8 (returning 2 units to
+  // warehouse) — warehouse must move from 40 to 42 and day2 carry-forward
+  // realigns from 80 down to 78.
+  assert(
+    driftScenarios.scenarioCorrection.wh0 === 40 &&
+      driftScenarios.scenarioCorrection.wh1 === 40 &&
+      driftScenarios.scenarioCorrection.day2StartBefore === 80 &&
+      driftScenarios.scenarioCorrection.day2StartAfter === 78 &&
+      driftScenarios.scenarioCorrection.wh2 === 42 &&
+      driftScenarios.scenarioCorrection.ok === true,
+    "Batch CC scenario CORRECTION: addedStock correction must realign carry-forward and shift warehouse by exactly the delta; reconcile must be OK",
+    driftScenarios.scenarioCorrection
+  );
+  // Scenario 4: multi-day rollover — start 200 (wh=200), top-up 30 (wh=170),
+  // warehouse stays at 200 until top-up, then stays at 170 across closes/sales.
+  assert(
+    driftScenarios.scenarioMultiRollover.wh0 === 200 &&
+      driftScenarios.scenarioMultiRollover.wh1 === 200 &&
+      driftScenarios.scenarioMultiRollover.wh2 === 200 &&
+      driftScenarios.scenarioMultiRollover.wh3 === 170 &&
+      driftScenarios.scenarioMultiRollover.wh4 === 170 &&
+      driftScenarios.scenarioMultiRollover.wh5 === 170 &&
+      driftScenarios.scenarioMultiRollover.ok === true,
+    "Batch CC scenario MULTI_ROLLOVER: warehouse must stay constant across sales/closes and only move on physical top-ups; reconcile must be OK",
+    driftScenarios.scenarioMultiRollover
+  );
+
   // Reconcile UI button must exist and runInventoryReconcile must run without
   // mutating ledgers.
   const reconcileButtonFlow = await page.evaluate(() => {
@@ -2229,6 +2460,54 @@ async function main() {
     if (typeof closeAppNotice === "function") closeAppNotice();
     document.querySelectorAll(".dialog-overlay.open, #appNoticeOverlay.open").forEach(el => el.classList.remove("open"));
   });
+
+  // Dashboard auto-reconcile banner: hidden when ledgers reconcile, visible
+  // with summary when drift is present.
+  const reconcileBannerFlow = await page.evaluate(() => {
+    const bannerEl = document.getElementById("dashboardReconcileBanner");
+    if (!bannerEl) return { exists: false };
+    renderDashboard();
+    const cleanHidden = bannerEl.hidden;
+    const cleanText = bannerEl.textContent || "";
+
+    // To break the invariant deterministically without depending on the
+    // current operating day, drop gi.global[sku] to 0. With cumulative > 0
+    // and global = 0, warehouse goes negative — reconcile flags warehouseUnderflow.
+    const stateBackup = JSON.parse(JSON.stringify(state.globalInventory));
+    const sku = PRODUCTS[0].sku;
+    const originalGlobal = state.globalInventory.global[sku];
+    state.globalInventory.global[sku] = 0;
+    renderDashboard();
+    const driftHidden = bannerEl.hidden;
+    const driftText = bannerEl.textContent || "";
+
+    // Restore state.
+    state.globalInventory = stateBackup;
+    invalidateSalesDerivedData();
+    renderDashboard();
+    const restoredHidden = bannerEl.hidden;
+
+    return {
+      exists: true,
+      cleanHidden,
+      cleanText,
+      driftHidden,
+      driftText,
+      restoredHidden,
+      sku,
+      originalGlobal
+    };
+  });
+  assert(
+    reconcileBannerFlow.exists &&
+      reconcileBannerFlow.cleanHidden === true &&
+      reconcileBannerFlow.driftHidden === false &&
+      reconcileBannerFlow.driftText.includes("drift detected") &&
+      reconcileBannerFlow.driftText.includes(reconcileBannerFlow.sku) &&
+      reconcileBannerFlow.restoredHidden === true,
+    "Batch CC: dashboard reconcile banner must hide when ledgers are clean, surface a summary when drift is detected, and re-hide after the state is restored",
+    reconcileBannerFlow
+  );
 
   assert(pageErrors.length === 0, "No page errors after Batch CC drift + reconcile flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch CC drift + reconcile flow", browserDialogs);
