@@ -2461,6 +2461,39 @@ async function main() {
     document.querySelectorAll(".dialog-overlay.open, #appNoticeOverlay.open").forEach(el => el.classList.remove("open"));
   });
 
+  // Reconcile CSV export button: the function exists, the button exists, and
+  // calling exportReconcileReportCsv triggers a single download with a CSV
+  // header that matches the report shape.
+  const reconcileCsvFlow = await page.evaluate(() => {
+    const buttonExists = !!document.getElementById("exportReconcileCsvBtn");
+    const fnExists = typeof exportReconcileReportCsv === "function";
+    let downloadName = null;
+    let downloadCount = 0;
+    const originalCreate = document.createElement.bind(document);
+    document.createElement = function (tag) {
+      const el = originalCreate(tag);
+      if (tag.toLowerCase() === "a") {
+        el.click = function () {
+          downloadCount += 1;
+          downloadName = el.download;
+        };
+      }
+      return el;
+    };
+    const result = exportReconcileReportCsv();
+    document.createElement = originalCreate;
+    return { buttonExists, fnExists, result, downloadCount, downloadName };
+  });
+  assert(
+    reconcileCsvFlow.buttonExists &&
+      reconcileCsvFlow.fnExists &&
+      reconcileCsvFlow.result === true &&
+      reconcileCsvFlow.downloadCount === 1 &&
+      /^meowseum-reconcile-\d{4}-\d{2}-\d{2}\.csv$/.test(reconcileCsvFlow.downloadName),
+    "Batch CC iter3: Reconcile CSV button must trigger exactly one download with name pattern meowseum-reconcile-YYYY-MM-DD.csv",
+    reconcileCsvFlow
+  );
+
   // Dashboard auto-reconcile banner: hidden when ledgers reconcile, visible
   // with summary when drift is present.
   const reconcileBannerFlow = await page.evaluate(() => {

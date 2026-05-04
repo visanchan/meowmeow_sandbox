@@ -439,6 +439,8 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 - A clean run shows `✅ Inventory reconciled · All N SKUs reconcile cleanly`. A run with drift lists the offending SKUs with the delta, the cumulative count, the expected count (booth + sold + samples), and a hint that the most likely cause is a manual correction touching `startingStock` for a non-day-1 day; the suggested fix is to record a top-up via `Inventory Correction → addedStock`.
 - The button is gated by the existing Developer Tools passcode (`345`); no separate passcode.
 - Inventory Correction now also runs `realignInventoryCarryForward` after corrections to `startingStock`, `addedStock`, or `sampleQty`, so day 2/3/4 starting stocks stay consistent with a corrected earlier day.
+- The Internal Dashboard also auto-runs the reconciler on every render and surfaces a tappable warning banner when any SKU has allocated drift or warehouse underflow. The banner stays hidden when ledgers are clean. Click the banner to open the same detailed report that `🧮 Reconcile Inventory` produces.
+- Developer Tools also has a `📤 Reconcile CSV` button that exports the per-SKU reconciliation report (sku, name, global, online, committed, cumulativeAllocated, soldTotal, sampleTotal, boothRemainingCurrentDay, expected, allocatedDelta, warehouse, isOk, warehouseUnderflow). Filename is `meowseum-reconcile-YYYY-MM-DD.csv`. Pair this with `📤 Export All Day CSVs` for a complete end-of-event archive (sales per day + per-SKU reconciliation snapshot).
 
 ## Bulk Day-CSV Export
 
