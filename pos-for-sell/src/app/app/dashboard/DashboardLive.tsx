@@ -15,6 +15,7 @@ import { TopSellersTile } from "./TopSellersTile";
 import { InventoryTile } from "./InventoryTile";
 import { HourBars } from "./HourBars";
 import { ExportCsvButton } from "./ExportCsvButton";
+import { ActivityFeedTile } from "./ActivityFeedTile";
 
 export function DashboardLive() {
   const { orders, ready: salesReady } = useDemoSales();
@@ -102,6 +103,8 @@ export function DashboardLive() {
           />
           <InventoryTile rows={inventoryRows} />
         </div>
+
+        <ActivityFeedTile />
 
         <HourBars hourly={hourly} />
       </div>
