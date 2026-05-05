@@ -88,10 +88,10 @@ export function updateDemoSale(
   writeDemoSales(next);
 }
 
-export function nextOrderNumber(): string {
-  const all = readDemoSales();
+/** Pure: derive the next order_number from a given list. Testable. */
+export function nextOrderNumberFrom(orders: DemoOrder[]): string {
   let maxSeq = 0;
-  for (const o of all) {
+  for (const o of orders) {
     const m = /^event_(\d+)$/.exec(o.orderNumber);
     if (m) {
       const n = Number(m[1]);
@@ -99,6 +99,11 @@ export function nextOrderNumber(): string {
     }
   }
   return `event_${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+/** Wrapper that reads from localStorage. */
+export function nextOrderNumber(): string {
+  return nextOrderNumberFrom(readDemoSales());
 }
 
 export function newDemoOrderId(): string {

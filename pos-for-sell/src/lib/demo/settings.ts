@@ -15,13 +15,18 @@ export const DEFAULT_DEMO_SETTINGS: DemoSettings = {
   promptpayPhone: "0812345678",
 };
 
+/** Pure: merge stored partial JSON value with defaults. Testable. */
+export function mergeDemoSettings(stored: unknown): DemoSettings {
+  if (!stored || typeof stored !== "object") return DEFAULT_DEMO_SETTINGS;
+  return { ...DEFAULT_DEMO_SETTINGS, ...(stored as Partial<DemoSettings>) };
+}
+
 export function readDemoSettings(): DemoSettings {
   if (typeof window === "undefined") return DEFAULT_DEMO_SETTINGS;
   try {
     const raw = window.localStorage.getItem(DEMO_SETTINGS_KEY);
     if (!raw) return DEFAULT_DEMO_SETTINGS;
-    const parsed = JSON.parse(raw) as Partial<DemoSettings>;
-    return { ...DEFAULT_DEMO_SETTINGS, ...parsed };
+    return mergeDemoSettings(JSON.parse(raw));
   } catch {
     return DEFAULT_DEMO_SETTINGS;
   }
