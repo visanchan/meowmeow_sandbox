@@ -1,17 +1,22 @@
 "use client";
 
 import { formatTHB } from "@/lib/money/format";
+import { useT } from "@/lib/i18n/provider";
 import type { Product } from "@/lib/pos/types";
 
 export function ProductCard({
   product,
   remaining,
   onAdd,
+  onPreOrder,
 }: {
   product: Product;
   remaining: number;
   onAdd: () => void;
+  /** Called when staff taps a sold-out product. If omitted, sold-out is just disabled. */
+  onPreOrder?: (product: Product) => void;
 }) {
+  const { t } = useT();
   const soldout = remaining <= 0;
   const low = remaining > 0 && remaining <= 5;
 
@@ -21,11 +26,19 @@ export function ProductCard({
       ? "bg-[var(--color-warn-soft-bg)] text-[var(--color-warn-soft-fg)]"
       : "bg-[var(--color-ok-soft-bg)] text-[var(--color-ok-soft-fg)]";
 
+  const handleClick = () => {
+    if (soldout) {
+      onPreOrder?.(product);
+    } else {
+      onAdd();
+    }
+  };
+
   return (
     <button
       type="button"
-      disabled={soldout}
-      onClick={onAdd}
+      onClick={handleClick}
+      disabled={soldout && !onPreOrder}
       className="group grid gap-1 rounded-2xl border border-[color-mix(in_oklch,var(--color-accent)_12%,transparent)] bg-gradient-to-b from-[#fffefd] via-[#fff8f0] to-[#f8eedf] p-2 text-left shadow-[0_10px_20px_rgba(77,53,29,0.05)] transition hover:-translate-y-px hover:shadow-[0_16px_28px_rgba(77,53,29,0.10)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_20px_rgba(77,53,29,0.05)]"
     >
       <div className="relative grid aspect-[5/1.95] place-items-center overflow-hidden rounded-xl border border-[color-mix(in_oklch,var(--color-accent)_10%,transparent)] bg-gradient-to-b from-[#fffaf4] to-[#f3e5cf]">
@@ -47,7 +60,11 @@ export function ProductCard({
         <span
           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-extrabold ${stockClass}`}
         >
-          {soldout ? "sold out" : remaining}
+          {soldout
+            ? onPreOrder
+              ? `★ ${t.preOrders.soldOutCta}`
+              : "sold out"
+            : remaining}
         </span>
       </div>
       <div className="flex items-baseline justify-between gap-2 px-1 pt-1">

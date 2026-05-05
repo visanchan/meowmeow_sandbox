@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/pos/types";
 import { ProductCard } from "./ProductCard";
+import { PreOrderModal } from "./PreOrderModal";
 import { useCart, useCartDispatch } from "@/lib/pos/cart-store";
 import { useT } from "@/lib/i18n/provider";
 
@@ -13,6 +14,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
   const reservedById = new Map(cart.lines.map((l) => [l.productId, l.qty]));
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [preOrderProduct, setPreOrderProduct] = useState<Product | null>(null);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -83,11 +85,18 @@ export function ProductGrid({ products }: { products: Product[] }) {
                 product={p}
                 remaining={remaining}
                 onAdd={() => dispatch({ type: "ADD", productId: p.id })}
+                onPreOrder={(prod) => setPreOrderProduct(prod)}
               />
             );
           })}
         </div>
       )}
+
+      <PreOrderModal
+        open={preOrderProduct !== null}
+        onClose={() => setPreOrderProduct(null)}
+        product={preOrderProduct}
+      />
     </>
   );
 }

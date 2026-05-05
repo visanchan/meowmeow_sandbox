@@ -46,6 +46,11 @@ export default async function AppHomePage() {
           body="Reconcile counted cash against today's sales."
         />
         <Tile
+          href="/app/pre-orders"
+          title={t.preOrders.title}
+          body={t.preOrders.body}
+        />
+        <Tile
           href="/app/settings"
           title={t.appHome.tileSettingsTitle}
           body={t.appHome.tileSettingsBody}

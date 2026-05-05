@@ -154,6 +154,30 @@ export type Dict = {
     forecastSold: (qty: number, days: number) => string;
     forecastSuggestRestock: (qty: number) => string;
   };
+  preOrders: {
+    title: string;
+    body: string;
+    demoNote: string;
+    formTitle: string;
+    formBody: (productName: string) => string;
+    fQty: string;
+    fName: string;
+    fPhone: string;
+    fEmail: string;
+    fNote: string;
+    fNotePlaceholder: string;
+    save: string;
+    captured: string;
+    statusPending: string;
+    statusNotified: string;
+    statusFulfilled: string;
+    statusCancelled: string;
+    markNotified: string;
+    markFulfilled: string;
+    markCancelled: string;
+    soldOutCta: string;
+    chromeLink: string;
+  };
   setupProducts: {
     title: string;
     body: string;
@@ -375,6 +399,31 @@ const en: Dict = {
     activityFeedHeader: "Live activity",
     forecastSold: (qty, days) => `Sold ${qty} in last ${days} day${days === 1 ? "" : "s"}`,
     forecastSuggestRestock: (qty) => `Consider +${qty} for next event`,
+  },
+  preOrders: {
+    title: "Pre-orders",
+    body: "Customers who asked for items that were sold out at the booth.",
+    demoNote: "Demo mode: saved to your browser.",
+    formTitle: "Pre-order",
+    formBody: (productName) =>
+      `${productName} is sold out. Take the customer's info; you'll fulfil them when stock returns.`,
+    fQty: "Qty",
+    fName: "Customer name",
+    fPhone: "Phone",
+    fEmail: "Email (optional)",
+    fNote: "Note (optional)",
+    fNotePlaceholder: "e.g. wants brown variant if available",
+    save: "Capture pre-order",
+    captured: "Pre-order captured",
+    statusPending: "pending",
+    statusNotified: "notified",
+    statusFulfilled: "fulfilled",
+    statusCancelled: "cancelled",
+    markNotified: "Mark notified",
+    markFulfilled: "Mark fulfilled",
+    markCancelled: "Cancel",
+    soldOutCta: "Pre-order",
+    chromeLink: "Pre-orders",
   },
   setupProducts: {
     title: "Products",
@@ -603,6 +652,31 @@ const th: Dict = {
     activityFeedHeader: "ความเคลื่อนไหวสด",
     forecastSold: (qty, days) => `ขายแล้ว ${qty} ใน ${days} วันล่าสุด`,
     forecastSuggestRestock: (qty) => `แนะนำเตรียมเพิ่ม ${qty} ชิ้นสำหรับงานถัดไป`,
+  },
+  preOrders: {
+    title: "พรีออเดอร์",
+    body: "ลูกค้าที่ถามหาสินค้าที่บูธหมดสต็อก",
+    demoNote: "โหมดทดลอง: บันทึกในเบราว์เซอร์ของคุณ",
+    formTitle: "พรีออเดอร์",
+    formBody: (productName) =>
+      `${productName} หมดสต็อกแล้ว เก็บข้อมูลลูกค้าไว้ จะติดต่อกลับเมื่อมีของ`,
+    fQty: "จำนวน",
+    fName: "ชื่อลูกค้า",
+    fPhone: "เบอร์โทร",
+    fEmail: "อีเมล (ไม่บังคับ)",
+    fNote: "หมายเหตุ (ไม่บังคับ)",
+    fNotePlaceholder: "เช่น ขอแบบสีน้ำตาลถ้ามี",
+    save: "บันทึกพรีออเดอร์",
+    captured: "บันทึกพรีออเดอร์แล้ว",
+    statusPending: "รอ",
+    statusNotified: "แจ้งแล้ว",
+    statusFulfilled: "ส่งมอบแล้ว",
+    statusCancelled: "ยกเลิก",
+    markNotified: "แจ้งลูกค้าแล้ว",
+    markFulfilled: "ส่งมอบแล้ว",
+    markCancelled: "ยกเลิก",
+    soldOutCta: "พรีออเดอร์",
+    chromeLink: "พรีออเดอร์",
   },
   setupProducts: {
     title: "สินค้า",

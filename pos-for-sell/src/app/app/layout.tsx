@@ -95,6 +95,9 @@ export default async function AppLayout({
             <Link href="/app/close-day" className="hover:text-accent">
               Close day
             </Link>
+            <Link href="/app/pre-orders" className="hover:text-accent">
+              {t.preOrders.chromeLink}
+            </Link>
             <Link href="/app/settings" className="hover:text-accent">
               {t.chrome.settings}
             </Link>
