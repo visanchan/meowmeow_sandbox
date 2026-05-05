@@ -16,6 +16,9 @@ const ACTION_TONE: Record<DemoAuditAction, PillTone> = {
   order_create: "accent",
   order_void: "danger",
   send_later_status_change: "warn",
+  stock_count_open: "neutral",
+  stock_count_commit: "ok",
+  stock_count_cancel: "neutral",
   demo_reset: "danger",
   demo_seed: "ok",
 };
@@ -29,6 +32,7 @@ const ACTIONS: Array<DemoAuditAction | "all"> = [
   "catalog_delete",
   "settings_update",
   "send_later_status_change",
+  "stock_count_commit",
   "demo_seed",
   "demo_reset",
 ];

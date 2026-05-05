@@ -13,6 +13,9 @@ export type DemoAuditAction =
   | "order_create"
   | "order_void"
   | "send_later_status_change"
+  | "stock_count_open"
+  | "stock_count_commit"
+  | "stock_count_cancel"
   | "demo_reset"
   | "demo_seed";
 
