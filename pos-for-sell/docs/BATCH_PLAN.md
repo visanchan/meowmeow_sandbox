@@ -560,6 +560,74 @@ Format per batch:
 
 ---
 
+## Phase 9 — Manager Action Dashboard V1 (DD-201 → DD-210)
+
+Post-pilot enhancement layer. Phase 7 (DD-85 → DD-94) gives parity with meowmeow's reporting dashboard; Phase 9 turns that reporting into "what should I do right now?" — surfacing alerts, recommendations, and a closing checklist so the booth owner does not need to mentally derive decisions from raw numbers. Numbered DD-201+ to avoid collision with `BATCH_PLAN_VOL2.md` (DD-101 → DD-200, scaffolding/credential-free work).
+
+Sister batch in meowmeow_pos_event.html: `Batch AA — Manager Action Dashboard V1` in root `TASKS.md`. Implement the SaaS version after the meowmeow batch ships so we can carry over its dashboardMetrics extensions and visual treatment.
+
+### DD-201 — Today Action Panel
+- **Goal:** Top-of-dashboard alert row that conditionally shows: sales-behind-goal, low-stock list, payment-split mismatch, pending-send-later count. Empty state is a quiet "All clear" line.
+- **Touches:** `src/app/app/dashboard/TodayActionPanel.tsx`, `src/lib/dashboard/alerts.ts`.
+- **Acceptance:** No alerts render when no condition fires; each alert appears only when its source signal trips; alert thresholds match meowmeow's `dashboardMetrics()` parity.
+- **Blocker:** DD-85 (today metrics), DD-86 (payment split), DD-88 (low-stock).
+
+### DD-202 — Inventory Recommendation Chips
+- **Goal:** Read-only action chips next to Low Stock Alerts: "Restock", "Push alternative SKU", "Switch to Send Later", "Selling fast — hold discount".
+- **Touches:** `src/app/app/dashboard/InventoryRecommendations.tsx`, `src/lib/dashboard/recommendations.ts`.
+- **Acceptance:** Each rule fires only on its specific signal (low + sold-today, OOS + sibling has stock, OOS + send-later eligible, top-quartile velocity); no automated action taken; chips are advisory text.
+- **Blocker:** DD-88 (low-stock), DD-87 (top sellers for velocity quartile).
+
+### DD-203 — End-of-Day Checklist
+- **Goal:** Collapsible panel with five hand-checkable items (export CSV, cash count, transfer total, card total, review send-later, save archive). Persists per-event-day in Supabase, not localStorage, since this is multi-tenant.
+- **Touches:** `src/app/app/dashboard/EndOfDayChecklist.tsx`, `database/schema.sql` (new `eod_checklist` table with `workspace_id`, `event_day_id`, `item_key`, `checked_by`, `checked_at`, RLS by workspace), `database/rls-policies.sql`, `src/app/app/dashboard/checklist-actions.ts` (Server Action).
+- **Acceptance:** Checks survive refresh and are scoped per event day; clearing the day or closing it resets state; audit_log row written on each toggle.
+- **Blocker:** DD-92 (end-of-day close).
+
+### DD-204 — Goal Pace Forecast
+- **Goal:** Extend the existing `PaceStrip.tsx` (DD-91) with projected event total, amount-still-needed, required-per-remaining-day, required-per-remaining-hour. Show "Projection unavailable" empty state when `paceSoFar = 0`.
+- **Touches:** `src/app/app/dashboard/PaceStrip.tsx`, `src/lib/dashboard/forecast.ts`.
+- **Acceptance:** No NaN/Infinity in any state; projection clearly labelled as a forecast; per-hour math uses event-hours window from event config.
+- **Blocker:** DD-91 (Goal/pace strip).
+
+### DD-205 — Daily Summary Copy Button
+- **Goal:** Single "Copy Today Summary" button that builds a clipboard-friendly text block (today total, payment split, top 5 sellers, low-stock list, pending send-later count, timestamp) for WhatsApp/Excel paste.
+- **Touches:** `src/app/app/dashboard/CopySummaryButton.tsx`, `src/lib/dashboard/summary-text.ts`.
+- **Acceptance:** Clicking copies a non-empty text block; button shows brief "Copied" state; works on iPad/desktop.
+- **Blocker:** DD-85 → DD-88 (so the summary contents are real).
+
+### DD-206 — Manager Action Dashboard tests
+- **Goal:** Vitest unit tests for `alerts.ts`, `recommendations.ts`, `forecast.ts`, `summary-text.ts`. Playwright smoke that walks the full panel.
+- **Touches:** `tests/lib/dashboard/*.test.ts`, `tests/e2e/dashboard-action-panel.spec.ts`.
+- **Acceptance:** Every alert / recommendation / forecast branch has at least one positive and one negative test; smoke asserts panel renders, alerts toggle on test data, copy button writes clipboard.
+- **Blocker:** DD-201 → DD-205.
+
+### DD-207 — Manager-action surface in `/admin/pilot-status`
+- **Goal:** Cross-workspace digest for the founder: list each pilot brand with its current alert count, low-stock count, and pending-send-later count. Single-line per workspace.
+- **Touches:** `src/app/admin/pilot-status/page.tsx`, `src/lib/dashboard/admin-digest.ts`.
+- **Acceptance:** Service-role-gated query (admin route only); no per-workspace data leaked across tenants; founder sees five brands at a glance.
+- **Blocker:** DD-100 (pilot-status base), DD-201 (alerts).
+
+### DD-208 — Empty-state coverage
+- **Goal:** Every Phase 9 component has an empty/zero-data state that does not show NaN, "0/NaN%", or stale prior-day values when the current day has no sales.
+- **Touches:** the Phase 9 components.
+- **Acceptance:** Visual review on a brand-new event day shows clean prompts ("All clear", "No data yet") instead of broken numbers.
+- **Blocker:** DD-201 → DD-205.
+
+### DD-209 — Mobile/iPad layout pass
+- **Goal:** Today Action Panel, recommendation chips, checklist, and forecast strip all stack cleanly on iPad and mobile widths without overlapping THB values.
+- **Touches:** Phase 9 component CSS, `src/app/globals.css` if shared tokens are extended.
+- **Acceptance:** Manual check at 1280, 1024, 768, 414; large THB values (THB 100,000+) do not overflow tiles.
+- **Blocker:** DD-201 → DD-205.
+
+### DD-210 — Phase 9 polish + README
+- **Goal:** README Manager Action Dashboard section explains what each alert means, how to dismiss/acknowledge, and that recommendations are advisory text. Cross-link from `docs/PROJECT_VISION.md`.
+- **Touches:** `pos-for-sell/README.md`, `docs/PROJECT_VISION.md` if relevant.
+- **Acceptance:** A new pilot client can read the README and understand each alert without asking.
+- **Blocker:** DD-201 → DD-209.
+
+---
+
 ## Phase boundaries (review checkpoints)
 
 - After **DD-12**: foundation ready, real Supabase keys must be available before DD-15.
@@ -570,6 +638,7 @@ Format per batch:
 - After **DD-84**: send-later fulfillment is operational.
 - After **DD-94**: end-of-event experience matches meowmeow.
 - After **DD-100**: pilot is live with admin oversight.
+- After **DD-210**: dashboard tells the manager what to do, not just what happened.
 
 ## Dependency notes
 
@@ -577,3 +646,6 @@ Format per batch:
 - DD-65, DD-66 require the `create_order` Postgres function to exist.
 - DD-92, DD-94 are blocked by DD-65 (need real sale rows).
 - DD-100 is blocked by everything before it.
+- DD-201 → DD-210 are blocked by Phase 7 (DD-85 → DD-94); they read manager-action signals from the dashboard data already produced there. Implement after the meowmeow `Batch AA` ships so the SaaS port can mirror its dashboardMetrics extensions and visual treatment.
+- DD-203 introduces a new `eod_checklist` table — keep its RLS reviewed alongside other Phase 7 tables.
+- DD-207 is blocked by DD-100 (pilot-status base).

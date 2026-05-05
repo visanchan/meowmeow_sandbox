@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useDemoCatalog } from "@/lib/demo/useDemoCatalog";
 import { useDemoAudit } from "@/lib/demo/useDemoAudit";
+import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { formatTHB } from "@/lib/money/format";
 import { useT } from "@/lib/i18n/provider";
+import { forecastProduct } from "@/lib/demo/forecast";
 import { ProductFormModal } from "./ProductFormModal";
 import { SAMPLE_CATALOG } from "@/lib/demo/sample-catalog";
 import type { Product } from "@/lib/pos/types";
@@ -19,10 +21,26 @@ const DEMO_WORKSPACE_ID = "demo-workspace";
 export function CatalogManager() {
   const { items, ready, create, update, remove, setActive } = useDemoCatalog();
   const audit = useDemoAudit();
+  const { orders } = useDemoSales();
   const { t } = useT();
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
   const { push } = useToast();
+
+  const forecastsByProduct = useMemo(() => {
+    const out = new Map<string, ReturnType<typeof forecastProduct>>();
+    for (const p of items) {
+      out.set(
+        p.id,
+        forecastProduct({
+          orders,
+          productId: p.id,
+          currentQty: p.current_qty,
+        }),
+      );
+    }
+    return out;
+  }, [items, orders]);
 
   function add() {
     setEditing(null);
@@ -209,6 +227,21 @@ export function CatalogManager() {
                 {" · stock "}
                 <span className="num">{p.current_qty}</span>
               </p>
+              {(() => {
+                const f = forecastsByProduct.get(p.id);
+                if (!f || f.window.qtySold === 0) return null;
+                return (
+                  <p className="mt-1 text-[11px] font-bold text-[var(--color-warn-soft-fg)]">
+                    {t.pos.forecastSold(f.window.qtySold, 30)}
+                    {f.suggestRestockQty > 0 && (
+                      <>
+                        {" · "}
+                        {t.pos.forecastSuggestRestock(f.suggestRestockQty)}
+                      </>
+                    )}
+                  </p>
+                );
+              })()}
             </div>
             <div className="flex flex-col gap-1.5">
               <Button size="sm" variant="secondary" onClick={() => edit(p)}>
