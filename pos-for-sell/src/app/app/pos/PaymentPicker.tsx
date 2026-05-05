@@ -1,14 +1,7 @@
 "use client";
 
 import type { PaymentMethod } from "@/lib/pos/types";
-
-const LABELS: Record<PaymentMethod, string> = {
-  cash: "Cash",
-  promptpay: "PromptPay",
-  transfer: "Transfer",
-  card: "Card",
-  other: "Other",
-};
+import { useT } from "@/lib/i18n/provider";
 
 export function PaymentPicker({
   methods,
@@ -19,6 +12,15 @@ export function PaymentPicker({
   selected: PaymentMethod | null;
   onSelect: (m: PaymentMethod) => void;
 }) {
+  const { t } = useT();
+  const labels: Record<PaymentMethod, string> = {
+    cash: t.pos.methodCash,
+    promptpay: t.pos.methodPromptPay,
+    transfer: t.pos.methodTransfer,
+    card: t.pos.methodCard,
+    other: t.pos.methodOther,
+  };
+
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
       {methods.map((m) => {
@@ -34,7 +36,7 @@ export function PaymentPicker({
                 : "rounded-xl border border-line bg-panel px-2 py-2.5 text-sm font-extrabold text-accent-strong hover:bg-soft"
             }
           >
-            {LABELS[m]}
+            {labels[m]}
           </button>
         );
       })}

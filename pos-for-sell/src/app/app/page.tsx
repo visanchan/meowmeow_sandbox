@@ -1,40 +1,49 @@
 import Link from "next/link";
+import { getDict } from "@/lib/i18n/server";
 
-export default function AppHomePage() {
+export default async function AppHomePage() {
+  const { t } = await getDict();
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">
-      <h1 className="font-display text-4xl text-accent-strong">Open booth</h1>
-      <p className="mt-3 text-text/85">Pick your next move.</p>
+      <h1 className="font-display text-4xl text-accent-strong">
+        {t.appHome.title}
+      </h1>
+      <p className="mt-3 text-text/85">{t.appHome.subtitle}</p>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         <Tile
           href="/app/pos"
-          title="POS"
-          body="Sell at the booth right now."
+          title={t.appHome.tilePosTitle}
+          body={t.appHome.tilePosBody}
         />
         <Tile
           href="/app/setup/products"
-          title="Products"
-          body="Set up SKUs, prices, images."
+          title={t.appHome.tileProductsTitle}
+          body={t.appHome.tileProductsBody}
         />
         <Tile
           href="/app/dashboard"
-          title="Dashboard"
-          body="Today&rsquo;s sales and inventory."
+          title={t.appHome.tileDashboardTitle}
+          body={t.appHome.tileDashboardBody}
         />
         <Tile
           href="/app/send-later"
-          title="Send-later"
-          body="Fulfil pending shipments."
+          title={t.appHome.tileSendLaterTitle}
+          body={t.appHome.tileSendLaterBody}
         />
         <Tile
           href="/app/correction"
-          title="Corrections"
-          body="Void a sale, restore inventory."
+          title={t.appHome.tileCorrectionsTitle}
+          body={t.appHome.tileCorrectionsBody}
+        />
+        <Tile
+          href="/app/audit-log"
+          title={t.appHome.tileAuditLogTitle}
+          body={t.appHome.tileAuditLogBody}
         />
         <Tile
           href="/app/settings"
-          title="Settings"
-          body="Brand name, PromptPay phone, defaults."
+          title={t.appHome.tileSettingsTitle}
+          body={t.appHome.tileSettingsBody}
         />
       </ul>
     </main>

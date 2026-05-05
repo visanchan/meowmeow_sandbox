@@ -1,21 +1,26 @@
 import Link from "next/link";
+import { getDict } from "@/lib/i18n/server";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { t } = await getDict();
+
   return (
     <main className="flex-1">
-      <section className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
+      <div className="mx-auto flex max-w-3xl items-center justify-end px-5 pt-4">
+        <LanguageSwitcher />
+      </div>
+      <section className="mx-auto max-w-3xl px-5 py-12 sm:py-20">
         <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-muted">
-          Pilot · invitation only · Thailand
+          {t.landing.kicker}
         </p>
         <h1 className="font-display text-5xl leading-[0.92] tracking-tight text-accent-strong sm:text-6xl">
-          A POS built for
+          {t.landing.title1}
           <br />
-          cat-product booths.
+          {t.landing.title2}
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-text/85">
-          Sell faster at events. Track stock per event. Take cash, PromptPay,
-          transfer or card. Send-later orders included. Close each day in five
-          minutes.
+          {t.landing.body}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -23,38 +28,38 @@ export default function HomePage() {
             href="/apply"
             className="btn-accent inline-flex items-center gap-2 rounded-[var(--radius-md)] px-6 py-3 text-base font-bold"
           >
-            Apply to join the pilot
+            {t.landing.ctaApply}
           </Link>
           <Link
             href="/apply/status"
             className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-line bg-panel px-5 py-3 text-sm font-bold text-accent-strong"
           >
-            Check application status
+            {t.landing.ctaStatus}
           </Link>
         </div>
 
         <ul className="mt-12 grid gap-3 sm:grid-cols-2">
           <Feature
-            title="Made for booths"
-            body="Built from a year of selling at pet expos. Same workflow as our event booth, just multi-tenant."
+            title={t.landing.feature1Title}
+            body={t.landing.feature1Body}
           />
           <Feature
-            title="Real database"
-            body="Every sale is in Supabase. Backups, audit trail, cross-device — no localStorage gambles."
+            title={t.landing.feature2Title}
+            body={t.landing.feature2Body}
           />
           <Feature
-            title="Send-later included"
-            body="Out-of-stock at the booth? Take payment, ship later. Status flow built in."
+            title={t.landing.feature3Title}
+            body={t.landing.feature3Body}
           />
           <Feature
-            title="Pilot first, free"
-            body="Five brands in the cat niche. Hand-picked. Free during pilot."
+            title={t.landing.feature4Title}
+            body={t.landing.feature4Body}
           />
         </ul>
       </section>
 
       <footer className="mx-auto max-w-3xl px-5 py-10 text-xs text-muted">
-        © {new Date().getFullYear()} Cat Booth POS · pilot
+        © {new Date().getFullYear()} {t.landing.footer}
       </footer>
     </main>
   );

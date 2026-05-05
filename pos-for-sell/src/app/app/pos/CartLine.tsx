@@ -4,6 +4,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { formatTHB } from "@/lib/money/format";
 import { useCartDispatch } from "@/lib/pos/cart-store";
 import type { CartLine as CartLineType, Product } from "@/lib/pos/types";
+import { useT } from "@/lib/i18n/provider";
 
 export function CartLine({
   line,
@@ -13,6 +14,7 @@ export function CartLine({
   product: Product;
 }) {
   const dispatch = useCartDispatch();
+  const { t } = useT();
   const lineTotal = product.price_satang * line.qty;
   const isLater = line.fulfillment === "send_later";
 
@@ -44,7 +46,7 @@ export function CartLine({
               : "border-[#b8d2ab] bg-[var(--color-ok-soft-bg)] text-[var(--color-ok-soft-fg)]"
           }`}
         >
-          {isLater ? "Send later" : "Take now"}
+          {isLater ? t.pos.sendLater : t.pos.takeNow}
         </button>
       </div>
       <div className="flex flex-col items-end justify-between gap-2">

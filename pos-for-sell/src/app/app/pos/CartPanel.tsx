@@ -10,6 +10,7 @@ import { ReviewModal } from "./ReviewModal";
 import { PromptPayDisplay } from "./PromptPayDisplay";
 import { CustomerInfoBlock } from "./CustomerInfoBlock";
 import { useDemoSettings } from "@/lib/demo/useDemoSettings";
+import { useT } from "@/lib/i18n/provider";
 
 const METHODS: PaymentMethod[] = [
   "cash",
@@ -29,6 +30,7 @@ export function CartPanel({
   const cart = useCart();
   const dispatch = useCartDispatch();
   const { settings } = useDemoSettings();
+  const { t } = useT();
   const [reviewOpen, setReviewOpen] = useState(false);
 
   const productIndex = new Map(products.map((p) => [p.id, p]));
@@ -56,12 +58,12 @@ export function CartPanel({
 
   const cta =
     cart.lines.length === 0
-      ? "Add a product"
+      ? t.pos.ctaAddProduct
       : !cart.paymentMethod
-        ? "Pick a payment method"
+        ? t.pos.ctaPickPayment
         : sendLaterMissingCustomer
-          ? "Fill send-later details"
-          : "Review & confirm";
+          ? t.pos.ctaFillSendLater
+          : t.pos.ctaReview;
   const ctaDisabled =
     cart.lines.length === 0 ||
     !cart.paymentMethod ||
@@ -71,14 +73,16 @@ export function CartPanel({
     <div className={compact ? "p-4" : "panel p-5"}>
       {!compact && (
         <header className="mb-3 flex items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl text-accent-strong">Cart</h2>
+          <h2 className="font-display text-xl text-accent-strong">
+            {t.pos.cart}
+          </h2>
           {cart.lines.length > 0 && (
             <button
               type="button"
               onClick={() => dispatch({ type: "CLEAR" })}
               className="rounded-full bg-[#f2e6d7] px-3 py-1 text-xs font-extrabold text-[#6a4a26]"
             >
-              Clear
+              {t.pos.clear}
             </button>
           )}
         </header>
@@ -86,7 +90,7 @@ export function CartPanel({
 
       {cart.lines.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-line bg-white px-4 py-6 text-center text-sm text-muted">
-          Tap a product to add it.
+          {t.pos.emptyCart}
         </p>
       ) : (
         <ul className="grid gap-2">
@@ -102,27 +106,28 @@ export function CartPanel({
         <DiscountInput
           satang={cart.discountSatang}
           onChange={(s) => dispatch({ type: "SET_DISCOUNT", satang: s })}
+          label={t.pos.discount}
         />
 
         <div className="grid gap-2 rounded-2xl border border-line bg-[#fffdf9] p-4 text-sm">
-          <Row label="Subtotal" value={formatTHB(subtotal)} muted />
+          <Row label={t.pos.subtotal} value={formatTHB(subtotal)} muted />
           {shipping > 0 && (
             <Row
-              label="Shipping (send-later)"
+              label={t.pos.shippingSendLater}
               value={formatTHB(shipping)}
               muted
             />
           )}
           {cart.discountSatang > 0 && (
             <Row
-              label="Discount"
+              label={t.pos.discount}
               value={`-${formatTHB(cart.discountSatang)}`}
               muted
             />
           )}
           <div className="mt-1 flex items-baseline justify-between border-t border-line pt-2">
             <span className="font-display text-lg text-accent-strong">
-              Total
+              {t.pos.total}
             </span>
             <span className="num text-2xl font-black text-accent-strong">
               {formatTHB(total)}
@@ -192,15 +197,17 @@ function Row({
 function DiscountInput({
   satang,
   onChange,
+  label,
 }: {
   satang: number;
   onChange: (s: number) => void;
+  label: string;
 }) {
   const presets = [0, 5000, 10000]; // 0, 50, 100 THB
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-line bg-panel px-3 py-2">
       <span className="text-xs font-extrabold uppercase tracking-wider text-muted">
-        Discount
+        {label}
       </span>
       <input
         type="number"

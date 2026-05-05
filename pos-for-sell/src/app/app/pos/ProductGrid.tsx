@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/lib/pos/types";
 import { ProductCard } from "./ProductCard";
 import { useCart, useCartDispatch } from "@/lib/pos/cart-store";
+import { useT } from "@/lib/i18n/provider";
 
 export function ProductGrid({ products }: { products: Product[] }) {
   const cart = useCart();
   const dispatch = useCartDispatch();
+  const { t } = useT();
   const reservedById = new Map(cart.lines.map((l) => [l.productId, l.qty]));
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
@@ -15,7 +17,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const p of products) set.add(p.category);
-    return ["all", ...[...set].sort()];
+    return ["all" as const, ...[...set].sort()];
   }, [products]);
 
   const filtered = useMemo(() => {
@@ -38,7 +40,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
-          placeholder="Search SKU, name, category…"
+          placeholder={t.pos.searchPlaceholder}
           className="flex-1 min-w-[180px] rounded-[var(--radius-md)] border border-line bg-panel px-3 py-2 text-sm text-text shadow-sm placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
         />
         <div className="flex flex-wrap gap-1">
@@ -53,7 +55,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
                   : "rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-accent-strong"
               }
             >
-              {c}
+              {c === "all" ? t.common.all : c}
             </button>
           ))}
         </div>
@@ -61,7 +63,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
 
       {filtered.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-line bg-white px-4 py-10 text-center text-sm text-muted">
-          No products match{query ? ` "${query}"` : ""}.
+          {t.pos.noMatch}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
