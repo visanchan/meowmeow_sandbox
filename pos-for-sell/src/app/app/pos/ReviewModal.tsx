@@ -69,7 +69,11 @@ export function ReviewModal({
 
     const orderType = deriveOrderType();
     const isSendLater = orderType === "send_later" || orderType === "mixed";
-    const isCash = (cart.paymentMethod ?? "cash") === "cash";
+    const usingSplits = cart.splits.length > 0;
+    const effectiveMethod: PaymentMethod = usingSplits
+      ? "mixed"
+      : (cart.paymentMethod ?? "cash");
+    const isCash = effectiveMethod === "cash";
     const tendered = cart.cashTenderedSatang;
     const change = isCash && tendered > total ? tendered - total : 0;
 
@@ -80,7 +84,7 @@ export function ReviewModal({
       customerPhone: cart.customer.phone || null,
       customerEmail: cart.customer.email || null,
       orderType,
-      paymentMethod: (cart.paymentMethod ?? "cash") as PaymentMethod,
+      paymentMethod: effectiveMethod,
       subtotalSatang: subtotal,
       discountSatang: cart.discountSatang,
       shippingFeeSatang: shipping,
@@ -90,6 +94,14 @@ export function ReviewModal({
       items,
       ...(isCash && tendered > 0
         ? { cashTenderedSatang: tendered, changeDueSatang: change }
+        : {}),
+      ...(usingSplits
+        ? {
+            payments: cart.splits.map((sp) => ({
+              method: sp.method,
+              amountSatang: sp.amountSatang,
+            })),
+          }
         : {}),
       ...(isSendLater
         ? {
@@ -219,25 +231,44 @@ export function ReviewModal({
           <p className="mt-1 text-xs text-muted">
             Payment method:{" "}
             <strong className="text-accent-strong">
-              {cart.paymentMethod ?? "—"}
+              {cart.splits.length > 0
+                ? `mixed · ${cart.splits.length} method${cart.splits.length === 1 ? "" : "s"}`
+                : (cart.paymentMethod ?? "—")}
             </strong>
           </p>
-          {cart.paymentMethod === "cash" && cart.cashTenderedSatang > 0 && (
-            <div className="mt-1 grid gap-0.5 rounded-xl bg-[var(--color-ok-soft-bg)] px-3 py-2 text-xs text-[var(--color-ok-soft-fg)]">
-              <Row
-                label="Tendered"
-                value={formatTHB(cart.cashTenderedSatang)}
-                muted
-              />
-              <Row
-                label="Change due"
-                value={formatTHB(
-                  Math.max(0, cart.cashTenderedSatang - total),
-                )}
-                muted
-              />
-            </div>
+          {cart.splits.length > 0 && (
+            <ul className="mt-1 grid gap-0.5 rounded-xl bg-soft px-3 py-2 text-xs">
+              {cart.splits.map((s, i) => (
+                <li
+                  key={i}
+                  className="flex items-baseline justify-between gap-2"
+                >
+                  <span className="font-bold text-muted">{s.method}</span>
+                  <span className="num font-bold">
+                    {formatTHB(s.amountSatang)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
+          {cart.splits.length === 0 &&
+            cart.paymentMethod === "cash" &&
+            cart.cashTenderedSatang > 0 && (
+              <div className="mt-1 grid gap-0.5 rounded-xl bg-[var(--color-ok-soft-bg)] px-3 py-2 text-xs text-[var(--color-ok-soft-fg)]">
+                <Row
+                  label="Tendered"
+                  value={formatTHB(cart.cashTenderedSatang)}
+                  muted
+                />
+                <Row
+                  label="Change due"
+                  value={formatTHB(
+                    Math.max(0, cart.cashTenderedSatang - total),
+                  )}
+                  muted
+                />
+              </div>
+            )}
           {hasSendLater && (
             <p className="rounded-xl border border-[#ddc4a2] bg-[#fff7ec] px-3 py-2 text-xs text-[#6d4c28]">
               Send-later: customer info will be required at confirm (DD-76).

@@ -21,6 +21,11 @@ export type DemoOrderItem = {
   note?: string;
 };
 
+export type DemoPayment = {
+  method: PaymentMethod;
+  amountSatang: number;
+};
+
 export type DemoOrder = {
   id: string;
   orderNumber: string; // event_001, event_002, ...
@@ -40,6 +45,10 @@ export type DemoOrder = {
   // Cash tender + change (only meaningful when paymentMethod === "cash").
   cashTenderedSatang?: number;
   changeDueSatang?: number;
+
+  // Multi-method split payments. When present, sum equals totalSatang and
+  // paymentMethod is "mixed".
+  payments?: DemoPayment[];
 
   // Send-later (only set for orderType === "send_later" or "mixed").
   sendLaterStatus?: SendLaterStatus;

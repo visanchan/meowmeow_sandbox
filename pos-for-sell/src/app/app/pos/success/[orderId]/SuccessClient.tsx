@@ -138,6 +138,21 @@ export function SuccessClient({ orderId }: { orderId: string }) {
                 />
               </div>
             )}
+          {order.payments && order.payments.length > 0 && (
+            <ul className="mt-1 grid gap-0.5 rounded-xl bg-soft px-3 py-2 text-xs">
+              {order.payments.map((p, i) => (
+                <li
+                  key={i}
+                  className="flex items-baseline justify-between gap-2"
+                >
+                  <span className="font-bold text-muted">{p.method}</span>
+                  <span className="num font-bold">
+                    {formatTHB(p.amountSatang)} THB
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {order.paymentMethod === "promptpay" && order.totalSatang > 0 && (

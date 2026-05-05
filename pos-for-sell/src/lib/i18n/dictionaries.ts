@@ -135,6 +135,12 @@ export type Dict = {
     changeDue: string;
     addNote: string;
     notePlaceholder: string;
+    splitPayment: string;
+    singlePayment: string;
+    addSplit: string;
+    splitRemaining: string;
+    splitOver: string;
+    splitsCount: (n: number) => string;
   };
   setupProducts: {
     title: string;
@@ -339,6 +345,12 @@ const en: Dict = {
     changeDue: "Change due",
     addNote: "Add note",
     notePlaceholder: "Note (e.g. no scarf, gift wrap)",
+    splitPayment: "Split payment",
+    singlePayment: "Single payment",
+    addSplit: "+ Add split",
+    splitRemaining: "Remaining",
+    splitOver: "Over by",
+    splitsCount: (n) => `${n} method${n === 1 ? "" : "s"}`,
   },
   setupProducts: {
     title: "Products",
@@ -549,6 +561,12 @@ const th: Dict = {
     changeDue: "เงินทอน",
     addNote: "เพิ่มหมายเหตุ",
     notePlaceholder: "หมายเหตุ (เช่น ไม่เอาผ้าพันคอ ห่อของขวัญ)",
+    splitPayment: "แบ่งจ่าย",
+    singlePayment: "จ่ายช่องทางเดียว",
+    addSplit: "+ เพิ่มช่องทาง",
+    splitRemaining: "เหลืออีก",
+    splitOver: "เกินไป",
+    splitsCount: (n) => `${n} ช่องทาง`,
   },
   setupProducts: {
     title: "สินค้า",

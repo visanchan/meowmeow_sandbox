@@ -8,10 +8,14 @@ import {
   type ReactNode,
 } from "react";
 import type { CartLine, PaymentMethod } from "./types";
+import type { PaymentSplit } from "./splits";
 
 type State = {
   lines: CartLine[];
   paymentMethod: PaymentMethod | null;
+  /** Multi-method splits. When non-empty, replaces single paymentMethod and
+   *  the order's payment_method becomes "mixed". */
+  splits: PaymentSplit[];
   discountSatang: number;
   /** Cash tendered when paymentMethod === "cash". 0 means not entered yet. */
   cashTenderedSatang: number;
@@ -37,11 +41,16 @@ type Action =
   | { type: "SET_PAYMENT_METHOD"; method: PaymentMethod | null }
   | { type: "SET_DISCOUNT"; satang: number }
   | { type: "SET_CASH_TENDERED"; satang: number }
+  | { type: "ADD_SPLIT"; split: PaymentSplit }
+  | { type: "UPDATE_SPLIT"; index: number; patch: Partial<PaymentSplit> }
+  | { type: "REMOVE_SPLIT"; index: number }
+  | { type: "CLEAR_SPLITS" }
   | { type: "SET_CUSTOMER"; patch: Partial<State["customer"]> };
 
 const initial: State = {
   lines: [],
   paymentMethod: null,
+  splits: [],
   discountSatang: 0,
   cashTenderedSatang: 0,
   customer: { name: "", phone: "", email: "", address: "" },
@@ -119,6 +128,25 @@ function reducer(s: State, a: Action): State {
       return { ...s, discountSatang: Math.max(0, a.satang) };
     case "SET_CASH_TENDERED":
       return { ...s, cashTenderedSatang: Math.max(0, a.satang) };
+    case "ADD_SPLIT":
+      // Switching to splits clears the single-method selection so derived UI
+      // doesn't show contradictory state.
+      return {
+        ...s,
+        splits: [...s.splits, a.split],
+        paymentMethod: null,
+      };
+    case "UPDATE_SPLIT":
+      return {
+        ...s,
+        splits: s.splits.map((sp, i) =>
+          i === a.index ? { ...sp, ...a.patch } : sp,
+        ),
+      };
+    case "REMOVE_SPLIT":
+      return { ...s, splits: s.splits.filter((_, i) => i !== a.index) };
+    case "CLEAR_SPLITS":
+      return { ...s, splits: [] };
     case "SET_CUSTOMER":
       return { ...s, customer: { ...s.customer, ...a.patch } };
   }

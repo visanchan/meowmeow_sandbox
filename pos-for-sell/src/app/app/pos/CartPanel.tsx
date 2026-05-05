@@ -10,8 +10,10 @@ import { ReviewModal } from "./ReviewModal";
 import { PromptPayDisplay } from "./PromptPayDisplay";
 import { CustomerInfoBlock } from "./CustomerInfoBlock";
 import { CashTenderBlock } from "./CashTenderBlock";
+import { SplitPaymentBlock } from "./SplitPaymentBlock";
 import { useDemoSettings } from "@/lib/demo/useDemoSettings";
 import { useT } from "@/lib/i18n/provider";
+import { validateSplits } from "@/lib/pos/splits";
 
 const METHODS: PaymentMethod[] = [
   "cash",
@@ -57,18 +59,25 @@ export function CartPanel({
     !!cart.customer.address.trim();
   const sendLaterMissingCustomer = hasSendLater && !customerComplete;
 
+  const usingSplits = cart.splits.length > 0;
+  const splitsValidation = usingSplits
+    ? validateSplits(cart.splits, total)
+    : null;
+
+  const paymentChosen = usingSplits
+    ? splitsValidation?.ok === true
+    : cart.paymentMethod !== null;
+
   const cta =
     cart.lines.length === 0
       ? t.pos.ctaAddProduct
-      : !cart.paymentMethod
+      : !paymentChosen
         ? t.pos.ctaPickPayment
         : sendLaterMissingCustomer
           ? t.pos.ctaFillSendLater
           : t.pos.ctaReview;
   const ctaDisabled =
-    cart.lines.length === 0 ||
-    !cart.paymentMethod ||
-    sendLaterMissingCustomer;
+    cart.lines.length === 0 || !paymentChosen || sendLaterMissingCustomer;
 
   return (
     <div className={compact ? "p-4" : "panel p-5"}>
@@ -136,23 +145,46 @@ export function CartPanel({
           </div>
         </div>
 
-        <PaymentPicker
-          methods={METHODS}
-          selected={cart.paymentMethod}
-          onSelect={(m) =>
-            dispatch({ type: "SET_PAYMENT_METHOD", method: m })
-          }
-        />
+        {!usingSplits && (
+          <>
+            <PaymentPicker
+              methods={METHODS}
+              selected={cart.paymentMethod}
+              onSelect={(m) =>
+                dispatch({ type: "SET_PAYMENT_METHOD", method: m })
+              }
+            />
 
-        {cart.paymentMethod === "promptpay" && total > 0 && (
-          <PromptPayDisplay
-            proxy={{ kind: "phone", value: settings.promptpayPhone }}
-            amountSatang={total}
-          />
+            {cart.lines.length > 0 && total > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch({
+                    type: "ADD_SPLIT",
+                    split: { method: "cash", amountSatang: total },
+                  })
+                }
+                className="self-start text-xs font-bold text-accent-strong underline-offset-2 hover:underline"
+              >
+                {t.pos.splitPayment} →
+              </button>
+            )}
+
+            {cart.paymentMethod === "promptpay" && total > 0 && (
+              <PromptPayDisplay
+                proxy={{ kind: "phone", value: settings.promptpayPhone }}
+                amountSatang={total}
+              />
+            )}
+
+            {cart.paymentMethod === "cash" && total > 0 && (
+              <CashTenderBlock totalSatang={total} />
+            )}
+          </>
         )}
 
-        {cart.paymentMethod === "cash" && total > 0 && (
-          <CashTenderBlock totalSatang={total} />
+        {usingSplits && total > 0 && (
+          <SplitPaymentBlock totalSatang={total} />
         )}
 
         <CustomerInfoBlock />
