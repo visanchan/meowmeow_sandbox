@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SettingsForm } from "./Form";
+import { DangerZone } from "./DangerZone";
 
 export default function SettingsPage() {
   return (
@@ -16,6 +17,8 @@ export default function SettingsPage() {
       <div className="panel mt-8 p-6">
         <SettingsForm />
       </div>
+
+      <DangerZone />
 
       <Link
         href="/app"
