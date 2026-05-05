@@ -84,6 +84,9 @@ export default async function AppLayout({
             <Link href="/app/send-later" className="hover:text-accent">
               Send-later
             </Link>
+            <Link href="/app/correction" className="hover:text-accent">
+              Corrections
+            </Link>
             <Link href="/app/settings" className="hover:text-accent">
               Settings
             </Link>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { validateSku } from "@/lib/sku";
 import { bahtToSatang } from "@/lib/money/format";
+import { compressImage } from "@/lib/image/compress";
 import type { Product } from "@/lib/pos/types";
 
 type FormValues = {
@@ -19,6 +20,7 @@ type FormValues = {
   shippingFeeBaht: string;
   startingQty: string;
   sendLaterEnabled: boolean;
+  imagePath: string | null; // data URL for the demo
 };
 
 const empty = (): FormValues => ({
@@ -29,6 +31,7 @@ const empty = (): FormValues => ({
   shippingFeeBaht: "0",
   startingQty: "0",
   sendLaterEnabled: true,
+  imagePath: null,
 });
 
 function fromProduct(p: Product): FormValues {
@@ -40,7 +43,17 @@ function fromProduct(p: Product): FormValues {
     shippingFeeBaht: (p.shipping_fee_satang / 100).toString(),
     startingQty: String(p.current_qty),
     sendLaterEnabled: p.send_later_enabled,
+    imagePath: p.image_path,
   };
+}
+
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 export function ProductFormModal({
@@ -58,6 +71,7 @@ export function ProductFormModal({
 }) {
   const [v, setV] = useState<FormValues>(empty());
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
+  const [uploading, setUploading] = useState(false);
   const { push } = useToast();
 
   useEffect(() => {
@@ -69,6 +83,35 @@ export function ProductFormModal({
 
   function set<K extends keyof FormValues>(key: K, val: FormValues[K]) {
     setV((s) => ({ ...s, [key]: val }));
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const result = await compressImage(file, {
+        maxWidth: 1024,
+        maxHeight: 1024,
+        quality: 0.8,
+        mimeType: "image/webp",
+      });
+      const dataUrl = await blobToDataUrl(result.blob);
+      set("imagePath", dataUrl);
+      push({
+        kind: "success",
+        title: "Image ready",
+        message: `${Math.round(result.bytes / 1024)} KB · ${result.width}×${result.height}`,
+      });
+    } catch (err) {
+      push({
+        kind: "error",
+        title: "Image failed",
+        message: err instanceof Error ? err.message : "Could not compress",
+      });
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -108,7 +151,7 @@ export function ProductFormModal({
       shipping_fee_satang: bahtToSatang(shipping),
       send_later_enabled: v.sendLaterEnabled,
       is_active: initial?.is_active ?? true,
-      image_path: initial?.image_path ?? null,
+      image_path: v.imagePath,
       current_qty: qty,
     };
 
@@ -191,6 +234,50 @@ export function ProductFormModal({
           label="Send-later enabled"
           hint="Customer can buy this even when out of stock at the booth."
         />
+
+        <div>
+          <span className="mb-1.5 block text-sm font-bold text-accent-strong">
+            Product image
+          </span>
+          <div className="flex items-start gap-3">
+            <div className="h-24 w-24 flex-none overflow-hidden rounded-xl border border-line bg-soft">
+              {v.imagePath ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={v.imagePath}
+                  alt="Preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="grid h-full w-full place-items-center text-[10px] font-bold uppercase tracking-wider text-muted">
+                  no image
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={uploading}
+                className="block text-sm text-muted file:mr-3 file:rounded-[var(--radius-md)] file:border-0 file:bg-soft file:px-4 file:py-2 file:text-sm file:font-bold file:text-accent-strong"
+              />
+              {v.imagePath && (
+                <button
+                  type="button"
+                  onClick={() => set("imagePath", null)}
+                  className="self-start text-xs font-bold text-[var(--color-danger-soft-fg)]"
+                >
+                  Remove image
+                </button>
+              )}
+              <p className="text-xs text-muted">
+                Auto-resized to ≤1024px and converted to WebP. Saved as a data
+                URL in this browser only — replaced by Supabase Storage at DD-45.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>

@@ -27,6 +27,11 @@ export default function AppHomePage() {
           body="Fulfil pending shipments."
         />
         <Tile
+          href="/app/correction"
+          title="Corrections"
+          body="Void a sale, restore inventory."
+        />
+        <Tile
           href="/app/settings"
           title="Settings"
           body="Brand name, PromptPay phone, defaults."

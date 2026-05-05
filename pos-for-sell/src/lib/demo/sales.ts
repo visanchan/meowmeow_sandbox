@@ -40,6 +40,11 @@ export type DemoOrder = {
   sendLaterStatus?: SendLaterStatus;
   trackingNumber?: string | null;
   shippingAddress?: string | null;
+
+  // Order status (defaults to "completed"; void flow flips to "voided").
+  status?: "completed" | "voided";
+  voidedAt?: string | null;
+  voidReason?: string | null;
 };
 
 export function readDemoSales(): DemoOrder[] {
