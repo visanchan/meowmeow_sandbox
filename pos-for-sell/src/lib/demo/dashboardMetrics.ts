@@ -28,6 +28,94 @@ export function ordersForToday(orders: DemoOrder[]): DemoOrder[] {
   return orders.filter((o) => isoDateInTZ(o.createdAt) === today);
 }
 
+/** Compute dashboard metrics from any pre-filtered set of orders. The
+ *  hourly bucket only makes sense for single-day ranges; callers should
+ *  ignore it when looking at multi-day windows. Pulled out of the
+ *  today-only flavor so the same shape works across any range. */
+export function computeMetricsFor(
+  orders: DemoOrder[],
+): DemoDashboardMetrics {
+  const totalSatang = orders.reduce(
+    (s, o) => s + effectiveTotalSatang(o),
+    0,
+  );
+  const bills = orders.filter(
+    (o) => (o.status ?? "completed") !== "voided",
+  ).length;
+  const avgBillSatang = bills > 0 ? Math.round(totalSatang / bills) : 0;
+
+  const paymentSplit = {
+    cash: 0,
+    promptpay: 0,
+    transfer: 0,
+    card: 0,
+    other: 0,
+  };
+  for (const o of orders) {
+    if ((o.status ?? "completed") === "voided") continue;
+    const m = o.paymentMethod;
+    const v = effectiveTotalSatang(o);
+    if (m === "cash") paymentSplit.cash += v;
+    else if (m === "promptpay") paymentSplit.promptpay += v;
+    else if (m === "transfer") paymentSplit.transfer += v;
+    else if (m === "card") paymentSplit.card += v;
+    else paymentSplit.other += v;
+  }
+
+  const bySku = new Map<
+    string,
+    {
+      productId: string;
+      sku: string;
+      name: string;
+      qty: number;
+      revenueSatang: number;
+    }
+  >();
+  for (const o of orders) {
+    if ((o.status ?? "completed") === "voided") continue;
+    for (const it of o.items) {
+      const k = it.productId;
+      const cur = bySku.get(k) ?? {
+        productId: it.productId,
+        sku: it.sku,
+        name: it.productName,
+        qty: 0,
+        revenueSatang: 0,
+      };
+      cur.qty += it.qty;
+      cur.revenueSatang += it.lineTotalSatang;
+      bySku.set(k, cur);
+    }
+  }
+  const topSellers = [...bySku.values()]
+    .sort((a, b) => b.revenueSatang - a.revenueSatang)
+    .slice(0, 5);
+
+  const hourly: Array<{ hour: number; today: number }> = [];
+  for (let h = 9; h <= 18; h++) hourly.push({ hour: h, today: 0 });
+  const hourFmt = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: TH_TZ,
+  });
+  for (const o of orders) {
+    if ((o.status ?? "completed") === "voided") continue;
+    const h = Number(hourFmt.format(new Date(o.createdAt)));
+    const slot = hourly.find((b) => b.hour === h);
+    if (slot) slot.today += effectiveTotalSatang(o);
+  }
+
+  return {
+    totalSatang,
+    bills,
+    avgBillSatang,
+    paymentSplit,
+    topSellers,
+    hourly,
+  };
+}
+
 export function computeDemoMetrics(
   orders: DemoOrder[],
 ): DemoDashboardMetrics {

@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { useDemoCatalog } from "@/lib/demo/useDemoCatalog";
-import {
-  computeDemoMetrics,
-  ordersForToday,
-} from "@/lib/demo/dashboardMetrics";
+import { computeMetricsFor } from "@/lib/demo/dashboardMetrics";
 import { aggregateMargin } from "@/lib/demo/margin";
+import {
+  dailyRevenueSeries,
+  daysInRange,
+  deltaPct,
+  ordersInRange,
+  previousRange,
+  rangePreset,
+  type RangePresetId,
+} from "@/lib/demo/dashboard-range";
 import { mockToday } from "./mock";
 import { PaceStrip } from "./PaceStrip";
 import { TodayMetricsTile } from "./TodayMetricsTile";
@@ -15,32 +22,49 @@ import { PaymentSplitTile } from "./PaymentSplitTile";
 import { TopSellersTile } from "./TopSellersTile";
 import { InventoryTile } from "./InventoryTile";
 import { HourBars } from "./HourBars";
+import { DailyBars } from "./DailyBars";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { ActivityFeedTile } from "./ActivityFeedTile";
 import { ProfitTile } from "./ProfitTile";
 import { ReorderTile } from "./ReorderTile";
+import { DateRangePicker } from "./DateRangePicker";
+import { DeltaChip } from "./DeltaChip";
 
 export function DashboardLive() {
   const { orders, ready: salesReady } = useDemoSales();
   const { items: catalog, ready: catalogReady } = useDemoCatalog();
+  const [rangeId, setRangeId] = useState<RangePresetId>("today");
 
-  const todayOrders = ordersForToday(orders);
-  const hasLiveData = salesReady && todayOrders.length > 0;
-  const live = hasLiveData ? computeDemoMetrics(orders) : null;
-  const todayMargin = hasLiveData ? aggregateMargin(todayOrders) : null;
+  const range = useMemo(() => rangePreset(rangeId), [rangeId]);
+  const prev = useMemo(() => previousRange(range), [range]);
+  const isMultiDay = daysInRange(range) > 1;
 
-  // Inventory: prefer the demo catalog when populated; fall back to the mock.
+  const ordersHere = useMemo(
+    () => (salesReady ? ordersInRange(orders, range) : []),
+    [orders, range, salesReady],
+  );
+  const ordersPrev = useMemo(
+    () => (salesReady ? ordersInRange(orders, prev) : []),
+    [orders, prev, salesReady],
+  );
+
+  const hasLiveData = salesReady && ordersHere.length > 0;
+  const live = hasLiveData ? computeMetricsFor(ordersHere) : null;
+  const prevMetrics = ordersPrev.length > 0 ? computeMetricsFor(ordersPrev) : null;
+  const margin = hasLiveData ? aggregateMargin(ordersHere) : null;
+  const prevMargin =
+    ordersPrev.length > 0 ? aggregateMargin(ordersPrev) : null;
+
   const inventoryRows =
     catalogReady && catalog.length > 0
       ? catalog.map((p) => ({
           sku: p.sku,
           name: p.name,
           current: p.current_qty,
-          starting: Math.max(p.current_qty, p.current_qty + (live ? 0 : 0)),
+          starting: Math.max(p.current_qty, p.current_qty),
         }))
       : mockToday.inventoryRemaining;
 
-  // Today metrics: live if any, else mock.
   const totals = live ?? {
     totalSatang: mockToday.totalSatang,
     bills: mockToday.bills,
@@ -53,20 +77,38 @@ export function DashboardLive() {
       qty: s.qty,
       revenueSatang: s.revenueSatang,
     })),
+    hourly: mockToday.hourly.map((h) => ({ hour: h.hour, today: h.today })),
   };
 
-  // Hourly: blend live today (per-hour) with the mock previous-day ghost.
-  const hourly = live
-    ? live.hourly.map((h) => ({
-        hour: h.hour,
-        today: h.today,
-        prev: mockToday.hourly.find((m) => m.hour === h.hour)?.prev ?? 0,
-      }))
-    : mockToday.hourly;
+  const hourly =
+    rangeId === "today" && live
+      ? live.hourly.map((h) => ({
+          hour: h.hour,
+          today: h.today,
+          prev: mockToday.hourly.find((m) => m.hour === h.hour)?.prev ?? 0,
+        }))
+      : mockToday.hourly;
 
-  // Goal stays as a mock target until DD-91 wires settings-driven goals.
+  const daily =
+    isMultiDay && hasLiveData
+      ? dailyRevenueSeries(orders, range)
+      : null;
+
   const goal = mockToday.goal;
   const achieved = live ? live.totalSatang : goal.achievedSatang;
+
+  // Period-over-period deltas
+  const dRev = deltaPct(
+    live?.totalSatang ?? 0,
+    prevMetrics?.totalSatang ?? 0,
+  );
+  const dBills = deltaPct(live?.bills ?? 0, prevMetrics?.bills ?? 0);
+  const dProfit = deltaPct(
+    margin?.profitSatang ?? 0,
+    prevMargin?.profitSatang ?? 0,
+  );
+
+  const compareLabel = `vs prev ${daysInRange(range) === 1 ? "day" : `${daysInRange(range)}d`}`;
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8">
@@ -74,36 +116,60 @@ export function DashboardLive() {
         <div>
           <h1 className="font-display text-3xl text-accent-strong">Dashboard</h1>
           <p className="text-xs font-bold uppercase tracking-wider text-muted">
-            {hasLiveData ? "Live demo · today" : "Demo · illustrative"}
+            {range.label}
+            {hasLiveData ? " · live demo" : " · illustrative"}
           </p>
         </div>
         <ExportCsvButton />
       </div>
-      <p className="mt-1 text-sm text-muted">
-        {hasLiveData
-          ? `${todayOrders.length} order${todayOrders.length === 1 ? "" : "s"} recorded today in this browser.`
-          : "Numbers are illustrative. Record a sale at /app/pos to see your own data here."}
-      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <DateRangePicker value={rangeId} onChange={setRangeId} />
+        {hasLiveData && (
+          <p className="text-xs text-muted">
+            {ordersHere.length} order{ordersHere.length === 1 ? "" : "s"} ·
+            comparing to {ordersPrev.length} previous-period
+          </p>
+        )}
+      </div>
+      {!hasLiveData && (
+        <p className="mt-2 text-sm text-muted">
+          No sales recorded in this range. Record a sale at /app/pos to see
+          your own data here.
+        </p>
+      )}
 
       <div className="mt-6 grid gap-4">
-        <PaceStrip achievedSatang={achieved} targetSatang={goal.targetSatang} />
+        {rangeId === "today" && (
+          <PaceStrip achievedSatang={achieved} targetSatang={goal.targetSatang} />
+        )}
 
-        <TodayMetricsTile
-          totalSatang={totals.totalSatang}
-          bills={totals.bills}
-          avgBillSatang={totals.avgBillSatang}
-        />
+        <div className="grid gap-2">
+          <TodayMetricsTile
+            totalSatang={totals.totalSatang}
+            bills={totals.bills}
+            avgBillSatang={totals.avgBillSatang}
+          />
+          {hasLiveData && (
+            <div className="flex flex-wrap gap-2">
+              <DeltaChip pct={dRev.pct} label={`revenue ${compareLabel}`} />
+              <DeltaChip pct={dBills.pct} label={`bills ${compareLabel}`} />
+              {margin?.marginPct !== null && (
+                <DeltaChip pct={dProfit.pct} label={`profit ${compareLabel}`} />
+              )}
+            </div>
+          )}
+        </div>
 
         <PaymentSplitTile split={totals.paymentSplit} />
 
-        {todayMargin && (
+        {margin && (
           <ProfitTile
-            revenueSatang={todayMargin.revenueSatang}
-            cogsSatang={todayMargin.cogsSatang}
-            profitSatang={todayMargin.profitSatang}
-            marginPct={todayMargin.marginPct}
-            ordersWithCost={todayMargin.ordersWithCost}
-            totalOrders={todayOrders.length}
+            revenueSatang={margin.revenueSatang}
+            cogsSatang={margin.cogsSatang}
+            profitSatang={margin.profitSatang}
+            marginPct={margin.marginPct}
+            ordersWithCost={margin.ordersWithCost}
+            totalOrders={ordersHere.length}
           />
         )}
 
@@ -125,7 +191,11 @@ export function DashboardLive() {
 
         <ActivityFeedTile />
 
-        <HourBars hourly={hourly} />
+        {isMultiDay && daily ? (
+          <DailyBars series={daily} />
+        ) : (
+          <HourBars hourly={hourly} />
+        )}
       </div>
 
       <Link
