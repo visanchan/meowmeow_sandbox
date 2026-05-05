@@ -34,6 +34,7 @@ export function SettingsForm() {
     }
     const normalized = normalizePhoneTH(phone, "local");
     const next = {
+      ...settings,
       brandDisplayName: brand.trim() || "Demo Brand",
       promptpayPhone: normalized,
     };

@@ -141,6 +141,9 @@ export type Dict = {
     splitRemaining: string;
     splitOver: string;
     splitsCount: (n: number) => string;
+    loyaltyPointsAvailable: (n: number) => string;
+    loyaltyPointsLifetime: (n: number) => string;
+    loyaltyEarnsPoints: (n: number) => string;
   };
   setupProducts: {
     title: string;
@@ -351,6 +354,9 @@ const en: Dict = {
     splitRemaining: "Remaining",
     splitOver: "Over by",
     splitsCount: (n) => `${n} method${n === 1 ? "" : "s"}`,
+    loyaltyPointsAvailable: (n) => `★ ${n} point${n === 1 ? "" : "s"} available`,
+    loyaltyPointsLifetime: (n) => `${n} lifetime`,
+    loyaltyEarnsPoints: (n) => `Earns ${n} point${n === 1 ? "" : "s"}`,
   },
   setupProducts: {
     title: "Products",
@@ -567,6 +573,9 @@ const th: Dict = {
     splitRemaining: "เหลืออีก",
     splitOver: "เกินไป",
     splitsCount: (n) => `${n} ช่องทาง`,
+    loyaltyPointsAvailable: (n) => `★ มี ${n} แต้ม`,
+    loyaltyPointsLifetime: (n) => `สะสม ${n} แต้ม`,
+    loyaltyEarnsPoints: (n) => `จะได้ ${n} แต้ม`,
   },
   setupProducts: {
     title: "สินค้า",

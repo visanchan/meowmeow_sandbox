@@ -22,13 +22,14 @@ describe("demo/settings/mergeDemoSettings", () => {
     });
   });
 
-  it("respects all provided fields", () => {
+  it("respects all provided fields and defaults the rest", () => {
     expect(
       mergeDemoSettings({
         brandDisplayName: "Cat Tokyo",
         promptpayPhone: "0922222222",
       }),
     ).toEqual({
+      ...DEFAULT_DEMO_SETTINGS,
       brandDisplayName: "Cat Tokyo",
       promptpayPhone: "0922222222",
     });

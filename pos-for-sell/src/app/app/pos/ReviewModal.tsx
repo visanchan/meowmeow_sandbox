@@ -8,6 +8,8 @@ import type { Product } from "@/lib/pos/types";
 import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { useDemoCatalog } from "@/lib/demo/useDemoCatalog";
 import { useDemoAudit } from "@/lib/demo/useDemoAudit";
+import { useDemoSettings } from "@/lib/demo/useDemoSettings";
+import { pointsForSale } from "@/lib/demo/loyalty";
 import {
   newDemoOrderId,
   nextOrderNumber,
@@ -15,6 +17,7 @@ import {
   type DemoOrderItem,
 } from "@/lib/demo/sales";
 import type { OrderType, PaymentMethod } from "@/lib/database.types";
+import { useT } from "@/lib/i18n/provider";
 import { useToast } from "@/components/ui/Toast";
 
 export function ReviewModal({
@@ -36,12 +39,15 @@ export function ReviewModal({
   const sales = useDemoSales();
   const catalog = useDemoCatalog();
   const audit = useDemoAudit();
+  const { settings } = useDemoSettings();
+  const { t } = useT();
   const { push } = useToast();
 
   const [confirmed, setConfirmed] = useState(false);
   const productIndex = new Map(products.map((p) => [p.id, p]));
   const hasSendLater = cart.lines.some((l) => l.fulfillment === "send_later");
   const hasTakeNow = cart.lines.some((l) => l.fulfillment === "take_now");
+  const pointsToEarn = pointsForSale(total, settings.loyaltyPointsPer100Baht);
 
   function deriveOrderType(): OrderType {
     if (hasSendLater && hasTakeNow) return "mixed";
@@ -103,6 +109,7 @@ export function ReviewModal({
             })),
           }
         : {}),
+      ...(pointsToEarn > 0 ? { pointsEarned: pointsToEarn } : {}),
       ...(isSendLater
         ? {
             sendLaterStatus: "pending" as const,
@@ -269,6 +276,13 @@ export function ReviewModal({
                 />
               </div>
             )}
+          {pointsToEarn > 0 && (
+            <p className="mt-1 rounded-xl bg-[var(--color-warn-soft-bg)] px-3 py-2 text-xs font-extrabold text-[var(--color-warn-soft-fg)]">
+              ★ {t.pos.loyaltyEarnsPoints(pointsToEarn)}
+              {cart.customer.phone.trim() === "" &&
+                " — add a customer phone to bank them"}
+            </p>
+          )}
           {hasSendLater && (
             <p className="rounded-xl border border-[#ddc4a2] bg-[#fff7ec] px-3 py-2 text-xs text-[#6d4c28]">
               Send-later: customer info will be required at confirm (DD-76).

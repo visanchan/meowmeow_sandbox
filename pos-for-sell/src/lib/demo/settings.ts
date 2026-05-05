@@ -6,6 +6,10 @@
 export type DemoSettings = {
   brandDisplayName: string;
   promptpayPhone: string; // Thai phone, accepts any input format the normalizer handles
+  /** How many loyalty points the customer earns per 100 THB spent. */
+  loyaltyPointsPer100Baht: number;
+  /** Discount value of one point, in THB. */
+  loyaltyBahtPerPoint: number;
 };
 
 export const DEMO_SETTINGS_KEY = "pos-for-sell:demo-settings:v1";
@@ -13,6 +17,8 @@ export const DEMO_SETTINGS_KEY = "pos-for-sell:demo-settings:v1";
 export const DEFAULT_DEMO_SETTINGS: DemoSettings = {
   brandDisplayName: "Demo Brand",
   promptpayPhone: "0812345678",
+  loyaltyPointsPer100Baht: 1,
+  loyaltyBahtPerPoint: 1,
 };
 
 /** Pure: merge stored partial JSON value with defaults. Testable. */

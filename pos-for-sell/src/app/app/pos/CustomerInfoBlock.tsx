@@ -97,6 +97,12 @@ export function CustomerInfoBlock() {
             <div className="text-xs">
               <p className="font-extrabold">
                 ★ {t.pos.returningCustomer} · {t.pos.ordersCount(match.orderCount)}
+                {match.pointsAvailable > 0 && (
+                  <>
+                    {" · "}
+                    {t.pos.loyaltyPointsAvailable(match.pointsAvailable)}
+                  </>
+                )}
               </p>
               <p className="opacity-80">
                 {match.name ?? "—"} · {t.pos.lastSeen}{" "}

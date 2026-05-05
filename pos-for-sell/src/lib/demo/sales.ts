@@ -50,6 +50,11 @@ export type DemoOrder = {
   // paymentMethod is "mixed".
   payments?: DemoPayment[];
 
+  // Loyalty: points earned (computed from totalSatang × workspace rate) and
+  // points redeemed against this sale (consumed from customer balance).
+  pointsEarned?: number;
+  pointsRedeemed?: number;
+
   // Send-later (only set for orderType === "send_later" or "mixed").
   sendLaterStatus?: SendLaterStatus;
   trackingNumber?: string | null;

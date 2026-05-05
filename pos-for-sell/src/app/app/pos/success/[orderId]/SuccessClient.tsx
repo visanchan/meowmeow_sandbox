@@ -153,6 +153,11 @@ export function SuccessClient({ orderId }: { orderId: string }) {
               ))}
             </ul>
           )}
+          {order.pointsEarned !== undefined && order.pointsEarned > 0 && (
+            <p className="mt-1 rounded-xl bg-[var(--color-warn-soft-bg)] px-3 py-2 text-center text-xs font-extrabold text-[var(--color-warn-soft-fg)]">
+              ★ {t.pos.loyaltyEarnsPoints(order.pointsEarned)}
+            </p>
+          )}
         </div>
 
         {order.paymentMethod === "promptpay" && order.totalSatang > 0 && (

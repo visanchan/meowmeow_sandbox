@@ -17,6 +17,12 @@ export type CustomerProfile = {
   lastSeenAt: string;
   /** Lifetime total in satang. */
   totalSatang: number;
+  /** Loyalty points earned across non-voided orders. */
+  pointsEarned: number;
+  /** Loyalty points redeemed across non-voided orders. */
+  pointsRedeemed: number;
+  /** Available = earned − redeemed. */
+  pointsAvailable: number;
 };
 
 /**
@@ -47,6 +53,10 @@ export function deriveCustomerProfiles(
     if (existing) {
       existing.orderCount += 1;
       existing.totalSatang += o.totalSatang;
+      existing.pointsEarned += o.pointsEarned ?? 0;
+      existing.pointsRedeemed += o.pointsRedeemed ?? 0;
+      existing.pointsAvailable =
+        existing.pointsEarned - existing.pointsRedeemed;
       // Keep the most-recent non-empty fields visible.
       if (o.createdAt > existing.lastSeenAt) {
         existing.lastSeenAt = o.createdAt;
@@ -56,6 +66,8 @@ export function deriveCustomerProfiles(
         if (o.shippingAddress) existing.address = o.shippingAddress;
       }
     } else {
+      const earned = o.pointsEarned ?? 0;
+      const redeemed = o.pointsRedeemed ?? 0;
       out.set(k, {
         phone: o.customerPhone ?? "",
         name: o.customerName,
@@ -64,6 +76,9 @@ export function deriveCustomerProfiles(
         orderCount: 1,
         lastSeenAt: o.createdAt,
         totalSatang: o.totalSatang,
+        pointsEarned: earned,
+        pointsRedeemed: redeemed,
+        pointsAvailable: earned - redeemed,
       });
     }
   }
