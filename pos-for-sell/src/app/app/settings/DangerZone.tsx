@@ -6,6 +6,7 @@ import { useDemoCatalog } from "@/lib/demo/useDemoCatalog";
 import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { useDemoAudit } from "@/lib/demo/useDemoAudit";
 import { useDemoCustomerNotes } from "@/lib/demo/useDemoCustomerNotes";
+import { useDemoCloseDay } from "@/lib/demo/useDemoCloseDay";
 import { writeDemoSettings, DEFAULT_DEMO_SETTINGS } from "@/lib/demo/settings";
 
 export function DangerZone() {
@@ -13,6 +14,7 @@ export function DangerZone() {
   const { clear: clearSales, orders } = useDemoSales();
   const { clear: clearAudit, entries, log } = useDemoAudit();
   const { clear: clearCustomerNotes } = useDemoCustomerNotes();
+  const { clear: clearCloseDay } = useDemoCloseDay();
   const { push } = useToast();
 
   function clearAll() {
@@ -34,6 +36,7 @@ export function DangerZone() {
     clearSales();
     clearAudit();
     clearCustomerNotes();
+    clearCloseDay();
     writeDemoSettings(DEFAULT_DEMO_SETTINGS);
     push({
       kind: "warn",

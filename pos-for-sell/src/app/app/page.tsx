@@ -41,6 +41,11 @@ export default async function AppHomePage() {
           body={t.appHome.tileAuditLogBody}
         />
         <Tile
+          href="/app/close-day"
+          title="Close day"
+          body="Reconcile counted cash against today's sales."
+        />
+        <Tile
           href="/app/settings"
           title={t.appHome.tileSettingsTitle}
           body={t.appHome.tileSettingsBody}
