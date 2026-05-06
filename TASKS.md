@@ -786,11 +786,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Status preservation assumes shipped/packed entries shouldn't be reverted to pending on correction. If a correction reduces the Send Later qty below what was already shipped, the new entry qty may be less than what physically went out — staff are expected to reconcile manually via Send Later queue UI; this batch does not auto-detect that case.
   - Codex review recommended before merge because the rebuild touches Send Later operational state and the warehouse formula's `committed` input.
 - **Owner:**
-- **Status:** ready-for-review
-- **Branch:** batch/ee-send-later-correction
+- **Status:** done
+- **Branch:**
 - **Claimed:** 2026-05-06 13:30
-- **BlockedBy:** DD (branched from `batch/dd-sample-bucket`; merge DD first, then this).
-- **Notes:** Drafted and shipped 2026-05-06 immediately after DD verification surfaced these two pre-existing edge cases. Both bugs would have caused real-world drift if left unfixed at the next event (warehouse over-allocation on Send Later corrections; staff unable to bump Send Later qty during a real-event correction). Smoke passes locally with five new EE scenarios.
+- **BlockedBy:**
+- **Notes:** Merged into `main` at `a40fc94` on 2026-05-06 (PR #3, rebased onto main after PR #2's base branch was deleted by PR #1's squash-merge). Both bugs closed; smoke green with five new EE scenarios.
 
 ### Batch DD — Sample Bucket Refactor + Warehouse Formula Repair
 - **Business objective:** Fix the post-event findings the user surfaced 2026-05-06: samples set on a past day cannot be edited from a later day; "Added Today" + sample interactions appear to leak event stock back to warehouse; staff want an easy way to convert event stock ↔ sample (because they sometimes sell a sample as a product).
@@ -828,11 +828,11 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Locking startingStock correction on Day 2+ removes a flexibility some advanced users may rely on; the addedStock route handles the same intent correctly.
   - Codex review required before merge per CLAUDE.md (touches inventory + correction).
 - **Owner:**
-- **Status:** ready-for-review
-- **Branch:** batch/dd-sample-bucket
+- **Status:** done
+- **Branch:**
 - **Claimed:** 2026-05-06 12:00
 - **BlockedBy:**
-- **Notes:** Drafted and claimed 2026-05-06 after the user's post-event field findings session. Replaces the per-day sampleQty model (Batch D) with a global event-long sample bucket plus explicit conversion buttons; Batch D migration left intact in code as a stepping-stone pattern but its outcome is superseded. **Implementation complete 2026-05-06**; smoke test extended (six new Batch DD scenarios + existing Batch X test updated for the new global model + reconciler resets updated). Local Playwright smoke passes. Codex review requested before merge per CLAUDE.md (touches inventory + correction).
+- **Notes:** Merged into `main` at `8a141aa` on 2026-05-06 (PR #1). Six post-event findings closed in one cohesive batch. Sample is now a global event-long bucket with Make/Return UI; warehouse formulas in live preview + correction validation rebuilt to use cumulativeAllocatedQty; Day 2+ startingStock correction blocked; reconciler invariant intact. Smoke extended with 11 new scenarios (6 core + 5 interaction).
 
 ## Suggested order (least-conflict first)
 
@@ -863,6 +863,8 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 
 ## Done
 
+- **Batch DD — Sample Bucket Refactor + Warehouse Formula Repair** — merged into `main` at `8a141aa` on 2026-05-06 by claude (PR #1). Six post-event findings closed: past-day sample reachable, phantom-stock via non-Day-1 startingStock correction blocked, live-preview and correction-validation warehouse formulas rebuilt, per-day sample collapsed into a global event-long bucket with Make / Return UI, sample double-count drift removed. Smoke extended with 11 new scenarios; reconciler invariant verified by deep-trace audit.
+- **Batch EE — Send Later Correction Fixes** — merged into `main` at `a40fc94` on 2026-05-06 by claude (PR #3, rebased onto main after PR #2's base disappeared). Two pre-existing edge cases closed: bill-correction Send Later queue rebuild via deterministic IDs (status / note preserved), and warehouse-aware allowance check on Send Later corrections so booth-empty + warehouse-stocked is allowed. Smoke extended with five EE scenarios.
 - **Batch B — Checkout Polish** — completed on `batch/b-checkout-polish` on 2026-04-26 by codex. Items #4, #5, #6 shipped.
 
 (Move completed batches here with the merging commit SHA.)
