@@ -17,16 +17,16 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-### Wave 39a — Sample bucket data layer
-- **Goal:** Port the meowmeow sample-bucket model into the SaaS data layer. Adds `event_inventory.sample_qty` (per-event-per-product persistent display count) and two atomic RPCs to swap units between current event stock and sample. Fixes the gap that meowmeow Batch DD closed on the single-file POS, before the SaaS surfaces the same field bug at a paying customer's event.
-- **Touches:** `database/schema.sql`, `database/migrations/2026-05-07_add_sample_qty.sql`, `database/functions/convert_event_to_sample.sql`, `database/functions/convert_sample_to_event.sql`, `src/lib/database.types.ts`, `tests/lib/sample-bucket.test.ts`, `docs/DATABASE_SCHEMA.md`.
-- **Acceptance:** column added with default 0 and check ≥ 0; conversion functions are workspace-scoped, role-gated (`owner`, `manager`, `cashier`, `stock_staff`), atomic, audit-logged, and refuse to underflow either side; types compile; vitest covers the type shape.
+### Wave 40a — Customer Portal data layer
+- **Goal:** Implement the post-purchase Customer Portal data layer per the strategic correction in [VISION.md](../VISION.md): customers and pets are captured **after** checkout via a QR / link on the receipt, never during the cashier flow. Five new tables + two RPCs + RLS policies + types.
+- **Touches:** `database/schema.sql`, `database/migrations/2026-05-07_customer_portal.sql`, `database/rls-policies.sql`, `database/functions/create_registration_token.sql`, `database/functions/claim_registration_token.sql`, `src/lib/database.types.ts`, `tests/lib/customer-portal.test.ts`, `docs/DATABASE_SCHEMA.md`.
+- **Acceptance:** five tables with RLS-on read policies and write-only-via-RPC contract; `create_registration_token` issues 16-char tokens to authenticated workspace members; `claim_registration_token` is anon-callable and atomically writes customer + contacts + pets + order_link in one transaction; tokens are single-use and 90-day expiring; types compile; vitest covers the contract.
 - **Owner:** claude
-- **Status:** ready-for-review
-- **Branch:** pos/wave-39a-sample-bucket
-- **Claimed:** 2026-05-07 00:00
-- **BlockedBy:** none for the data-layer scope. Wave 39b (UI) and Wave 39c (correction queue rebuild) follow as separate batches.
-- **Notes:** Carried forward from meowmeow Batch DD/EE field findings. Sister batches: 39b sample-bucket UI; 39c bill-correction Send Later queue rebuild + warehouse-aware allowance (port of meowmeow Batch EE). **Implementation complete 2026-05-07**: schema column + idempotent migration file, two atomic RPCs (workspace-scoped, role-gated, audit-logged), database.types.ts updated, 6 vitest type guards (254 tests pass total). Codex review recommended before merge per CLAUDE.md (touches inventory atomicity).
+- **Status:** in-progress
+- **Branch:** pos/wave-40a-customer-portal
+- **Claimed:** 2026-05-07 00:30
+- **BlockedBy:** none for the data layer. UI (40b — receipt QR + portal page + Server Actions) and cashier-side lookup (40c — repeat customer attach) follow as separate batches.
+- **Notes:** This is the architectural separation that turns the existing in-cashier pet UI (Wave 35 demo localStorage) into a proper post-purchase portal layer. Pet profile remains the booth-seller competitive moat per VISION.md, but it is now implemented as a relationship engine rather than a checkout burden.
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 

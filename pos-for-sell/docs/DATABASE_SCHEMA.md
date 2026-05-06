@@ -30,6 +30,16 @@ Source of truth: `database/schema.sql`. RLS in `database/rls-policies.sql`. Seed
 
 14. **audit_logs** — append-only. Action + table + before/after JSON snapshots.
 
+### Customer Portal (Wave 40a — post-purchase, customer-facing)
+
+The pet/customer profile system is **never** part of the cashier checkout flow. It is captured after the sale via a QR / link on the receipt that opens a customer-facing registration page. See [VISION.md](../../VISION.md) and [PROJECT_VISION.md](PROJECT_VISION.md) for the strategic rationale.
+
+15. **customers** — workspace-scoped customer profile. Created via the portal claim flow or by an explicit cashier-side tag. `registered_via` records origin (portal / cashier / admin / import).
+16. **customer_contacts** — multi-channel contact rows per customer (phone / email / line / other). Unique on `(workspace_id, channel, value)` so repeat lookups can match without duplicates.
+17. **pets** — pet profiles per customer (vertical module, optional even within the portal). Holds species, breed, weight, birthday/adoption day, allergies, preferences.
+18. **customer_order_links** — many-to-many bridge between customers and orders. Populated on portal claim and on cashier-side returning-customer attach.
+19. **customer_registration_tokens** — one-shot tokens (16-char base32-style). Created when a sale is completed; consumed once when the customer claims via the portal. 90-day default expiry.
+
 ## Money
 
 All money columns are `bigint` representing **THB satang** (1 THB = 100 satang). UI formats to "1,234.50 THB".
@@ -44,7 +54,7 @@ All money columns are `bigint` representing **THB satang** (1 THB = 100 satang).
 ## RLS strategy
 
 - **Public tables (`applications`)**: anyone can insert; only admins can select/update.
-- **Auth-required, workspace-scoped (`products`, `events`, `event_inventory`, `orders`, `order_items`, `payment_records`, `send_later_orders`, `audit_logs`)**: row visible only to members of the workspace via `workspace_members`. Insert/update allowed if user has the appropriate role within the workspace.
+- **Auth-required, workspace-scoped (`products`, `events`, `event_inventory`, `orders`, `order_items`, `payment_records`, `send_later_orders`, `audit_logs`, `customers`, `customer_contacts`, `pets`, `customer_order_links`, `customer_registration_tokens`)**: row visible only to members of the workspace via `workspace_members`. Direct writes are blocked on the customer/pet/portal tables — all mutations go through the SECURITY DEFINER RPCs (`claim_registration_token` for the anon portal flow; future cashier-side helpers in Waves 40b/c).
 - **Identity tables (`workspaces`, `workspace_members`)**: a member can read their own workspace and its members. Insert is via server action with admin/owner check. Update is owner-only.
 - **Admin tables (`invite_codes`, `admin_users`)**: only platform admins can read/write.
 
@@ -56,6 +66,8 @@ All money columns are `bigint` representing **THB satang** (1 THB = 100 satang).
 - `redeem_invite_code(code text, password text, brand_name text) returns uuid` — code validation + signup + workspace creation, in one transaction. Returns workspace_id.
 - `convert_event_to_sample(p_event_id uuid, p_product_id uuid, p_qty int, p_reason text default null) returns event_inventory` — atomically moves N units from `current_qty` into `sample_qty`. Refuses to underflow. Audit-logged. Roles: owner, manager, cashier, stock_staff. (Wave 39a)
 - `convert_sample_to_event(p_event_id uuid, p_product_id uuid, p_qty int, p_reason text default null) returns event_inventory` — inverse. Moves N units from `sample_qty` back into `current_qty`. Same roles. (Wave 39a)
+- `create_registration_token(p_order_id uuid) returns text` — issues a one-shot post-purchase token tied to an order. Roles: owner, manager, cashier. Returns the 16-char token used for the receipt QR / share link. Audit-logged. (Wave 40a)
+- `claim_registration_token(p_token text, p_payload jsonb) returns uuid` — anon-callable. Validates the token (exists / not expired / not claimed), creates customer + contacts + pets + order link in one transaction, marks the token claimed. Returns the new customer_id. The token IS the credential — no auth session required. Audit-logged. (Wave 40a)
 
 ## Roles
 

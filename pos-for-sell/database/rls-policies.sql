@@ -265,3 +265,59 @@ create policy audit_logs_member_or_admin_select
     (workspace_id is null and public.is_admin())
     or (workspace_id is not null and (public.is_workspace_member(workspace_id) or public.is_admin()))
   );
+
+-- =================================================================
+-- customers / customer_contacts / pets / customer_order_links
+-- (Wave 40a — Customer Portal)
+--
+-- Reads: workspace members + platform admins.
+-- Writes: only the SECURITY DEFINER RPCs (claim_registration_token,
+-- and future cashier-side helpers in Wave 40b/c). No direct writes
+-- from authenticated clients; the RPCs handle everything atomically
+-- and audit-log every mutation.
+-- =================================================================
+alter table if exists public.customers              enable row level security;
+alter table if exists public.customer_contacts      enable row level security;
+alter table if exists public.pets                   enable row level security;
+alter table if exists public.customer_order_links   enable row level security;
+alter table if exists public.customer_registration_tokens enable row level security;
+
+drop policy if exists customers_member_select            on public.customers;
+drop policy if exists customer_contacts_member_select    on public.customer_contacts;
+drop policy if exists pets_member_select                 on public.pets;
+drop policy if exists customer_order_links_member_select on public.customer_order_links;
+
+create policy customers_member_select
+  on public.customers for select
+  to authenticated
+  using (public.is_workspace_member(workspace_id) or public.is_admin());
+
+create policy customer_contacts_member_select
+  on public.customer_contacts for select
+  to authenticated
+  using (public.is_workspace_member(workspace_id) or public.is_admin());
+
+create policy pets_member_select
+  on public.pets for select
+  to authenticated
+  using (public.is_workspace_member(workspace_id) or public.is_admin());
+
+create policy customer_order_links_member_select
+  on public.customer_order_links for select
+  to authenticated
+  using (public.is_workspace_member(workspace_id) or public.is_admin());
+
+-- =================================================================
+-- customer_registration_tokens
+--
+-- Reads: workspace members can see their own tokens (so the cashier
+-- can list issued tokens, see which were claimed). The anon claim
+-- flow does NOT need RLS read — the SECURITY DEFINER RPC validates
+-- the token and bypasses RLS. Tokens are NEVER exposed to anon SELECT.
+-- =================================================================
+drop policy if exists customer_reg_tokens_member_select on public.customer_registration_tokens;
+
+create policy customer_reg_tokens_member_select
+  on public.customer_registration_tokens for select
+  to authenticated
+  using (public.is_workspace_member(workspace_id) or public.is_admin());
