@@ -246,6 +246,7 @@ export type Database = {
           current_qty: number;
           reserved_qty: number;
           sold_qty: number;
+          sample_qty: number;
           adjusted_qty: number;
           updated_at: string;
         };
@@ -258,6 +259,7 @@ export type Database = {
           current_qty?: number;
           reserved_qty?: number;
           sold_qty?: number;
+          sample_qty?: number;
           adjusted_qty?: number;
           updated_at?: string;
         };
@@ -456,6 +458,24 @@ export type Database = {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      convert_event_to_sample: {
+        Args: {
+          p_event_id: string;
+          p_product_id: string;
+          p_qty: number;
+          p_reason?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["event_inventory"]["Row"];
+      };
+      convert_sample_to_event: {
+        Args: {
+          p_event_id: string;
+          p_product_id: string;
+          p_qty: number;
+          p_reason?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["event_inventory"]["Row"];
       };
     };
     Enums: Record<string, never>;

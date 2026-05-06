@@ -20,7 +20,7 @@ Source of truth: `database/schema.sql`. RLS in `database/rls-policies.sql`. Seed
 ### Selling
 
 8. **events** — one booth/fair. Workspace-scoped. Has start_date, end_date, status.
-9. **event_inventory** — per-product stock at an event. Has starting_qty, current_qty, reserved_qty (for send-later), sold_qty, adjusted_qty.
+9. **event_inventory** — per-product stock at an event. Has starting_qty, current_qty, reserved_qty (for send-later), sold_qty, **sample_qty** (event-long display bucket; Wave 39a), adjusted_qty. Sample units are physically on display at the booth: they reduce sellable booth stock (`current_qty`) but never return to warehouse on their own. Move units between booth and sample with the `convert_event_to_sample` and `convert_sample_to_event` RPCs.
 10. **orders** — sale header. Has total, payment_method, payment_status, customer info, order_type (take_now / send_later / mixed).
 11. **order_items** — one row per SKU sold. Has fulfillment_type per line.
 12. **payment_records** — payment events for an order (multiple payments allowed, e.g. partial cash + transfer).
@@ -54,6 +54,8 @@ All money columns are `bigint` representing **THB satang** (1 THB = 100 satang).
 - `void_order(order_id uuid, reason text) returns void` — inverse. Restores event_inventory, sets order.status = voided, writes audit row. Owner/manager only.
 - `correct_order(order_id uuid, payload jsonb) returns void` — edit existing order; recomputes inventory delta vs original; writes audit.
 - `redeem_invite_code(code text, password text, brand_name text) returns uuid` — code validation + signup + workspace creation, in one transaction. Returns workspace_id.
+- `convert_event_to_sample(p_event_id uuid, p_product_id uuid, p_qty int, p_reason text default null) returns event_inventory` — atomically moves N units from `current_qty` into `sample_qty`. Refuses to underflow. Audit-logged. Roles: owner, manager, cashier, stock_staff. (Wave 39a)
+- `convert_sample_to_event(p_event_id uuid, p_product_id uuid, p_qty int, p_reason text default null) returns event_inventory` — inverse. Moves N units from `sample_qty` back into `current_qty`. Same roles. (Wave 39a)
 
 ## Roles
 

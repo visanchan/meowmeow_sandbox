@@ -17,7 +17,16 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-None. All credential-free Phase 0 + Phase 1 UI work is landed locally on `main` (uncommitted). Next claimable batch: **DD-15** — blocked on Supabase credentials. See **Blockers section** at end of file.
+### Wave 39a — Sample bucket data layer
+- **Goal:** Port the meowmeow sample-bucket model into the SaaS data layer. Adds `event_inventory.sample_qty` (per-event-per-product persistent display count) and two atomic RPCs to swap units between current event stock and sample. Fixes the gap that meowmeow Batch DD closed on the single-file POS, before the SaaS surfaces the same field bug at a paying customer's event.
+- **Touches:** `database/schema.sql`, `database/migrations/2026-05-07_add_sample_qty.sql`, `database/functions/convert_event_to_sample.sql`, `database/functions/convert_sample_to_event.sql`, `src/lib/database.types.ts`, `tests/lib/sample-bucket.test.ts`, `docs/DATABASE_SCHEMA.md`.
+- **Acceptance:** column added with default 0 and check ≥ 0; conversion functions are workspace-scoped, role-gated (`owner`, `manager`, `cashier`, `stock_staff`), atomic, audit-logged, and refuse to underflow either side; types compile; vitest covers the type shape.
+- **Owner:** claude
+- **Status:** ready-for-review
+- **Branch:** pos/wave-39a-sample-bucket
+- **Claimed:** 2026-05-07 00:00
+- **BlockedBy:** none for the data-layer scope. Wave 39b (UI) and Wave 39c (correction queue rebuild) follow as separate batches.
+- **Notes:** Carried forward from meowmeow Batch DD/EE field findings. Sister batches: 39b sample-bucket UI; 39c bill-correction Send Later queue rebuild + warehouse-aware allowance (port of meowmeow Batch EE). **Implementation complete 2026-05-07**: schema column + idempotent migration file, two atomic RPCs (workspace-scoped, role-gated, audit-logged), database.types.ts updated, 6 vitest type guards (254 tests pass total). Codex review recommended before merge per CLAUDE.md (touches inventory atomicity).
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 

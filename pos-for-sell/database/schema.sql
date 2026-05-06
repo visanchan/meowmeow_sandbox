@@ -172,6 +172,7 @@ create table if not exists public.event_inventory (
   current_qty   int not null default 0 check (current_qty >= 0),
   reserved_qty  int not null default 0 check (reserved_qty >= 0),
   sold_qty      int not null default 0 check (sold_qty >= 0),
+  sample_qty    int not null default 0 check (sample_qty >= 0),
   adjusted_qty  int not null default 0,
   updated_at    timestamptz not null default now(),
   unique (event_id, product_id)
