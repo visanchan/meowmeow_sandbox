@@ -51,6 +51,11 @@ export default async function AppHomePage() {
           body="Walk the warehouse, count, fix drift after each event."
         />
         <Tile
+          href="/app/inventory/samples"
+          title="Sample bucket"
+          body="Move stock between event-sellable and on-display sample. Sell a sample, return one to event."
+        />
+        <Tile
           href="/app/customers"
           title="Customers"
           body="Lifecycle, lifetime spend, top SKU per phone."
