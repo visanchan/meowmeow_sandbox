@@ -5,6 +5,7 @@ import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { useDemoSettings } from "@/lib/demo/useDemoSettings";
 import { useT } from "@/lib/i18n/provider";
 import { PromptPayDisplay } from "../../PromptPayDisplay";
+import { RegistrationLinkBlock } from "./RegistrationLinkBlock";
 import { formatTHB } from "@/lib/money/format";
 import { formatDateTimeTH } from "@/lib/date";
 
@@ -193,6 +194,8 @@ export function SuccessClient({ orderId }: { orderId: string }) {
             Dashboard
           </Link>
         </div>
+
+        <RegistrationLinkBlock orderId={order.id} />
       </div>
     </main>
   );

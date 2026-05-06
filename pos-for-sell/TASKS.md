@@ -17,16 +17,16 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-### Wave 40a — Customer Portal data layer
-- **Goal:** Implement the post-purchase Customer Portal data layer per the strategic correction in [VISION.md](../VISION.md): customers and pets are captured **after** checkout via a QR / link on the receipt, never during the cashier flow. Five new tables + two RPCs + RLS policies + types.
-- **Touches:** `database/schema.sql`, `database/migrations/2026-05-07_customer_portal.sql`, `database/rls-policies.sql`, `database/functions/create_registration_token.sql`, `database/functions/claim_registration_token.sql`, `src/lib/database.types.ts`, `tests/lib/customer-portal.test.ts`, `docs/DATABASE_SCHEMA.md`.
-- **Acceptance:** five tables with RLS-on read policies and write-only-via-RPC contract; `create_registration_token` issues 16-char tokens to authenticated workspace members; `claim_registration_token` is anon-callable and atomically writes customer + contacts + pets + order_link in one transaction; tokens are single-use and 90-day expiring; types compile; vitest covers the contract.
+### Wave 40b — Customer Portal UI (demo mode)
+- **Goal:** Make the post-purchase Customer Portal flow clickable end-to-end against the existing demo-mode pattern (no Supabase needed). Cashier completes a sale → success screen issues a registration QR + share link → customer fills the form → registration appears in the seller's customer list. Real Supabase wiring follows after Wave 40a (PR #5) merges.
+- **Touches:** `src/lib/demo/customer-tokens.ts`, `src/lib/demo/useDemoCustomerTokens.ts`, `src/app/app/pos/success/[orderId]/SuccessClient.tsx` (extend), `src/app/app/pos/success/[orderId]/RegistrationLinkBlock.tsx` (NEW), `src/app/register/[token]/page.tsx` (NEW), `src/app/register/[token]/RegisterForm.tsx` (NEW), `src/app/register/[token]/schema.ts` (NEW), `src/app/register/[token]/actions.ts` (NEW), `src/app/register/[token]/success/page.tsx` (NEW), `tests/lib/customer-tokens.test.ts`.
+- **Acceptance:** click-through demo works in one browser session: sale → success screen shows QR + 16-char share link + "Send registration link" button; opening the link in a new tab loads the portal page, validates the demo token, accepts the form (customer + optional pet), writes the demo customer + link, redirects to the success page; back in the seller app, the customer dashboard reflects the new entry.
 - **Owner:** claude
-- **Status:** in-progress
-- **Branch:** pos/wave-40a-customer-portal
-- **Claimed:** 2026-05-07 00:30
-- **BlockedBy:** none for the data layer. UI (40b — receipt QR + portal page + Server Actions) and cashier-side lookup (40c — repeat customer attach) follow as separate batches.
-- **Notes:** This is the architectural separation that turns the existing in-cashier pet UI (Wave 35 demo localStorage) into a proper post-purchase portal layer. Pet profile remains the booth-seller competitive moat per VISION.md, but it is now implemented as a relationship engine rather than a checkout burden.
+- **Status:** ready-for-review
+- **Branch:** pos/wave-40b-customer-portal-ui
+- **Claimed:** 2026-05-07 01:30
+- **BlockedBy:** none for the demo flow. Real Supabase wiring deferred to Wave 40d (after Wave 40a merges + a Supabase project is provisioned).
+- **Notes:** Demo mode uses localStorage-backed `useDemoCustomerTokens` hook (mirrors `useDemoPets` / `useDemoClaims` patterns). When Wave 40a merges and Supabase wires up, the Server Action swaps from the demo store to the `claim_registration_token` RPC; the UI does not change. **Implementation complete 2026-05-07**: 4 new files (token store + hook + portal page server-component + RegisterClient form) + 1 modification (SuccessClient mounts RegistrationLinkBlock) + 1 new component (RegistrationLinkBlock with QR + share link + copy button) + 15 new vitest tests. 263 tests pass total. tsc clean. `npm run build` clean — new `/register/[token]` route renders.
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 
