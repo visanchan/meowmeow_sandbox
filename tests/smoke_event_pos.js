@@ -3255,6 +3255,316 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch DD sample bucket flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch DD sample bucket flow", browserDialogs);
 
+  // ----------------------------------------------------------------------
+  // Batch DD interaction scenarios — verify sample + Send Later, sample +
+  // day rollover, sample + bill void, free gift + sample, and top-up +
+  // reversal sequences all keep warehouse / per-day-remaining / reconciler
+  // invariants intact. These are the interaction points the field event
+  // exposed.
+  // ----------------------------------------------------------------------
+  const interactionFlow = await page.evaluate(() => {
+    function resetClean() {
+      localStorage.clear();
+      state.sales = [];
+      state.voidedSales = [];
+      state.preorders = [];
+      state.cart = [];
+      state.movements = [];
+      state.inventory = createDefaultInventory();
+      state.globalInventory = createDefaultGlobalInventory();
+      invalidateSalesDerivedData();
+      state.selectedOperator = "Zamm";
+      PRODUCTS.forEach(p => {
+        state.globalInventory.global[p.sku] = 0;
+        state.globalInventory.onlineAllocated[p.sku] = 0;
+        state.globalInventory.eventAllocated[p.sku] = 0;
+        state.globalInventory.sampleQty[p.sku] = 0;
+        state.inventory.days.day1.eventStartConfirmed[p.sku] = true;
+      });
+    }
+    const sku = (PRODUCTS.find(p => p.sku === "001A") || PRODUCTS[0]).sku;
+    function makeSale(billId, dayId, items) {
+      const total = items.reduce((s, it) => s + (it.lineTotal || 0), 0);
+      return {
+        id: billId, billId, operatingDay: dayId,
+        datetime: new Date().toISOString(), timestamp: Date.now(),
+        payment: "cash", paymentStatus: "confirmed", operator: "Zamm",
+        subtotal: total, discount: 0, total,
+        items: items.map(it => ({
+          sku: it.sku, name: "smoke", category: "smoke",
+          qty: it.qty, basePrice: it.basePrice || 100,
+          lineTotal: it.lineTotal || (it.qty * (it.basePrice || 100)),
+          isFreeGift: !!it.isFreeGift, isPreorder: !!it.isPreorder,
+          fulfillmentType: it.fulfillmentType || ""
+        })),
+        tags: []
+      };
+    }
+    function reconcile() { return reconcileInventoryReport().find(r => r.sku === sku); }
+
+    // --- Scenario INT-1: Sample + Send Later. Warehouse must be invariant
+    // to sample conversions; Send Later commit must subtract from warehouse.
+    resetClean();
+    state.globalInventory.global[sku] = 50;
+    state.inventory.days.day1.startingStock[sku] = 30;
+    invalidateSalesDerivedData();
+    const int1Initial = stockSetupSnapshot(sku, "day1");
+    convertEventToSample(sku, 3);
+    const int1AfterMakeSample = stockSetupSnapshot(sku, "day1");
+    state.preorders = [{
+      id: "INT1-SL", sku, qty: 5, status: "pending",
+      fulfillmentType: "reserved_send_later", operatingDay: "day1",
+      paymentStatus: "paid_now", customerName: "x", phone: "1"
+    }];
+    invalidateSalesDerivedData();
+    const int1AfterSendLater = stockSetupSnapshot(sku, "day1");
+    convertSampleToEvent(sku, 1);
+    const int1AfterReturn = stockSetupSnapshot(sku, "day1");
+    const int1Reconcile = reconcile();
+
+    // --- Scenario INT-2: Sample + day rollover with sales. Carry-forward
+    // must preserve sample (not subtract it), so Day 2 starts with the
+    // physical-at-booth count and globalSample stays put.
+    resetClean();
+    state.globalInventory.global[sku] = 50;
+    state.inventory.days.day1.startingStock[sku] = 20;
+    state.sales = [makeSale("INT2-1", "day1", [{ sku, qty: 4 }])];
+    invalidateSalesDerivedData();
+    convertEventToSample(sku, 5);
+    const int2Day1 = { ...stockSetupSnapshot(sku, "day1"), sample: globalSampleQty(sku) };
+    state.inventory.days.day1.closed = true;
+    state.inventory.days.day2.startingStock = getDayPhysicalAtBoothMap("day1");
+    state.inventory.days.day2.eventStartConfirmed = buildSkuMap(() => true);
+    state.inventory.currentDay = "day2";
+    state.inventory.viewDay = "day2";
+    realignInventoryCarryForward("day1", { persist: false });
+    invalidateSalesDerivedData();
+    const int2Day2 = { ...stockSetupSnapshot(sku, "day2"), sample: globalSampleQty(sku) };
+    const int2Day2StartingFromCarry = state.inventory.days.day2.startingStock[sku];
+    const int2Reconcile = reconcile();
+
+    // --- Scenario INT-3: Sample + bill void. Voiding a sale must restore
+    // booth remaining; sample bucket must be unchanged; reconciler clean.
+    resetClean();
+    state.globalInventory.global[sku] = 50;
+    state.inventory.days.day1.startingStock[sku] = 20;
+    convertEventToSample(sku, 4);
+    state.sales = [makeSale("INT3-1", "day1", [{ sku, qty: 6 }])];
+    invalidateSalesDerivedData();
+    const int3BeforeVoid = { ...stockSetupSnapshot(sku, "day1"), sample: globalSampleQty(sku) };
+    // Mimic voidSale path: drop sale, append VOID movements, realign.
+    state.voidedSales.push({ ...state.sales[0], voidedAt: new Date().toISOString(), voidReason: "smoke void" });
+    state.sales = [];
+    invalidateSalesDerivedData();
+    realignInventoryCarryForward("day1", { persist: false });
+    const int3AfterVoid = { ...stockSetupSnapshot(sku, "day1"), sample: globalSampleQty(sku) };
+    const int3Reconcile = reconcile();
+
+    // --- Scenario INT-4: Free gift + sample. Free-gift item decrements
+    // booth inventory but is excluded from paid sold counts. Sample bucket
+    // should be untouched.
+    resetClean();
+    state.globalInventory.global[sku] = 50;
+    state.inventory.days.day1.startingStock[sku] = 20;
+    convertEventToSample(sku, 3);
+    const int4SampleBefore = globalSampleQty(sku);
+    state.sales = [makeSale("INT4-1", "day1", [
+      { sku, qty: 2, basePrice: 100, lineTotal: 200 },
+      { sku, qty: 1, basePrice: 0, lineTotal: 0, isFreeGift: true }
+    ])];
+    invalidateSalesDerivedData();
+    const int4Snap = { ...stockSetupSnapshot(sku, "day1"), sample: globalSampleQty(sku) };
+    const int4SoldMap = getDaySoldMap("day1");
+    const int4Reconcile = reconcile();
+
+    // --- Scenario INT-5: Top-up + reversal + correction sequence. Warehouse
+    // must round-trip cleanly across these mutations.
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.globalInventory.onlineAllocated[sku] = 20;
+    state.inventory.days.day1.startingStock[sku] = 30;
+    invalidateSalesDerivedData();
+    const int5Initial = stockSetupSnapshot(sku, "day1").warehouse;
+    // Top up +5 (mirrors applyStockSetupDraft top-up branch).
+    state.inventory.days.day1.addedStock[sku] += 5;
+    state.inventory.days.day1.addLog.push({
+      sku, qty: 5, at: new Date().toISOString(),
+      dayId: "day1", type: "stock_setup",
+      reason: "Confirmed Stock Setup top-up"
+    });
+    const int5AfterTopUp = stockSetupSnapshot(sku, "day1").warehouse;
+    // Reverse (mirrors confirmInventoryReverse).
+    state.inventory.days.day1.addedStock[sku] -= 3;
+    state.inventory.days.day1.addLog.push({
+      sku, qty: -3, at: new Date().toISOString(),
+      dayId: "day1", type: "correction", reason: "smoke reverse",
+      reversedLogAt: new Date().toISOString()
+    });
+    const int5AfterReverse = stockSetupSnapshot(sku, "day1").warehouse;
+    // Inventory Correction on addedStock (current value 2 -> 6, +4 from warehouse).
+    if (els.inventoryCorrectionSkuSelect) els.inventoryCorrectionSkuSelect.value = sku;
+    if (els.inventoryCorrectionFieldSelect) els.inventoryCorrectionFieldSelect.value = "addedStock";
+    if (els.inventoryCorrectionQtyInput) els.inventoryCorrectionQtyInput.value = "6";
+    if (els.inventoryCorrectionReasonInput) els.inventoryCorrectionReasonInput.value = "smoke";
+    const correctionDraft = buildInventoryCorrectionDraft();
+    state.pendingInventoryCorrection = correctionDraft;
+    confirmInventoryCorrection();
+    const int5AfterCorrection = stockSetupSnapshot(sku, "day1").warehouse;
+    const int5Reconcile = reconcile();
+
+    return {
+      sku,
+      // INT-1
+      int1: {
+        warehouseInitial: int1Initial.warehouse,
+        warehouseAfterMakeSample: int1AfterMakeSample.warehouse,
+        warehouseAfterSendLater: int1AfterSendLater.warehouse,
+        warehouseAfterReturn: int1AfterReturn.warehouse,
+        sampleAfterMake: int1AfterMakeSample.sample,
+        sampleAfterReturn: int1AfterReturn.sample,
+        committedAfterSendLater: int1AfterSendLater.committed,
+        reconcileOk: int1Reconcile?.isOk,
+        reconcileDelta: int1Reconcile?.allocatedDelta,
+      },
+      // INT-2
+      int2: {
+        day1Sample: int2Day1.sample,
+        day1Remaining: int2Day1.remainingEvent,
+        day1Sold: int2Day1.sold,
+        day2StartingFromCarry: int2Day2StartingFromCarry,
+        day2Sample: int2Day2.sample,
+        day2Remaining: int2Day2.remainingEvent,
+        reconcileOk: int2Reconcile?.isOk,
+        reconcileDelta: int2Reconcile?.allocatedDelta,
+      },
+      // INT-3
+      int3: {
+        beforeVoidRemaining: int3BeforeVoid.remainingEvent,
+        beforeVoidSample: int3BeforeVoid.sample,
+        beforeVoidSold: int3BeforeVoid.sold,
+        afterVoidRemaining: int3AfterVoid.remainingEvent,
+        afterVoidSample: int3AfterVoid.sample,
+        afterVoidSold: int3AfterVoid.sold,
+        reconcileOk: int3Reconcile?.isOk,
+        reconcileDelta: int3Reconcile?.allocatedDelta,
+      },
+      // INT-4
+      int4: {
+        sampleBefore: int4SampleBefore,
+        sampleAfter: int4Snap.sample,
+        soldMap: int4SoldMap[sku],
+        remainingAfter: int4Snap.remainingEvent,
+        reconcileOk: int4Reconcile?.isOk,
+        reconcileDelta: int4Reconcile?.allocatedDelta,
+      },
+      // INT-5
+      int5: {
+        initial: int5Initial,
+        afterTopUp: int5AfterTopUp,
+        afterReverse: int5AfterReverse,
+        afterCorrection: int5AfterCorrection,
+        reconcileOk: int5Reconcile?.isOk,
+        reconcileDelta: int5Reconcile?.allocatedDelta,
+      },
+    };
+  });
+
+  // INT-1 assertions: sample neutral on warehouse; Send Later subtracts from warehouse.
+  assert(interactionFlow.int1.warehouseInitial === interactionFlow.int1.warehouseAfterMakeSample,
+    "INT-1: Make sample must NOT change warehouse",
+    interactionFlow.int1);
+  assert(interactionFlow.int1.warehouseInitial - interactionFlow.int1.warehouseAfterSendLater === 5,
+    "INT-1: Send Later commit (qty=5) must reduce warehouse by 5",
+    interactionFlow.int1);
+  assert(interactionFlow.int1.warehouseAfterSendLater === interactionFlow.int1.warehouseAfterReturn,
+    "INT-1: Return sample must NOT change warehouse (committed already counted)",
+    interactionFlow.int1);
+  assert(interactionFlow.int1.sampleAfterMake === 3 && interactionFlow.int1.sampleAfterReturn === 2,
+    "INT-1: sample bucket must move from 3 to 2 across Make+Return",
+    interactionFlow.int1);
+  assert(interactionFlow.int1.committedAfterSendLater === 5,
+    "INT-1: committed must reflect Send Later qty",
+    interactionFlow.int1);
+  assert(interactionFlow.int1.reconcileOk === true && interactionFlow.int1.reconcileDelta === 0,
+    "INT-1: reconciler must be clean across sample + Send Later interaction",
+    interactionFlow.int1);
+
+  // INT-2 assertions: carry-forward preserves physical-at-booth, sample persists.
+  assert(interactionFlow.int2.day1Sample === 5,
+    "INT-2: Day 1 sample bucket must equal 5",
+    interactionFlow.int2);
+  // Day 1 booth physical = starting + added - sold = 20 + 0 - 4 = 16.
+  assert(interactionFlow.int2.day2StartingFromCarry === 16,
+    "INT-2: Day 2 starting must be physical-at-booth (no sample sub) = 16",
+    interactionFlow.int2);
+  assert(interactionFlow.int2.day2Sample === 5,
+    "INT-2: globalSample must persist across day rollover (Bug E closure)",
+    interactionFlow.int2);
+  // Day 2 sellable = starting(16) + added(0) - globalSample(5) - sold(0) = 11.
+  assert(interactionFlow.int2.day2Remaining === 11,
+    "INT-2: Day 2 remaining must equal physical(16) - globalSample(5) = 11",
+    interactionFlow.int2);
+  assert(interactionFlow.int2.reconcileOk === true && interactionFlow.int2.reconcileDelta === 0,
+    "INT-2: reconciler must be clean after sample + day rollover with sales",
+    interactionFlow.int2);
+
+  // INT-3 assertions: void restores booth remaining, sample bucket unchanged.
+  assert(interactionFlow.int3.beforeVoidSold === 6 && interactionFlow.int3.afterVoidSold === 0,
+    "INT-3: void must zero out the sold count for the voided bill's day",
+    interactionFlow.int3);
+  assert(interactionFlow.int3.afterVoidRemaining - interactionFlow.int3.beforeVoidRemaining === 6,
+    "INT-3: void must restore 6 units to remaining event stock",
+    interactionFlow.int3);
+  assert(interactionFlow.int3.beforeVoidSample === 4 && interactionFlow.int3.afterVoidSample === 4,
+    "INT-3: void must NOT change sample bucket",
+    interactionFlow.int3);
+  assert(interactionFlow.int3.reconcileOk === true && interactionFlow.int3.reconcileDelta === 0,
+    "INT-3: reconciler must be clean after void with active samples",
+    interactionFlow.int3);
+
+  // INT-4 assertions: free gift counts toward inventory deduction (booth stock
+  // physically went out the door), but the dashboard's paid top-sellers
+  // aggregator filters isFreeGift separately. Sample bucket is untouched.
+  assert(interactionFlow.int4.sampleBefore === 3 && interactionFlow.int4.sampleAfter === 3,
+    "INT-4: free-gift sale must NOT change sample bucket",
+    interactionFlow.int4);
+  // soldMap counts all booth-sold items (paid + free gift) for inventory math.
+  // Filter for paid-only happens in dashboard top sellers, not in sold counts.
+  assert(interactionFlow.int4.soldMap === 3,
+    "INT-4: getDaySoldMap must include free-gift qty in inventory sold count (2 paid + 1 free = 3)",
+    interactionFlow.int4);
+  // remaining = starting(20) + 0 - globalSample(3) - sold(3) = 14.
+  assert(interactionFlow.int4.remainingAfter === 14,
+    "INT-4: remaining must subtract free-gift qty from booth stock (14 = 20 - 3 sample - 3 sold)",
+    interactionFlow.int4);
+  assert(interactionFlow.int4.reconcileOk === true && interactionFlow.int4.reconcileDelta === 0,
+    "INT-4: reconciler must be clean across free-gift + sample interaction",
+    interactionFlow.int4);
+
+  // INT-5 assertions: top-up / reverse / correction round-trips warehouse correctly.
+  // Initial warehouse = global(100) - online(20) - day1Start(30) - committed(0) = 50.
+  // After +5 top-up: 100 - 20 - 35 - 0 = 45.
+  // After -3 reverse:  100 - 20 - 32 - 0 = 48.
+  // After correction addedStock 2 -> 6 (now 6): 100 - 20 - 36 - 0 = 44.
+  assert(interactionFlow.int5.initial === 50,
+    "INT-5: initial warehouse must equal 50",
+    interactionFlow.int5);
+  assert(interactionFlow.int5.afterTopUp === 45,
+    "INT-5: warehouse must drop by 5 after top-up",
+    interactionFlow.int5);
+  assert(interactionFlow.int5.afterReverse === 48,
+    "INT-5: warehouse must rise by 3 after reverse",
+    interactionFlow.int5);
+  assert(interactionFlow.int5.afterCorrection === 44,
+    "INT-5: warehouse must drop by 4 after addedStock correction (2 -> 6)",
+    interactionFlow.int5);
+  assert(interactionFlow.int5.reconcileOk === true && interactionFlow.int5.reconcileDelta === 0,
+    "INT-5: reconciler must be clean after top-up + reverse + correction sequence",
+    interactionFlow.int5);
+
+  assert(pageErrors.length === 0, "No page errors after Batch DD interaction scenarios", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch DD interaction scenarios", browserDialogs);
+
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
 }
