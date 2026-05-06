@@ -703,6 +703,62 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:**
 - **Notes:** Final readiness pass requested by user on 2026-04-28. Codex executed this solo after Batch Z was tested by the user and merged locally into `main`. Full smoke passes on `batch/final-review`. Final-review coverage added one combined high-risk checkout scenario: paid booth items + Send Later delivery fee + card surcharge + automatic sticker gifts, asserting pending sale total, saved sale total, delivery fee, card surcharge, free sticker inventory movement, Send Later non-event-stock movement, and day CSV rows all agree. Static drift scan found only historical/legacy scarf references in docs and legacy compatibility code; no live `FREE_GIFT_SKU` or browser-dialog regression found.
 
+### Batch AA — Manager Action Dashboard V1
+- **Business objective:** Turn the Internal Dashboard from "nice reporting" into "what should I do right now?". Layer manager-oriented action prompts on top of the existing V3 + Today By Hour dashboard so the owner/staff can see at a glance what needs attention, instead of scanning numbers and inferring decisions.
+- **Expected benefit:** Fewer missed stock/payment/fulfillment issues during a live event; faster restock and promo decisions; smoother end-of-day closeout; easier daily updates to family/team members without manual spreadsheet copying.
+- **Implementation difficulty:** medium. Five sub-features, all display-only and reading from existing state.
+- **Cost/complexity tradeoff:** Reuse existing `dashboardMetrics()`, `state.sales`, `state.inventory`, `state.preorders`, and the dashboard panel CSS. No new storage keys, no new CSV shapes, no chart libraries, no new payment/inventory math. The whole batch is a read-only manager layer above already-correct data.
+- **Reference:** Source recommendation drafted by user 2026-05-05 after exploring the `app ui improvement-handoff/` mockups. Treat the handoff folder as visual reference only — do not load any handoff file from `meowmeow_pos_event.html` at runtime.
+- **Items:**
+  1. **Today Action Panel** — top-of-dashboard alert row that surfaces only the conditions currently true:
+     - "Sales behind goal" — when today total / open-day pace falls below the per-day pace needed from `dashboardMetrics()`.
+     - "Low stock items" — list of SKUs at or below their low-alert threshold (already computed for Batch V's Low Stock Alerts card; reuse it).
+     - "Cash/transfer/card reconciliation warning" — when `paySplit` cash + transfer + card total disagrees with today total beyond a small float tolerance.
+     - "Pending Send Later orders" — count of orders in pending status from `state.preorders`, with a one-click jump to the queue.
+     - Empty state when no condition fires: a quiet "All clear" line. Do not show zero-count alerts.
+  2. **Inventory Recommendations** — short action chips next to the Low Stock Alerts card. Each chip is read-only display text generated from existing inventory + sales velocity:
+     - "Restock this item" — when remaining ≤ low-alert threshold AND the SKU has sold today.
+     - "Push this alternative SKU" — when an out-of-stock SKU has a same-tab sibling with healthy stock (use `tab` grouping from `PRODUCTS`).
+     - "Switch to Send Later" — when remaining stock is 0 but the SKU has Send Later eligibility.
+     - "Selling fast — do not discount yet" — when today qty for the SKU is in the top quartile of all sold SKUs.
+     - Recommendations are advisory text; no automated action is taken.
+  3. **End-of-Day Checklist** — collapsible panel near the bottom of the dashboard with five hand-checkable items:
+     - Export sales CSV (links to the existing day-CSV button).
+     - Cash count matches dashboard cash total (manual confirmation).
+     - Transfer total matches expected (manual confirmation).
+     - Card total matches expected (manual confirmation).
+     - Review pending Send Later orders (links to the queue).
+     - Save daily archive (links to the existing day archive).
+     - Checks persist in `localStorage` per operating day under a new key (`meowseum_event_eod_checklist_v1`) and clear on reset.
+  4. **Goal Pace Forecast** — extends the existing goal/pace strip with a projection block:
+     - Current revenue (already shown).
+     - Projected event total = `currentRevenue + paceSoFar × remainingOpenDays`, clearly labelled as a projection.
+     - Amount still needed to hit `EVENT_SALES_GOAL`.
+     - Required sales per remaining day AND per remaining hour for the active day (using event hours window, e.g. 10:00-21:00 from existing buckets).
+     - Show "Projection unavailable — no sales today" empty state instead of NaN/Infinity when `paceSoFar = 0`.
+  5. **Daily Summary Export** — single "Copy Today Summary" button that builds a clipboard-friendly text block with: today total, payment split, top sellers (paid only, top 5), low-stock items, pending Send Later count, and timestamp. Uses existing `navigator.clipboard.writeText` pattern from receipt-text. No CSV, no email — just text for WhatsApp/Excel paste.
+- **Touches:** `meowmeow_pos_event.html` dashboard markup/CSS/rendering, `dashboardMetrics()` (extend with `paySplitMismatch`, `pendingPreorderCount`, `recommendations`, `projectedEventTotal`, `requiredPerDay`, `requiredPerHour`, `dailySummaryText`), one new `localStorage` key for checklist state, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** product data, sales storage, CSV shape, transfer QR amount path, passcodes, inventory math, Send Later reservation math, free-gift display format, discount exception flags, payment split totals, or anything in the Correction Center / Bill Correction / Void Audit flows. Specifically, do not introduce CRM features, AI forecasting, full accounting, or staff ranking — those are explicitly deferred per the source recommendation.
+- **Acceptance checks:**
+  - With no sales and clean state, Today Action Panel shows the "All clear" empty line.
+  - Adding a low-stock SKU surfaces both the low-stock alert and the matching "Restock this item" recommendation chip.
+  - Marking off an end-of-day checklist item persists across panel close/reopen and across page refresh, and is cleared by Reset Data and by closing the operating day.
+  - Goal Pace Forecast shows the projection unavailable state with no sales, and a finite THB projection once at least one sale exists.
+  - "Copy Today Summary" puts a non-empty text block on the clipboard that includes today total, payment split, top 5 sellers, and low-stock list.
+  - Wrong dashboard PIN still blocks access; correct internal PIN still opens the redesigned panel.
+  - `tests/smoke_event_pos.js` extended with one focused scenario per sub-feature; full smoke passes.
+  - README Internal Dashboard section updated with the new manager-action layer.
+- **Risks/assumptions:**
+  - Source assumption from the recommendation: current POS data must give reliable sales / stock / payment / send-later counts. If any of those numbers are still being stabilized, defer the matching alert rather than ship a misleading recommendation.
+  - The "selling fast — do not discount yet" recommendation depends on today qty being non-trivial; below a small minimum, suppress it to avoid noise on slow days.
+  - Codex review recommended before merge because the alert layer affects manager decision-making during live event operations, even though no underlying data path changes.
+- **Owner:**
+- **Status:** planned
+- **Branch:**
+- **Claimed:**
+- **BlockedBy:** FINAL_REVIEW (post-event readiness pass should land first so the layer reads from a stable base).
+- **Notes:** Drafted 2026-05-05 from the user's recommendation after exploring `app ui improvement-handoff/`. Five sub-features intentionally scoped as one batch because they share the same dashboard region and the same `dashboardMetrics()` extension; splitting would multiply CSS/markup churn. Sister entry exists in `pos-for-sell/docs/BATCH_PLAN.md` Phase 9 so the SaaS version inherits the same manager-action concept after Phase 7 reaches parity.
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -726,6 +782,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 18. **Y** - Product Delivery Fee for Send Later Orders.
 19. **Z** - Replace Free Scarf Promo with Sticker Choice Promo after Batch Y is reviewed.
 20. **FINAL_REVIEW** - Event readiness bug fix and full workflow check after Batch Z is reviewed.
+21. **AA** - Manager Action Dashboard V1 (alerts, recommendations, end-of-day checklist, goal pace forecast, copyable daily summary). Planned, not claimed; lands after FINAL_REVIEW so the action layer reads from a stable post-event base.
 
 ## Done
 

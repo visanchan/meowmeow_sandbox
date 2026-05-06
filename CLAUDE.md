@@ -53,13 +53,14 @@ Claude should not:
 
 ## Handoff back to Codex/user
 
-At the end of a batch, report:
+At the end of a batch — or any standalone task — report:
 
 - What changed.
 - Files touched.
 - Manual checks performed.
 - Any risk or assumption still open.
 - Whether README/TASKS were updated.
+- Approximate token usage and USD cost. State the model used (e.g. `claude-opus-4-7`, `claude-sonnet-4-6`, Codex `gpt-X`), best-effort input/output token counts, the per-million rate applied, and the resulting `~$X.XX`. Mark as estimate — agents cannot read their own token meter mid-session. Users can run `/cost` in Claude Code for the exact figure.
 
 For high-risk batches, request Codex review before merge.
 
