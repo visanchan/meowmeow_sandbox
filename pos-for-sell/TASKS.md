@@ -22,11 +22,11 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 - **Touches:** `database/schema.sql`, `database/migrations/2026-05-07_add_sample_qty.sql`, `database/functions/convert_event_to_sample.sql`, `database/functions/convert_sample_to_event.sql`, `src/lib/database.types.ts`, `tests/lib/sample-bucket.test.ts`, `docs/DATABASE_SCHEMA.md`.
 - **Acceptance:** column added with default 0 and check ≥ 0; conversion functions are workspace-scoped, role-gated (`owner`, `manager`, `cashier`, `stock_staff`), atomic, audit-logged, and refuse to underflow either side; types compile; vitest covers the type shape.
 - **Owner:** claude
-- **Status:** in-progress
+- **Status:** ready-for-review
 - **Branch:** pos/wave-39a-sample-bucket
 - **Claimed:** 2026-05-07 00:00
 - **BlockedBy:** none for the data-layer scope. Wave 39b (UI) and Wave 39c (correction queue rebuild) follow as separate batches.
-- **Notes:** Carried forward from meowmeow Batch DD/EE field findings. Sister batches: 39b sample-bucket UI; 39c bill-correction Send Later queue rebuild + warehouse-aware allowance (port of meowmeow Batch EE).
+- **Notes:** Carried forward from meowmeow Batch DD/EE field findings. Sister batches: 39b sample-bucket UI; 39c bill-correction Send Later queue rebuild + warehouse-aware allowance (port of meowmeow Batch EE). **Implementation complete 2026-05-07**: schema column + idempotent migration file, two atomic RPCs (workspace-scoped, role-gated, audit-logged), database.types.ts updated, 6 vitest type guards (254 tests pass total). Codex review recommended before merge per CLAUDE.md (touches inventory atomicity).
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 
