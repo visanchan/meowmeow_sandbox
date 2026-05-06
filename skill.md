@@ -244,3 +244,84 @@ Auto-memory files persist across sessions in `~/.claude/projects/.../memory/`. U
 - If the memory names a date → verify against the system's `currentDate`. The "free runs through May 5, 2026" claim outlived the actual cutoff.
 
 **When a memory contradicts current code, trust current code.** Update or remove the stale memory so future sessions don't repeat the mistake.
+
+---
+
+## 11. Anon-callable RPC with token credential (SaaS pattern)
+
+**Trigger**: a customer-facing surface needs to write to the database, but the customer doesn't have a Supabase auth session (e.g. post-purchase Customer Portal, public unsubscribe link, anonymous review submission).
+
+**The pattern** (proven in pos-for-sell Wave 40a):
+
+1. **Issuer-side** — when the seller-facing flow has a moment where the token can be created (e.g. order completes), call an authenticated RPC like `create_X_token(parent_id)` that:
+   - Validates the caller is a workspace member with the right role.
+   - Generates an opaque random token (15+ bytes from `gen_random_bytes`, base64-stripped to a URL-safe ~16-char string).
+   - Inserts a row in a `*_tokens` table with `expires_at = now() + interval '90 days'`, `claimed_at = null`.
+   - Returns the token string.
+2. **Customer-side** — receive the token in a URL (QR / shareable link). Server-side route fetches the token row using the **service-role admin client** (server-only) to validate before rendering the form.
+3. **Claim RPC** — `claim_X_token(p_token, p_payload jsonb)` is `security definer` and **`grant execute ... to anon, authenticated`**. It:
+   - Locks the token row `for update`.
+   - Aborts with `errcode = '22023'` if missing / claimed / expired.
+   - Performs all writes atomically (multiple tables in one transaction).
+   - Audit-logs with `user_id = null` (anon flow has no `auth.uid()`).
+   - Marks the token claimed.
+   - Returns the new entity id.
+4. **RLS** — `*_tokens` table has RLS on with **member-SELECT only**, no anon-SELECT policy. The token is the credential; it never leaks via direct read.
+
+**Why it works**:
+- The token IS the credential. Two different physical people, two different sessions, one shared opaque secret — exactly the booth-cashier-then-customer flow.
+- All writes go through one SECURITY DEFINER RPC. No anon SQL surface; the database policy is "anon can call this one function, nothing else."
+- Audit log captures every claim with timestamp + payload-shape; `user_id null` rows are visibly anon.
+- 90-day expiry gives customers time to register on their own pace; 16-char base32-style gives ~80 bits of entropy, sufficient for non-guessable tokens.
+
+**What didn't work** (rejected during the design):
+- Putting an anon SELECT policy on the token table with a "where token = X" clause. Tokens become scrapable from URLs; entropy isn't enough on its own without the SECURITY DEFINER aborts-on-claimed gate.
+- Requiring customer auth before claim. Defeats the speed goal at the booth; customers walk away rather than sign up.
+
+---
+
+## 12. Two-layer SaaS architecture (POS App + Customer Portal)
+
+**Trigger**: building a SaaS where the customer-facing experience and the staff-facing experience have very different speed / completeness tradeoffs (POS booth being the canonical case).
+
+**The rule**: **don't ask staff to do CRM during peak sales time.** Customer info, pet profiles, loyalty, marketing consent — all of it lives in a separate customer-facing layer that the customer fills out *after* the sale.
+
+**Implementation pattern** (proven in MochiPOS):
+
+- **Layer A — staff-facing app**: routes under `/app/*`, gated by `workspace_members` membership. Required-to-save fields are minimal. Customer fields are optional even when present (e.g. shipping info for Send Later). No CRM UI.
+- **Layer B — customer-facing portal**: routes under `/register/[token]` (or similar). Anon, mobile-first. Captures the full profile via a SECURITY DEFINER RPC keyed by token (see pattern 11).
+- **Bridge**: a one-shot token in a `*_registration_tokens` table. Issued by the staff-facing app at sale completion; redeemed by the customer at any later time via QR or shareable link.
+- **Hard rule for code reviews**: pet UI / CRM widgets must not appear in `/app/*` batches. If you see them there, move them to the portal.
+
+**Why "checkout first, profile later" matters in real numbers**:
+- A booth doing 100 customers/hour with 45-second profile capture per sale = **75 staff-minutes spent on data entry per hour**. That's an entire cashier's worth of time.
+- Customers under queue pressure type the wrong number, give the wrong pet name, skip the field, or walk away. Data quality is worse than capturing nothing.
+- A QR on the receipt converts to genuine, accurate, customer-typed registration — at 30%+ rates if the offer is good (loyalty, future product recommendations, pet-specific reminders).
+
+**When to apply**: any SaaS that puts staff between the customer and the data. Booth POS, restaurant POS, salon booking, queue-management apps — the "do CRM later" rule applies broadly.
+
+**When not to apply**: SaaS where the same person plays both roles (self-checkout, e-commerce). There you can ask for everything upfront because there's no queue waiting.
+
+---
+
+## 13. Stacked PR recovery after squash-merge
+
+**Trigger**: PR B was branched off PR A's branch (e.g. `batch/ee-...` off `batch/dd-...`). PR A is squash-merged with `--delete-branch`. GitHub closes PR B because its base disappeared.
+
+**The pattern**:
+1. Don't try to retarget PR B in the GitHub UI — it'll show all of A+B's changes as a diff against new main, since squash discards the original commits.
+2. Cherry-pick approach (cleanest):
+   ```bash
+   git checkout main && git pull
+   git checkout -b batch/x-name-v2
+   git cherry-pick <last-commit-of-original-B-branch>  # only B's changes
+   ```
+   If multiple commits, cherry-pick the range that's B-only.
+3. Verify the diff matches expectations (`git diff main`).
+4. Push the new branch and open a fresh PR (`gh pr create --base main`).
+5. Update the original PR B's body with a "superseded by #N" note for traceability.
+
+**What didn't work** (burned us once during DD/EE):
+- `git rebase origin/main` on the EE branch — produced merge conflicts because the squash combined DD's commits, and EE's commits were applied on top of DD's individual commits. The conflicts are noise to resolve manually.
+
+**Lesson**: when you know a stack-of-PRs strategy is in play, prefer **rebase B onto A's last commit before squash** (or just merge A as a regular merge to preserve commit history). For squash workflows, cherry-pick is the recovery.
