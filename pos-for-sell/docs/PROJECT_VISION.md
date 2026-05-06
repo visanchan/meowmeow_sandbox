@@ -1,5 +1,7 @@
 # Cat Booth POS SaaS — Project Vision
 
+> **Canonical strategic direction:** see [ROADMAP.md](ROADMAP.md) for the full founder roadmap (May 2026) — beachhead, vertical-module strategy, Google Auth + invite-only pilot, three-level data philosophy, six-month build plan, pricing. This file remains the pilot-mechanics overview; ROADMAP wins where they overlap.
+
 ## What it is
 
 A web-based POS for cat-product booth sellers. Hosted on Vercel. Database, auth, and image storage on Supabase. Each client is a separate workspace with row-level isolation.
