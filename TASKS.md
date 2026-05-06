@@ -759,6 +759,48 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** FINAL_REVIEW (post-event readiness pass should land first so the layer reads from a stable base).
 - **Notes:** Drafted 2026-05-05 from the user's recommendation after exploring `app ui improvement-handoff/`. Five sub-features intentionally scoped as one batch because they share the same dashboard region and the same `dashboardMetrics()` extension; splitting would multiply CSS/markup churn. Sister entry exists in `pos-for-sell/docs/BATCH_PLAN.md` Phase 9 so the SaaS version inherits the same manager-action concept after Phase 7 reaches parity.
 
+### Batch DD — Sample Bucket Refactor + Warehouse Formula Repair
+- **Business objective:** Fix the post-event findings the user surfaced 2026-05-06: samples set on a past day cannot be edited from a later day; "Added Today" + sample interactions appear to leak event stock back to warehouse; staff want an easy way to convert event stock ↔ sample (because they sometimes sell a sample as a product).
+- **Expected benefit:** Sample stock is one persistent number visible from any day; converting event ↔ sample is a one-click action with audit trail; warehouse formula is consistent across Stock Setup live preview and Inventory Correction validation; phantom-stock paths through non-Day-1 startingStock corrections are closed.
+- **Implementation difficulty:** medium-high. Touches inventory state machine, correction validation, carry-forward, reconciler, smoke tests.
+- **Cost/complexity tradeoff:** One batch covering all six bugs because the sample model touches the same code regions as the formula repairs; splitting would multiply churn in `meowmeow_pos_event.html`.
+- **Bugs closed (with line refs):**
+  - **Bug A** — Past-day sample is unreachable. `applyStockSetupDraft` (line 1934) and `confirmInventoryCorrection` (line 2157) only write current-day `dayRecord.sampleQty`. Once Day 1 closes, no UI path edits its sample.
+  - **Bug B** — Phantom stock via non-Day-1 startingStock correction. `cumulativeAllocatedQty` (line 1909) reads only `day1.startingStock`, so editing Day 2 startingStock via Inventory Correction creates remaining stock without affecting warehouse.
+  - **Bug C** — Stock Setup live-preview warehouse formula wrong on Day 2+. `refreshPreview` (line 2213) uses `row.eventStarting` instead of `cumulativeAllocatedQty`, displaying inflated warehouse while editing locked fields.
+  - **Bug D** — Inventory Correction validation uses the same broken formula. `buildInventoryCorrectionDraft` (line 2155) can pass corrections that put real warehouse negative.
+  - **Bug E** — Per-day sample model causes visibility gap. Sample on Day 1 invisible from Day 2's UI; if user re-enters the count on Day 2, `totalSampleQty` (line 1910) double-counts and reconciler flags drift.
+  - **Bug F** — No "sell sample" path. Two-step error-prone field edit, no audit linkage between sample reduction and the subsequent sale.
+- **Items:**
+  1. Move sample to event-level: `state.globalInventory.sampleQty[sku]` (single number per SKU). One-time migration sums via `Math.max` across days; sets `sampleQtyGlobalMigrated:true`. Per-day `dayRecord.sampleQty` zeroed after migration but retained in shape for backward read compatibility.
+  2. Update `getDayRemainingMap`: subtract `globalInventory.sampleQty` (not per-day). Carry-forward formula in `closeOperatingDay` and `realignInventoryCarryForward` becomes `starting + added - sold` (no sample sub) so samples persist physically across days.
+  3. Update `totalSampleQty`, `stockSetupSnapshot`, `inventoryCorrectionCurrentValue`, `reconcileInventoryReport` to read global sample.
+  4. Replace sample stepper in Stock & Allocation Setup with read-only `Sample N` value plus 🔬 `Make sample (+1)` and `Return sample (−1)` buttons. New handlers `convertEventToSample(sku, qty=1)` and `convertSampleToEvent(sku, qty=1)` write `globalInventory.sampleQty` and append `SAMPLE_OUT` / `SAMPLE_IN` movement journal entries with auto reasons.
+  5. Inventory Correction `sampleQty` field now writes `state.globalInventory.sampleQty[sku]` instead of `dayRecord.sampleQty[draft.sku]`. The `dayId` selector becomes irrelevant for sample (still recorded for audit but writes are global).
+  6. Fix `refreshPreview` (line 2213) and `buildInventoryCorrectionDraft` (line 2155) warehouse formulas: use `cumulativeAllocatedQty(sku) + clampCount(row.addedToday delta)` style. Lock `startingStock` correction to Day 1 only; on Day 2+ disable the option and direct the user to use `addedStock` correction instead.
+  7. README inventory section updated: explain global sample, conversion buttons, Day 2+ correction routing.
+  8. Smoke test extensions: past-day sample reachability, Make/Return sample buttons, Day 2 startingStock correction lockout, refreshPreview formula correctness on Day 2, reconciler invariant with global sample.
+- **Touches:** `meowmeow_pos_event.html` (state shape, formulas, UI, correction flow, reconciler), `tests/smoke_event_pos.js` (new scenarios + update existing per-day sample test from Batch X), `readme.md` (inventory + correction sections), `TASKS.md`.
+- **Do not change:** sales storage, CSV shape, void audit, send-later reservation math, dashboard layout, PINs, payment flows, free-gift logic, addedStock top-up flow (Batch G semantics preserved).
+- **Acceptance checks:**
+  - Migration: existing localStorage with per-day sampleQty rolls into a single global sample number; flag prevents re-running; per-day sampleQty zeroed.
+  - Day 1 sample created with Make Sample button: globalSample +1, Day 1 remaining −1, warehouse unchanged, `SAMPLE_OUT` movement logged.
+  - Day 1 closes. Day 2 active. Sample visible from Day 2's Stock Setup with the same value. Return Sample button reduces global sample, current day remaining +1, `SAMPLE_IN` movement logged.
+  - Inventory Correction startingStock field disabled on Day 2+; reason text explains routing through addedStock.
+  - Stock Setup live preview warehouse value matches `stockSetupSnapshot(sku).warehouse` after every keystroke on Day 2.
+  - Reconciler: `cumulativeAllocated = remainingCurrentDay + globalSample + totalSold` invariant holds. No drift after sample conversion or addedStock correction.
+  - Existing smoke scenarios still pass (no regression in void/carry-forward, top-up reset, dashboard, void audit, drift detection, bulk export).
+- **Risks/assumptions:**
+  - Migration heuristic uses `Math.max` across days — overestimates if user reduced sample mid-event; user can correct via Return Sample button afterward. Underestimating would silently lose physical samples; overestimating is recoverable.
+  - Locking startingStock correction on Day 2+ removes a flexibility some advanced users may rely on; the addedStock route handles the same intent correctly.
+  - Codex review required before merge per CLAUDE.md (touches inventory + correction).
+- **Owner:**
+- **Status:** ready-for-review
+- **Branch:** batch/dd-sample-bucket
+- **Claimed:** 2026-05-06 12:00
+- **BlockedBy:**
+- **Notes:** Drafted and claimed 2026-05-06 after the user's post-event field findings session. Replaces the per-day sampleQty model (Batch D) with a global event-long sample bucket plus explicit conversion buttons; Batch D migration left intact in code as a stepping-stone pattern but its outcome is superseded. **Implementation complete 2026-05-06**; smoke test extended (six new Batch DD scenarios + existing Batch X test updated for the new global model + reconciler resets updated). Local Playwright smoke passes. Codex review requested before merge per CLAUDE.md (touches inventory + correction).
+
 ## Suggested order (least-conflict first)
 
 1. **A** (Claude or Codex) — fundamentals, unblocks B.
@@ -783,6 +825,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 19. **Z** - Replace Free Scarf Promo with Sticker Choice Promo after Batch Y is reviewed.
 20. **FINAL_REVIEW** - Event readiness bug fix and full workflow check after Batch Z is reviewed.
 21. **AA** - Manager Action Dashboard V1 (alerts, recommendations, end-of-day checklist, goal pace forecast, copyable daily summary). Planned, not claimed; lands after FINAL_REVIEW so the action layer reads from a stable post-event base.
+22. **DD** - Sample Bucket Refactor + Warehouse Formula Repair. Claimed 2026-05-06; closes six post-event findings around sample/Added-Today/warehouse interactions. Codex review required before merge.
 
 ## Done
 
