@@ -794,12 +794,12 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
   - Migration heuristic uses `Math.max` across days — overestimates if user reduced sample mid-event; user can correct via Return Sample button afterward. Underestimating would silently lose physical samples; overestimating is recoverable.
   - Locking startingStock correction on Day 2+ removes a flexibility some advanced users may rely on; the addedStock route handles the same intent correctly.
   - Codex review required before merge per CLAUDE.md (touches inventory + correction).
-- **Owner:** claude
-- **Status:** in-progress
+- **Owner:**
+- **Status:** ready-for-review
 - **Branch:** batch/dd-sample-bucket
 - **Claimed:** 2026-05-06 12:00
 - **BlockedBy:**
-- **Notes:** Drafted and claimed 2026-05-06 after the user's post-event field findings session. Replaces the per-day sampleQty model (Batch D) with a global event-long sample bucket plus explicit conversion buttons; Batch D migration left intact in code as a stepping-stone pattern but its outcome is superseded.
+- **Notes:** Drafted and claimed 2026-05-06 after the user's post-event field findings session. Replaces the per-day sampleQty model (Batch D) with a global event-long sample bucket plus explicit conversion buttons; Batch D migration left intact in code as a stepping-stone pattern but its outcome is superseded. **Implementation complete 2026-05-06**; smoke test extended (six new Batch DD scenarios + existing Batch X test updated for the new global model + reconciler resets updated). Local Playwright smoke passes. Codex review requested before merge per CLAUDE.md (touches inventory + correction).
 
 ## Suggested order (least-conflict first)
 

@@ -774,7 +774,9 @@ async function main() {
     state.inventory.viewDay = "day1";
     state.inventory.days.day1.startingStock[sku] = 10;
     state.inventory.days.day1.addedStock[sku] = 2;
-    state.inventory.days.day1.sampleQty[sku] = 1;
+    // Batch DD: sample is now event-long on globalInventory, not per-day.
+    state.globalInventory.sampleQty[sku] = 1;
+    state.globalInventory.sampleQtyGlobalMigrated = true;
     state.sales = [
       {
         id: "SMOKE-SAMPLE-1",
@@ -839,7 +841,7 @@ async function main() {
       addedValueHighlighted: !!addedCellBefore?.querySelector(".inventory-added-value.inventory-table-number"),
       remainingValueHighlighted: !!remainingCellBefore?.classList.contains("inventory-table-number"),
       remainingBefore,
-      sampleAfterCorrection: state.inventory.days.day1.sampleQty[sku],
+      sampleAfterCorrection: state.globalInventory.sampleQty[sku],
       rowChipGoneAfterCorrection: !rowAfter?.querySelector(".inventory-sample-chip"),
       remainingAfter,
       summaryAfterCorrection: inventoryViewAddedTotal.textContent,
@@ -848,12 +850,12 @@ async function main() {
 
   assert(inventorySampleFlow.summaryHasSplit, "Inventory Flow Added Stock KPI must render as a split Added/Sample card", inventorySampleFlow);
   assert(inventorySampleFlow.summaryShowsAddedTwo, "Inventory Flow Added Stock KPI must keep the added total visible", inventorySampleFlow);
-  assert(inventorySampleFlow.summaryShowsSampleOne, "Inventory Flow Added Stock KPI must show Sample -1", inventorySampleFlow);
+  assert(inventorySampleFlow.summaryShowsSampleOne, "Inventory Flow Added Stock KPI must show Sample -1 (event-long bucket)", inventorySampleFlow);
   assert(inventorySampleFlow.rowShowsSampleChip, "Inventory Flow row must show -1 sample for the sampled SKU", inventorySampleFlow);
   assert(inventorySampleFlow.addedValueHighlighted, "Inventory Flow Added Stock table value must use the highlighted numeric styling", inventorySampleFlow);
   assert(inventorySampleFlow.remainingValueHighlighted, "Inventory Flow Remaining Stock table value must use the highlighted numeric styling", inventorySampleFlow);
   assert(inventorySampleFlow.remainingBefore === 8, "Sample stock must stay deducted from remaining event stock", inventorySampleFlow);
-  assert(inventorySampleFlow.sampleAfterCorrection === 0, "Inventory Correction must save sample quantity back to 0", inventorySampleFlow);
+  assert(inventorySampleFlow.sampleAfterCorrection === 0, "Batch DD: Inventory Correction sampleQty must write to globalInventory.sampleQty", inventorySampleFlow);
   assert(inventorySampleFlow.rowChipGoneAfterCorrection, "Inventory Flow row sample chip must disappear after sample quantity returns to 0", inventorySampleFlow);
   assert(inventorySampleFlow.remainingAfter === 9, "Returning sample stock to 0 must increase remaining event stock by 1", inventorySampleFlow);
   assert(inventorySampleFlow.summaryAfterCorrection.includes("-0"), "Inventory Flow sample summary must show a quiet -0 state after correction", inventorySampleFlow);
@@ -2411,6 +2413,8 @@ async function main() {
         state.globalInventory.global[p.sku] = 0;
         state.globalInventory.onlineAllocated[p.sku] = 0;
         state.globalInventory.eventAllocated[p.sku] = 0;
+        // Batch DD: sample is event-long; reset alongside other globals.
+        if (state.globalInventory.sampleQty) state.globalInventory.sampleQty[p.sku] = 0;
       });
       const sku = PRODUCTS[0].sku;
       state.globalInventory.global[sku] = globalQty;
@@ -2424,7 +2428,8 @@ async function main() {
       state.inventory.days[activeDay].closed = true;
       state.inventory.days[activeDay].closedAt = new Date().toISOString();
       if (nextDay) {
-        state.inventory.days[nextDay].startingStock = getDayRemainingMap(activeDay);
+        // Batch DD: physical at booth carry-forward (no sample subtraction; samples persist).
+        state.inventory.days[nextDay].startingStock = getDayPhysicalAtBoothMap(activeDay);
         state.inventory.days[nextDay].addedStock = buildSkuMap(() => 0);
         state.inventory.days[nextDay].eventStartConfirmed = buildSkuMap(() => true);
         realignInventoryCarryForward(activeDay, { persist: false });
@@ -3029,6 +3034,226 @@ async function main() {
 
   assert(pageErrors.length === 0, "No page errors after Batch AA bulk export flow", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch AA bulk export flow", browserDialogs);
+
+  // ----------------------------------------------------------------------
+  // Batch DD: sample bucket refactor + warehouse formula repair.
+  // Six post-event bugs around sample / Added Today / warehouse interactions.
+  // Scenarios:
+  //   1. Migration: per-day sampleQty rolls into globalInventory.sampleQty.
+  //   2. Make / Return sample buttons: warehouse unchanged, day remaining moves.
+  //   3. Past-day sample reachable: Day 1 sample editable from Day 2.
+  //   4. Day-2 startingStock correction blocked.
+  //   5. Live preview formula matches stockSetupSnapshot on Day 2.
+  //   6. Reconciler invariant holds with global sample.
+  // ----------------------------------------------------------------------
+  const sampleBucketFlow = await page.evaluate(() => {
+    localStorage.clear();
+    state.sales = [];
+    state.voidedSales = [];
+    state.preorders = [];
+    state.cart = [];
+    state.movements = [];
+    invalidateSalesDerivedData();
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    state.selectedOperator = "Zamm";
+
+    const product = PRODUCTS.find(item => item.sku === "001A") || PRODUCTS[0];
+    const sku = product.sku;
+
+    // Scenario 1 — Migration: simulate stale per-day sampleQty (pre-DD).
+    state.globalInventory.sampleQtyGlobalMigrated = false;
+    state.globalInventory.sampleQty[sku] = 0;
+    state.inventory.days.day1.sampleQty[sku] = 5;
+    state.inventory.days.day2.sampleQty[sku] = 3;
+    state.inventory.days.day3.sampleQty[sku] = 0;
+    state.inventory.days.day4.sampleQty[sku] = 0;
+    migrateSampleQtyToGlobal();
+    const migrated = {
+      flagFlippedTrue: state.globalInventory.sampleQtyGlobalMigrated === true,
+      globalSampleAfterMigration: state.globalInventory.sampleQty[sku],
+      day1Cleared: state.inventory.days.day1.sampleQty[sku],
+      day2Cleared: state.inventory.days.day2.sampleQty[sku],
+      idempotent: (() => {
+        // Re-running must not double-add or change anything.
+        migrateSampleQtyToGlobal();
+        return state.globalInventory.sampleQty[sku];
+      })()
+    };
+
+    // Reset for the rest of the scenarios.
+    state.inventory = createDefaultInventory();
+    state.globalInventory = createDefaultGlobalInventory();
+    state.movements = [];
+    state.sales = [];
+    invalidateSalesDerivedData();
+    PRODUCTS.forEach(p => {
+      state.globalInventory.global[p.sku] = 0;
+      state.globalInventory.onlineAllocated[p.sku] = 0;
+      state.globalInventory.eventAllocated[p.sku] = 0;
+      state.globalInventory.sampleQty[p.sku] = 0;
+    });
+    state.globalInventory.global[sku] = 100;
+    state.globalInventory.onlineAllocated[sku] = 20;
+    state.inventory.days.day1.startingStock[sku] = 30;
+    PRODUCTS.forEach(p => { state.inventory.days.day1.eventStartConfirmed[p.sku] = true; });
+
+    // Scenario 2 — Make sample (+1) on Day 1.
+    const beforeMake = stockSetupSnapshot(sku, "day1");
+    const makeResult = convertEventToSample(sku, 1);
+    const afterMake = stockSetupSnapshot(sku, "day1");
+    const makeMovement = state.movements[state.movements.length - 1] || {};
+
+    // Return sample (-1) on Day 1.
+    const returnResult = convertSampleToEvent(sku, 1);
+    const afterReturn = stockSetupSnapshot(sku, "day1");
+    const returnMovement = state.movements[state.movements.length - 1] || {};
+
+    // Make again, then close Day 1, verify visible from Day 2.
+    convertEventToSample(sku, 2);
+    const sampleAfterTwoMakes = stockSetupSnapshot(sku, "day1").sample;
+
+    // Manually close Day 1 (mirroring closeOperatingDay carry-forward).
+    state.inventory.days.day1.closed = true;
+    state.inventory.days.day2.startingStock = getDayPhysicalAtBoothMap("day1");
+    state.inventory.days.day2.eventStartConfirmed = buildSkuMap(() => true);
+    state.inventory.currentDay = "day2";
+    state.inventory.viewDay = "day2";
+    realignInventoryCarryForward("day1", { persist: false });
+    invalidateSalesDerivedData();
+
+    // Scenario 3 — Sample visible from Day 2 (was the original bug).
+    const day2View = stockSetupSnapshot(sku, "day2");
+
+    // Try Return Sample from Day 2 — should work even though sample was created on Day 1.
+    const returnFromDay2 = convertSampleToEvent(sku, 1);
+    const day2AfterReturn = stockSetupSnapshot(sku, "day2");
+
+    // Scenario 4 — startingStock correction blocked on Day 2.
+    let blockedNoticeFired = false;
+    const originalNotice = window.showAppNotice;
+    window.showAppNotice = (msg, opts) => {
+      if (opts && opts.title && opts.title.includes("Cannot correct starting stock")) {
+        blockedNoticeFired = true;
+      }
+    };
+    if (els.inventoryCorrectionSkuSelect) els.inventoryCorrectionSkuSelect.value = sku;
+    if (els.inventoryCorrectionFieldSelect) els.inventoryCorrectionFieldSelect.value = "startingStock";
+    if (els.inventoryCorrectionQtyInput) els.inventoryCorrectionQtyInput.value = "999";
+    if (els.inventoryCorrectionReasonInput) els.inventoryCorrectionReasonInput.value = "smoke";
+    const blockedDraft = buildInventoryCorrectionDraft();
+    window.showAppNotice = originalNotice;
+
+    // Scenario 5 — Live preview formula matches stockSetupSnapshot on Day 2.
+    // We're already on Day 2; render management and check rendered warehouse.
+    state.sales.push({ id: "S1", billId: "S1", operatingDay: "day1", datetime: new Date().toISOString(), timestamp: Date.now(), payment: "cash", paymentStatus: "confirmed", operator: "Zamm", subtotal: 0, discount: 0, total: 0, items: [] });
+    invalidateSalesDerivedData();
+    renderInventoryManagement();
+    const warehouseSnap = stockSetupSnapshot(sku, "day2").warehouse;
+    const warehouseDom = inventoryControlList.querySelector(`[data-warehouse-preview="${sku}"]`);
+    const warehouseDomText = warehouseDom ? warehouseDom.textContent : "";
+
+    // Scenario 6 — Reconciler invariant.
+    const reportEntry = reconcileInventoryReport().find(r => r.sku === sku) || {};
+
+    return {
+      migrated,
+      makeResult,
+      makeMovementType: makeMovement.type,
+      makeMovementQty: makeMovement.qty,
+      beforeMakeRemaining: beforeMake.remainingEvent,
+      afterMakeRemaining: afterMake.remainingEvent,
+      beforeMakeWarehouse: beforeMake.warehouse,
+      afterMakeWarehouse: afterMake.warehouse,
+      returnResult,
+      returnMovementType: returnMovement.type,
+      returnMovementQty: returnMovement.qty,
+      afterReturnRemaining: afterReturn.remainingEvent,
+      sampleAfterTwoMakes,
+      day2VisibleSample: day2View.sample,
+      day2VisibleRemaining: day2View.remainingEvent,
+      returnFromDay2,
+      day2AfterReturnSample: day2AfterReturn.sample,
+      day2AfterReturnRemaining: day2AfterReturn.remainingEvent,
+      blockedNoticeFired,
+      blockedDraftIsNull: blockedDraft === null,
+      warehouseSnap,
+      warehouseDomText,
+      reportEntryIsOk: reportEntry.isOk,
+      reportEntryDelta: reportEntry.allocatedDelta,
+      reportEntrySample: reportEntry.sampleSum,
+    };
+  });
+
+  assert(sampleBucketFlow.migrated.flagFlippedTrue,
+    "Batch DD: migration must set sampleQtyGlobalMigrated=true",
+    sampleBucketFlow.migrated);
+  assert(sampleBucketFlow.migrated.globalSampleAfterMigration === 5,
+    "Batch DD: migration must take Math.max across days (5 + 3 -> 5)",
+    sampleBucketFlow.migrated);
+  assert(sampleBucketFlow.migrated.day1Cleared === 0 && sampleBucketFlow.migrated.day2Cleared === 0,
+    "Batch DD: migration must zero out per-day sampleQty after rolling up",
+    sampleBucketFlow.migrated);
+  assert(sampleBucketFlow.migrated.idempotent === 5,
+    "Batch DD: migration must be idempotent (re-running does not double-count)",
+    sampleBucketFlow.migrated);
+
+  assert(sampleBucketFlow.makeResult === true,
+    "Batch DD: convertEventToSample must succeed when remaining event stock > 0",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.makeMovementType === "SAMPLE_OUT" && sampleBucketFlow.makeMovementQty === 1,
+    "Batch DD: Make sample must log SAMPLE_OUT movement with qty +1",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.beforeMakeRemaining - sampleBucketFlow.afterMakeRemaining === 1,
+    "Batch DD: Make sample must reduce day remaining by 1",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.beforeMakeWarehouse === sampleBucketFlow.afterMakeWarehouse,
+    "Batch DD: Make sample must NOT change warehouse (sample doesn't return to warehouse)",
+    sampleBucketFlow);
+
+  assert(sampleBucketFlow.returnResult === true,
+    "Batch DD: convertSampleToEvent must succeed when sample > 0",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.returnMovementType === "SAMPLE_IN" && sampleBucketFlow.returnMovementQty === -1,
+    "Batch DD: Return sample must log SAMPLE_IN movement with qty -1",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.afterReturnRemaining === sampleBucketFlow.beforeMakeRemaining,
+    "Batch DD: Return sample must restore the original day remaining",
+    sampleBucketFlow);
+
+  assert(sampleBucketFlow.day2VisibleSample === sampleBucketFlow.sampleAfterTwoMakes,
+    "Batch DD: sample created on Day 1 must be visible from Day 2 (was unreachable bug)",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.returnFromDay2 === true,
+    "Batch DD: Return sample on Day 2 must succeed against samples created on Day 1",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.day2AfterReturnSample === sampleBucketFlow.day2VisibleSample - 1,
+    "Batch DD: Return sample on Day 2 must decrement global sample",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.day2AfterReturnRemaining === sampleBucketFlow.day2VisibleRemaining + 1,
+    "Batch DD: Return sample on Day 2 must increment current-day remaining by 1",
+    sampleBucketFlow);
+
+  assert(sampleBucketFlow.blockedNoticeFired === true,
+    "Batch DD: startingStock correction on Day 2+ must surface a blocking notice",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.blockedDraftIsNull === true,
+    "Batch DD: buildInventoryCorrectionDraft must return null when startingStock targets non-Day-1",
+    sampleBucketFlow);
+
+  assert(sampleBucketFlow.warehouseDomText.includes(String(sampleBucketFlow.warehouseSnap)),
+    "Batch DD: rendered warehouse cell must match stockSetupSnapshot warehouse on Day 2 (Bug C closure)",
+    sampleBucketFlow);
+
+  assert(sampleBucketFlow.reportEntryIsOk === true,
+    "Batch DD: reconciler must report isOk=true after sample bucket conversions on Day 2",
+    sampleBucketFlow);
+  assert(sampleBucketFlow.reportEntryDelta === 0,
+    "Batch DD: reconciler allocatedDelta must be 0 across sample conversions",
+    sampleBucketFlow);
+
+  assert(pageErrors.length === 0, "No page errors after Batch DD sample bucket flow", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch DD sample bucket flow", browserDialogs);
 
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
