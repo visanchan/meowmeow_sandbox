@@ -2,7 +2,7 @@
 
 This is the **Cat Booth POS SaaS** project. It is co-located in the same git repo as `meowmeow_pos_event.html` but is a **distinct project** with its own protocol, batch namespace (`DD-XX`), and architecture.
 
-When working anywhere inside `pos-for-sell/`, **this file overrides the root `CLAUDE.md`**.
+When working anywhere inside `pos-for-sell/`, **this file overrides the root `CLAUDE.md`**. The "Working with this user" section in the root `CLAUDE.md` still applies here — read it for tone and assumed capabilities.
 
 ## Read first, every session
 

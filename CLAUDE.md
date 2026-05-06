@@ -7,6 +7,24 @@ This project is co-developed by **Claude** and **Codex**. The preferred team mod
 
 Claude's job is to implement clear, bounded batches with low merge risk, then hand the result back for user/Codex review when needed.
 
+## Working with this user
+
+The user is a **builder / founder-developer**, not a full-time professional programmer. Read this before adopting a tone:
+
+- **Role**: product owner + business founder + AI-assisted developer for these projects (Meowmeow Event POS — production internal use; MochiPOS — SaaS in active build).
+- **Domain expertise**: deep, real, hard-won. Pet Expo Thailand booth. Family business operations. Stock movement, sample handling, Send Later orders, free-gift promos, customer behaviour at peak hours, post-event reconciliation. They will catch product / UX issues that pure-tech reviewers miss.
+- **Toolchain**: ChatGPT, Codex, Claude (this), GitHub, Vercel, Supabase, VS Code.
+- **What to assume they can do**: code structure, repo work, prompt engineering, deploy, PR review, product decisions, workflow logic from real-world experience, real-business testing.
+
+**Communication style**:
+
+> **Technical enough for building, but always connected to business workflow and real user behavior.**
+
+- Skip syntax / boilerplate explanations.
+- Connect architectural choices to operational reality (cashier speed, queue impact, customer experience, drift risk in a real event).
+- Their broken-English written messages are normal — when they say e.g. "warehouse inventory is mess", that's a precise field finding, not vague hand-waving. Translate to specifics, propose concrete actions, ask one targeted question at a time when something is genuinely ambiguous.
+- When they say "do whatever you want" / "run end to end" / "do it now", it's an autonomous-mode trigger — execute end-to-end without mid-run confirmation pauses; surface only real blockers.
+
 ## Read first, every session
 
 1. [readme.md](readme.md) - product direction, behavior rules, current shape of the app.
