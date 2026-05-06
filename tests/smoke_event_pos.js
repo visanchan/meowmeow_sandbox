@@ -3565,6 +3565,252 @@ async function main() {
   assert(pageErrors.length === 0, "No page errors after Batch DD interaction scenarios", pageErrors);
   assert(browserDialogs.length === 0, "No browser dialogs after Batch DD interaction scenarios", browserDialogs);
 
+  // ----------------------------------------------------------------------
+  // Batch EE: Send Later correction fixes.
+  // EE-1: Allowance check uses warehouse for Send Later items (booth-empty
+  //       case still passes when warehouse has stock).
+  // EE-2: Allowance check uses booth for booth items (rejects when booth
+  //       lacks stock).
+  // EE-3: Bill correction increases Send Later qty -> queue entry qty
+  //       updated; committed reflects new value.
+  // EE-4: Bill correction reduces Send Later qty to 0 -> queue entry
+  //       dropped; committed reflects new value.
+  // EE-5: Bill correction adds a new Send Later line on a booth bill ->
+  //       new queue entry created.
+  // ----------------------------------------------------------------------
+  const sendLaterCorrectionFlow = await page.evaluate(() => {
+    function resetClean() {
+      localStorage.clear();
+      state.sales = [];
+      state.voidedSales = [];
+      state.preorders = [];
+      state.cart = [];
+      state.movements = [];
+      state.inventory = createDefaultInventory();
+      state.globalInventory = createDefaultGlobalInventory();
+      invalidateSalesDerivedData();
+      state.selectedOperator = "Zamm";
+      PRODUCTS.forEach(p => {
+        state.globalInventory.global[p.sku] = 0;
+        state.globalInventory.onlineAllocated[p.sku] = 0;
+        state.globalInventory.eventAllocated[p.sku] = 0;
+        state.globalInventory.sampleQty[p.sku] = 0;
+        state.inventory.days.day1.eventStartConfirmed[p.sku] = true;
+      });
+    }
+    const sku = (PRODUCTS.find(p => p.sku === "001A") || PRODUCTS[0]).sku;
+    function makeSaleWithSL(billId, dayId, boothQty, slQty, basePrice = 100, deliveryFee = 0) {
+      const items = [];
+      if (boothQty > 0) items.push({
+        sku, name: "smoke-booth", category: "smoke",
+        qty: boothQty, basePrice,
+        lineSubtotal: basePrice * boothQty,
+        finalUnitPrice: basePrice,
+        lineTotal: basePrice * boothQty, lineDiscount: 0,
+        deliveryFeePerUnit: 0, lineDeliveryFee: 0,
+        isFreeGift: false, isPreorder: false,
+        isFulfillmentLater: false, fulfillmentType: ""
+      });
+      if (slQty > 0) items.push({
+        sku, name: "smoke-sl", category: "smoke",
+        qty: slQty, basePrice,
+        lineSubtotal: basePrice * slQty,
+        finalUnitPrice: basePrice,
+        lineTotal: basePrice * slQty, lineDiscount: 0,
+        deliveryFeePerUnit: deliveryFee,
+        lineDeliveryFee: deliveryFee * slQty,
+        isFreeGift: false, isPreorder: false,
+        isFulfillmentLater: true, fulfillmentType: "reserved_send_later"
+      });
+      const subtotal = items.reduce((s, it) => s + it.lineSubtotal, 0);
+      const dFee = items.reduce((s, it) => s + (it.lineDeliveryFee || 0), 0);
+      return {
+        id: billId, billId, operatingDay: dayId,
+        datetime: new Date().toISOString(), timestamp: Date.now(),
+        payment: "cash", paymentStatus: "confirmed", operator: "Zamm",
+        customerName: "Smoke", customerPhone: "1", customerLineId: "",
+        customerReceiveLocation: "EE",
+        receiptEmail: null, email: null, receiptEmailRequested: false,
+        subtotal, discount: 0, total: subtotal + dFee,
+        deliveryFee: dFee, cardSurcharge: 0, items, tags: []
+      };
+    }
+
+    // --- EE-1: warehouse-based allowance for Send Later. Booth empty,
+    // warehouse plenty. Increase a Send Later line; expect no allowance issue.
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.globalInventory.onlineAllocated[sku] = 0;
+    state.inventory.days.day1.startingStock[sku] = 0;  // booth empty intentionally
+    const ee1Sale = makeSaleWithSL("EE1-1", "day1", 0, 5, 100, 0);
+    state.sales = [ee1Sale];
+    state.preorders = [{
+      id: `PRE-EE1-1-${sku}-reserved_send_later`, sku, qty: 5,
+      status: "pending", fulfillmentType: "reserved_send_later",
+      operatingDay: "day1", paymentStatus: "paid_now",
+      linkedBillId: "EE1-1", customerName: "Smoke", phone: "1"
+    }];
+    invalidateSalesDerivedData();
+    // Try to increase to qty=8 (warehouse has 100 - 0 - 0 - 5 = 95, so allowed).
+    const ee1Increased = ee1Sale.items.map(it => ({ ...it, qty: 8 }));
+    const ee1Issues = correctionStockAllowance(ee1Sale, ee1Increased);
+    // Same scenario but try qty=200 (above warehouse cap) — should fail.
+    const ee1OverIssues = correctionStockAllowance(ee1Sale, ee1Sale.items.map(it => ({ ...it, qty: 200 })));
+
+    // --- EE-2: booth-based allowance for booth items. Booth low; increase fails.
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 3;
+    const ee2Sale = makeSaleWithSL("EE2-1", "day1", 2, 0);
+    state.sales = [ee2Sale];
+    invalidateSalesDerivedData();
+    // booth remaining = 3 - 2 = 1; original = 2. maxAllowed = 1 + 2 = 3. Try 4 -> fail.
+    const ee2OverIssues = correctionStockAllowance(ee2Sale, ee2Sale.items.map(it => ({ ...it, qty: 4 })));
+    const ee2WithinIssues = correctionStockAllowance(ee2Sale, ee2Sale.items.map(it => ({ ...it, qty: 3 })));
+
+    // --- EE-3: queue rebuild on Send Later qty increase via correction.
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 5;
+    const ee3Sale = makeSaleWithSL("EE3-1", "day1", 0, 4, 100, 0);
+    state.sales = [ee3Sale];
+    state.preorders = [{
+      id: `PRE-EE3-1-${sku}-reserved_send_later`, sku, qty: 4,
+      status: "pending", fulfillmentType: "reserved_send_later",
+      operatingDay: "day1", paymentStatus: "paid_now",
+      linkedBillId: "EE3-1", customerName: "Smoke", phone: "1",
+      productName: "smoke-sl",
+      note: "preserve-this-note"
+    }];
+    invalidateSalesDerivedData();
+    const ee3CommittedBefore = sendLaterReservedQty(sku);
+    // Apply correction directly: bump SL qty to 7.
+    ee3Sale.items[0].qty = 7;
+    ee3Sale.items[0].lineSubtotal = 700;
+    ee3Sale.items[0].lineTotal = 700;
+    rebuildSendLaterQueueForSale(ee3Sale);
+    invalidateSalesDerivedData();
+    const ee3CommittedAfter = sendLaterReservedQty(sku);
+    const ee3Entry = state.preorders.find(e => e.linkedBillId === "EE3-1");
+
+    // --- EE-4: queue rebuild on Send Later removal (qty 0 = drop).
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 5;
+    const ee4Sale = makeSaleWithSL("EE4-1", "day1", 1, 3, 100, 0);
+    state.sales = [ee4Sale];
+    state.preorders = [{
+      id: `PRE-EE4-1-${sku}-reserved_send_later`, sku, qty: 3,
+      status: "packed", fulfillmentType: "reserved_send_later",
+      operatingDay: "day1", paymentStatus: "paid_now",
+      linkedBillId: "EE4-1", customerName: "Smoke", phone: "1",
+      productName: "smoke-sl"
+    }];
+    invalidateSalesDerivedData();
+    // Correction removes the Send Later line entirely.
+    ee4Sale.items = ee4Sale.items.filter(it => !isFulfillmentLaterLine(it));
+    rebuildSendLaterQueueForSale(ee4Sale);
+    invalidateSalesDerivedData();
+    const ee4PreordersForBill = state.preorders.filter(e => e.linkedBillId === "EE4-1");
+    const ee4Committed = sendLaterReservedQty(sku);
+
+    // --- EE-5: queue rebuild adds a new Send Later line where there wasn't one.
+    resetClean();
+    state.globalInventory.global[sku] = 100;
+    state.inventory.days.day1.startingStock[sku] = 10;
+    const ee5Sale = makeSaleWithSL("EE5-1", "day1", 2, 0);
+    state.sales = [ee5Sale];
+    state.preorders = [];
+    invalidateSalesDerivedData();
+    // Correction adds a Send Later line.
+    ee5Sale.items.push({
+      sku, name: "smoke-sl", category: "smoke",
+      qty: 4, basePrice: 100,
+      lineSubtotal: 400, finalUnitPrice: 100,
+      lineTotal: 400, lineDiscount: 0,
+      deliveryFeePerUnit: 0, lineDeliveryFee: 0,
+      isFreeGift: false, isPreorder: false,
+      isFulfillmentLater: true, fulfillmentType: "reserved_send_later"
+    });
+    rebuildSendLaterQueueForSale(ee5Sale);
+    invalidateSalesDerivedData();
+    const ee5Entry = state.preorders.find(e => e.linkedBillId === "EE5-1");
+    const ee5Committed = sendLaterReservedQty(sku);
+
+    return {
+      ee1: { issues: ee1Issues, overIssues: ee1OverIssues },
+      ee2: { overIssues: ee2OverIssues, withinIssues: ee2WithinIssues },
+      ee3: {
+        committedBefore: ee3CommittedBefore,
+        committedAfter: ee3CommittedAfter,
+        entryQty: ee3Entry?.qty,
+        notePreserved: ee3Entry?.note,
+        statusPreserved: ee3Entry?.status
+      },
+      ee4: {
+        entryCount: ee4PreordersForBill.length,
+        committed: ee4Committed
+      },
+      ee5: {
+        entryQty: ee5Entry?.qty,
+        entryStatus: ee5Entry?.status,
+        committed: ee5Committed
+      }
+    };
+  });
+
+  // EE-1: warehouse allowance for Send Later.
+  assert(sendLaterCorrectionFlow.ee1.issues.length === 0,
+    "EE-1: Send Later qty increase from 5 to 8 must be allowed when warehouse has stock and booth is empty",
+    sendLaterCorrectionFlow.ee1);
+  assert(sendLaterCorrectionFlow.ee1.overIssues.length === 1 && sendLaterCorrectionFlow.ee1.overIssues[0].kind === "warehouse",
+    "EE-1: increasing SL qty above warehouse cap must surface a warehouse-kind issue",
+    sendLaterCorrectionFlow.ee1);
+
+  // EE-2: booth allowance enforced for booth items.
+  assert(sendLaterCorrectionFlow.ee2.overIssues.length === 1 && sendLaterCorrectionFlow.ee2.overIssues[0].kind === "booth",
+    "EE-2: booth item exceeding remaining must surface a booth-kind issue",
+    sendLaterCorrectionFlow.ee2);
+  assert(sendLaterCorrectionFlow.ee2.withinIssues.length === 0,
+    "EE-2: booth item within remaining + originalQty must be allowed",
+    sendLaterCorrectionFlow.ee2);
+
+  // EE-3: queue qty updated, committed reflects new value, status/note preserved.
+  assert(sendLaterCorrectionFlow.ee3.committedBefore === 4 && sendLaterCorrectionFlow.ee3.committedAfter === 7,
+    "EE-3: rebuilding queue on SL qty increase must update sendLaterReservedQty from 4 to 7",
+    sendLaterCorrectionFlow.ee3);
+  assert(sendLaterCorrectionFlow.ee3.entryQty === 7,
+    "EE-3: queue entry qty must equal corrected line qty",
+    sendLaterCorrectionFlow.ee3);
+  assert(sendLaterCorrectionFlow.ee3.notePreserved === "preserve-this-note",
+    "EE-3: existing entry note must be preserved on rebuild",
+    sendLaterCorrectionFlow.ee3);
+  assert(sendLaterCorrectionFlow.ee3.statusPreserved === "pending",
+    "EE-3: existing entry status must be preserved on rebuild",
+    sendLaterCorrectionFlow.ee3);
+
+  // EE-4: queue entry dropped when SL line removed; committed = 0.
+  assert(sendLaterCorrectionFlow.ee4.entryCount === 0,
+    "EE-4: removing SL line in correction must drop the queue entry for that bill",
+    sendLaterCorrectionFlow.ee4);
+  assert(sendLaterCorrectionFlow.ee4.committed === 0,
+    "EE-4: committed warehouse reservation must drop to 0 after SL line removal",
+    sendLaterCorrectionFlow.ee4);
+
+  // EE-5: new SL line in correction creates a new queue entry.
+  assert(sendLaterCorrectionFlow.ee5.entryQty === 4,
+    "EE-5: adding a Send Later line in correction must create a queue entry with the new qty",
+    sendLaterCorrectionFlow.ee5);
+  assert(sendLaterCorrectionFlow.ee5.entryStatus === "pending",
+    "EE-5: newly created queue entry must default to pending status",
+    sendLaterCorrectionFlow.ee5);
+  assert(sendLaterCorrectionFlow.ee5.committed === 4,
+    "EE-5: warehouse committed must reflect the newly added SL qty (= 4)",
+    sendLaterCorrectionFlow.ee5);
+
+  assert(pageErrors.length === 0, "No page errors after Batch EE Send Later correction scenarios", pageErrors);
+  assert(browserDialogs.length === 0, "No browser dialogs after Batch EE Send Later correction scenarios", browserDialogs);
+
   await browser.close();
   console.log(`local smoke passed for ${path.basename(appPath)}`);
 }
