@@ -48,6 +48,11 @@ export type SendLaterStatus =
   | "shipped"
   | "completed"
   | "cancelled";
+export type PreferredContactMethod = "phone" | "email" | "line";
+export type ContactChannel = "phone" | "email" | "line" | "other";
+export type CustomerRegisteredVia = "portal" | "cashier" | "admin" | "import";
+export type PetSpecies = "cat" | "dog" | "rabbit" | "bird" | "other";
+export type CustomerOrderLinkSource = "portal" | "cashier" | "admin";
 
 export type Database = {
   public: {
@@ -448,6 +453,148 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
         Relationships: [];
       };
+      customers: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          display_name: string | null;
+          preferred_contact_method: PreferredContactMethod | null;
+          consent_marketing: boolean;
+          consent_marketing_at: string | null;
+          registered_via: CustomerRegisteredVia;
+          first_seen_at: string;
+          last_seen_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          display_name?: string | null;
+          preferred_contact_method?: PreferredContactMethod | null;
+          consent_marketing?: boolean;
+          consent_marketing_at?: string | null;
+          registered_via?: CustomerRegisteredVia;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["customers"]["Insert"]>;
+        Relationships: [];
+      };
+      customer_contacts: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          customer_id: string;
+          channel: ContactChannel;
+          value: string;
+          is_primary: boolean;
+          verified_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          customer_id: string;
+          channel: ContactChannel;
+          value: string;
+          is_primary?: boolean;
+          verified_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["customer_contacts"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      pets: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          customer_id: string;
+          name: string;
+          species: PetSpecies;
+          breed: string | null;
+          weight_kg: number | null;
+          birthday: string | null;
+          adoption_day: string | null;
+          allergies: string | null;
+          preferences: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          customer_id: string;
+          name: string;
+          species?: PetSpecies;
+          breed?: string | null;
+          weight_kg?: number | null;
+          birthday?: string | null;
+          adoption_day?: string | null;
+          allergies?: string | null;
+          preferences?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pets"]["Insert"]>;
+        Relationships: [];
+      };
+      customer_order_links: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          customer_id: string;
+          order_id: string;
+          linked_via: CustomerOrderLinkSource;
+          linked_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          customer_id: string;
+          order_id: string;
+          linked_via?: CustomerOrderLinkSource;
+          linked_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["customer_order_links"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      customer_registration_tokens: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          order_id: string;
+          token: string;
+          expires_at: string;
+          claimed_at: string | null;
+          claimed_customer_id: string | null;
+          created_at: string;
+          created_by_user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          order_id: string;
+          token: string;
+          expires_at?: string;
+          claimed_at?: string | null;
+          claimed_customer_id?: string | null;
+          created_at?: string;
+          created_by_user_id?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["customer_registration_tokens"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -476,6 +623,14 @@ export type Database = {
           p_reason?: string | null;
         };
         Returns: Database["public"]["Tables"]["event_inventory"]["Row"];
+      };
+      create_registration_token: {
+        Args: { p_order_id: string };
+        Returns: string;
+      };
+      claim_registration_token: {
+        Args: { p_token: string; p_payload: Json };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;
