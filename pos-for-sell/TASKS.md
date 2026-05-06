@@ -17,16 +17,7 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-### Wave 40b — Customer Portal UI (demo mode)
-- **Goal:** Make the post-purchase Customer Portal flow clickable end-to-end against the existing demo-mode pattern (no Supabase needed). Cashier completes a sale → success screen issues a registration QR + share link → customer fills the form → registration appears in the seller's customer list. Real Supabase wiring follows after Wave 40a (PR #5) merges.
-- **Touches:** `src/lib/demo/customer-tokens.ts`, `src/lib/demo/useDemoCustomerTokens.ts`, `src/app/app/pos/success/[orderId]/SuccessClient.tsx` (extend), `src/app/app/pos/success/[orderId]/RegistrationLinkBlock.tsx` (NEW), `src/app/register/[token]/page.tsx` (NEW), `src/app/register/[token]/RegisterForm.tsx` (NEW), `src/app/register/[token]/schema.ts` (NEW), `src/app/register/[token]/actions.ts` (NEW), `src/app/register/[token]/success/page.tsx` (NEW), `tests/lib/customer-tokens.test.ts`.
-- **Acceptance:** click-through demo works in one browser session: sale → success screen shows QR + 16-char share link + "Send registration link" button; opening the link in a new tab loads the portal page, validates the demo token, accepts the form (customer + optional pet), writes the demo customer + link, redirects to the success page; back in the seller app, the customer dashboard reflects the new entry.
-- **Owner:** claude
-- **Status:** ready-for-review
-- **Branch:** pos/wave-40b-customer-portal-ui
-- **Claimed:** 2026-05-07 01:30
-- **BlockedBy:** none for the demo flow. Real Supabase wiring deferred to Wave 40d (after Wave 40a merges + a Supabase project is provisioned).
-- **Notes:** Demo mode uses localStorage-backed `useDemoCustomerTokens` hook (mirrors `useDemoPets` / `useDemoClaims` patterns). When Wave 40a merges and Supabase wires up, the Server Action swaps from the demo store to the `claim_registration_token` RPC; the UI does not change. **Implementation complete 2026-05-07**: 4 new files (token store + hook + portal page server-component + RegisterClient form) + 1 modification (SuccessClient mounts RegistrationLinkBlock) + 1 new component (RegistrationLinkBlock with QR + share link + copy button) + 15 new vitest tests. 263 tests pass total. tsc clean. `npm run build` clean — new `/register/[token]` route renders.
+_None — Waves 39a, 39b, 40a, 40b, 40c all merged 2026-05-07. See **Done** section below._
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 
@@ -255,3 +246,18 @@ Pick one provider for analytics + error tracking; defer until Phase 8.
 ## Done
 
 (Move completed batches here with the merging commit SHA.)
+
+### Wave 39a — Sample bucket data layer (schema + RPCs + types)
+- **Merged:** 2026-05-07 · `6455917` (PR #4)
+
+### Wave 40a — Customer Portal data layer (5 tables + 2 RPCs + RLS)
+- **Merged:** 2026-05-07 · `2c5d908` (PR #5)
+
+### Wave 40b — Customer Portal UI (demo mode)
+- **Merged:** 2026-05-07 · `56f743d` (PR #6)
+
+### Wave 40c — Cashier repeat-customer lookup (demo mode)
+- **Merged:** 2026-05-07 · `4522862` (PR #9 — recovered after PR #7 was orphaned by squash-merge of base branch; cherry-pick onto fresh main per `skill.md` § 13)
+
+### Wave 39b — Sample bucket UI (demo mode)
+- **Merged:** 2026-05-07 · `e9cab46` (PR #8)
