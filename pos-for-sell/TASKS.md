@@ -17,7 +17,16 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-None. All credential-free Phase 0 + Phase 1 UI work is landed locally on `main` (uncommitted). Next claimable batch: **DD-15** — blocked on Supabase credentials. See **Blockers section** at end of file.
+### Wave 40b — Customer Portal UI (demo mode)
+- **Goal:** Make the post-purchase Customer Portal flow clickable end-to-end against the existing demo-mode pattern (no Supabase needed). Cashier completes a sale → success screen issues a registration QR + share link → customer fills the form → registration appears in the seller's customer list. Real Supabase wiring follows after Wave 40a (PR #5) merges.
+- **Touches:** `src/lib/demo/customer-tokens.ts`, `src/lib/demo/useDemoCustomerTokens.ts`, `src/app/app/pos/success/[orderId]/SuccessClient.tsx` (extend), `src/app/app/pos/success/[orderId]/RegistrationLinkBlock.tsx` (NEW), `src/app/register/[token]/page.tsx` (NEW), `src/app/register/[token]/RegisterForm.tsx` (NEW), `src/app/register/[token]/schema.ts` (NEW), `src/app/register/[token]/actions.ts` (NEW), `src/app/register/[token]/success/page.tsx` (NEW), `tests/lib/customer-tokens.test.ts`.
+- **Acceptance:** click-through demo works in one browser session: sale → success screen shows QR + 16-char share link + "Send registration link" button; opening the link in a new tab loads the portal page, validates the demo token, accepts the form (customer + optional pet), writes the demo customer + link, redirects to the success page; back in the seller app, the customer dashboard reflects the new entry.
+- **Owner:** claude
+- **Status:** in-progress
+- **Branch:** pos/wave-40b-customer-portal-ui
+- **Claimed:** 2026-05-07 01:30
+- **BlockedBy:** none for the demo flow. Real Supabase wiring deferred to Wave 40d (after Wave 40a merges + a Supabase project is provisioned).
+- **Notes:** Demo mode uses localStorage-backed `useDemoCustomerTokens` hook (mirrors `useDemoPets` / `useDemoClaims` patterns). When Wave 40a merges and Supabase wires up, the Server Action swaps from the demo store to the `claim_registration_token` RPC; the UI does not change.
 
 ## What landed in this initial run (Phase 0 + part of Phase 1)
 
