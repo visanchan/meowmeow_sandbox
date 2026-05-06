@@ -759,6 +759,39 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 - **BlockedBy:** FINAL_REVIEW (post-event readiness pass should land first so the layer reads from a stable base).
 - **Notes:** Drafted 2026-05-05 from the user's recommendation after exploring `app ui improvement-handoff/`. Five sub-features intentionally scoped as one batch because they share the same dashboard region and the same `dashboardMetrics()` extension; splitting would multiply CSS/markup churn. Sister entry exists in `pos-for-sell/docs/BATCH_PLAN.md` Phase 9 so the SaaS version inherits the same manager-action concept after Phase 7 reaches parity.
 
+### Batch EE — Send Later Correction Fixes
+- **Business objective:** Close two pre-existing Send Later correction bugs surfaced by the deep-trace math audit during Batch DD verification, so the app is fully ready for the next event.
+- **Expected benefit:** Bill corrections that change Send Later quantities update both the customer-paid total and the warehouse reservation queue; allowance checks correctly distinguish booth stock from warehouse stock; staff receive a clear "event booth" vs "warehouse" message when a correction would exceed available stock.
+- **Implementation difficulty:** low. Two surgical functions; no new state shape; no migration.
+- **Cost/complexity tradeoff:** Touches the same correction code region as Batch DD; lands as a separate batch with its own PR for review independence.
+- **Bugs closed:**
+  - **Bug G1** — `confirmCorrectionSave` updated `sale.items` but did not rebuild `state.preorders` for the bill's Send Later lines. Result: a bill corrected from 5 to 8 Send Later units would charge the customer for 8 but keep `committed=5` in `sendLaterReservedQty`, under-counting the warehouse reservation by 3 units.
+  - **Bug G2** — `correctionStockAllowance` aggregated all SKU qty (booth + Send Later) and validated against booth remaining only. Increasing a Send Later qty was rejected when booth was empty, even when warehouse had stock; falsely permissive in the reverse direction is harmless but the rejection blocked legitimate corrections.
+- **Items:**
+  1. Split `correctionStockAllowance` aggregation by `(sku, isFulfillmentLater)`. Booth bucket validates against `getProductInventorySnapshot(dayId, sku).remaining + originalQty`; Send Later bucket validates against `warehouseRemaining(sku) + originalQty`. Issues carry a `kind` discriminator (`booth` / `warehouse`).
+  2. Update the status banner in `buildCorrectionDraft` to read the `kind` and name the limit (`event booth stock is not enough` vs `warehouse stock is not enough`).
+  3. New `rebuildSendLaterQueueForSale(sale)` helper. Builds new preorder entries via `normalizePreorder` keyed by deterministic `PRE-{billId}-{sku}-{fulfillmentType}` IDs; for each ID with a matching existing entry, preserves `status`, `note`, and `createdAt`; replaces `state.preorders` for this bill with the new set; leaves entries linked to other bills untouched.
+  4. Wire `rebuildSendLaterQueueForSale(sale)` into `confirmCorrectionSave` after `saveSales()` succeeds and before `realignInventoryCarryForward`. Add `renderPreorders()` to the post-correction render pass so the queue panel reflects the rebuild without a manual refresh.
+- **Touches:** `meowmeow_pos_event.html`, `tests/smoke_event_pos.js`, `readme.md`, `TASKS.md`.
+- **Do not change:** `finalizeSale` preorder creation, the deterministic ID format, free-gift handling, sample bucket logic, dashboard or void audit.
+- **Acceptance checks:**
+  - Increasing a Send Later qty in correction is allowed when warehouse has stock and booth is empty.
+  - Increasing a booth-fulfilled qty when only warehouse has stock is rejected with an `event booth` message.
+  - After increasing a Send Later qty, `state.preorders` entry for the bill matches the new qty and `sendLaterReservedQty(sku)` reflects it.
+  - After removing a Send Later line via correction, the queue entry for that bill is dropped.
+  - After adding a new Send Later line via correction, a new queue entry is created with `status: pending`.
+  - Existing queue entries with `status: packed` or `status: shipped` keep their status when the corresponding correction simply changes qty (status preservation).
+  - Smoke test extends with five EE scenarios and existing scenarios still pass.
+- **Risks/assumptions:**
+  - Status preservation assumes shipped/packed entries shouldn't be reverted to pending on correction. If a correction reduces the Send Later qty below what was already shipped, the new entry qty may be less than what physically went out — staff are expected to reconcile manually via Send Later queue UI; this batch does not auto-detect that case.
+  - Codex review recommended before merge because the rebuild touches Send Later operational state and the warehouse formula's `committed` input.
+- **Owner:**
+- **Status:** ready-for-review
+- **Branch:** batch/ee-send-later-correction
+- **Claimed:** 2026-05-06 13:30
+- **BlockedBy:** DD (branched from `batch/dd-sample-bucket`; merge DD first, then this).
+- **Notes:** Drafted and shipped 2026-05-06 immediately after DD verification surfaced these two pre-existing edge cases. Both bugs would have caused real-world drift if left unfixed at the next event (warehouse over-allocation on Send Later corrections; staff unable to bump Send Later qty during a real-event correction). Smoke passes locally with five new EE scenarios.
+
 ### Batch DD — Sample Bucket Refactor + Warehouse Formula Repair
 - **Business objective:** Fix the post-event findings the user surfaced 2026-05-06: samples set on a past day cannot be edited from a later day; "Added Today" + sample interactions appear to leak event stock back to warehouse; staff want an easy way to convert event stock ↔ sample (because they sometimes sell a sample as a product).
 - **Expected benefit:** Sample stock is one persistent number visible from any day; converting event ↔ sample is a one-click action with audit trail; warehouse formula is consistent across Stock Setup live preview and Inventory Correction validation; phantom-stock paths through non-Day-1 startingStock corrections are closed.
@@ -826,6 +859,7 @@ Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
 20. **FINAL_REVIEW** - Event readiness bug fix and full workflow check after Batch Z is reviewed.
 21. **AA** - Manager Action Dashboard V1 (alerts, recommendations, end-of-day checklist, goal pace forecast, copyable daily summary). Planned, not claimed; lands after FINAL_REVIEW so the action layer reads from a stable post-event base.
 22. **DD** - Sample Bucket Refactor + Warehouse Formula Repair. Claimed 2026-05-06; closes six post-event findings around sample/Added-Today/warehouse interactions. Codex review required before merge.
+23. **EE** - Send Later Correction fixes. Claimed 2026-05-06; closes two pre-existing edge cases surfaced by the deep-trace audit during DD verification (queue rebuild on bill correction; warehouse-aware allowance check for Send Later lines). Branched off DD; merge after DD.
 
 ## Done
 
