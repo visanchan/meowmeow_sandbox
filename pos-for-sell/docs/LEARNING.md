@@ -2,6 +2,8 @@
 
 > Started 2026-05-07. Source: [ROADMAP.md § 13](ROADMAP.md). Goal: founder can read the MochiPOS repo, guide AI agents, review work, and make architectural calls — not become a full-time engineer.
 
+> **Landing page in the app:** when the dev server is running, open `http://localhost:3000/learn` for a visual table of contents with the current "today" callout, the 5 levels as tiles, and links to every reference doc.
+
 ## How this curriculum works
 
 - **One level at a time.** No skipping ahead. Each level builds on the previous.
