@@ -81,10 +81,9 @@ export default function LearnPage() {
           <SurfaceTile
             audience="pet owners (customers)"
             title="Customer-facing"
-            body="What the customer sees: scan QR at the booth to browse, register a pet after a purchase."
+            body="What the customer sees: scan QR at the booth to browse the menu (/qr-menu), or after a purchase claim a pet profile via the token link on their receipt (/register/[token])."
             links={[
               { href: "/qr-menu", label: "/qr-menu" },
-              { href: "/register", label: "/register" },
             ]}
           />
         </ul>
