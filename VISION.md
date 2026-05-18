@@ -68,7 +68,7 @@ Every refactor traces back to a real Pet Expo field finding, not a theoretical b
 
 ## 4. Project 2 — MochiPOS *(SaaS, in active build)*
 
-Located in `pos-for-sell/`. Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Resend + Vercel + npm. 100-batch build plan in `pos-for-sell/docs/BATCH_PLAN.md`.
+Located in `pos-for-sell/`. Stack: Next.js 16 + TypeScript + Tailwind v4 + Supabase + Resend + Vercel + npm. 100-batch build plan in `pos-for-sell/docs/BATCH_PLAN.md`.
 
 ### Architecture: two connected layers
 

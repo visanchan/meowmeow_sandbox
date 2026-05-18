@@ -225,7 +225,7 @@ This is the autonomous-mode trigger. Memory entry: `feedback_run_nonstop.md` ("r
 
 This sandbox holds two distinct projects:
 - **Project 1** — `meowmeow_pos_event.html` (this README + skill.md describe). Single-file vanilla. Used live at Pet Expo events.
-- **Project 2** — `pos-for-sell/` (Next.js 15 + TS + Tailwind v4 + Supabase + Resend + Vercel). SaaS sister product. Separate [pos-for-sell/CLAUDE.md](pos-for-sell/CLAUDE.md), separate batches (DD-XX numbering, "Wave N" commit prefix).
+- **Project 2** — `pos-for-sell/` (Next.js 16 + TS + Tailwind v4 + Supabase + Resend + Vercel). SaaS sister product. Separate [pos-for-sell/CLAUDE.md](pos-for-sell/CLAUDE.md), separate batches (DD-XX numbering, "Wave N" commit prefix).
 
 **Don't cross-pollinate code between them.** They share concepts (sample bucket, warehouse formula, carry-forward) but are independent codebases. A fix on one is documented; the sister fix on the other should be planned as its own batch.
 
