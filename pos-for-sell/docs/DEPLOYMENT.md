@@ -19,7 +19,7 @@
   ```sql
   insert into public.admin_users (user_id) values ('<your-auth-uid>');
   ```
-- Apply database migrations: run `database/schema.sql`, then `database/rls-policies.sql`, then optionally `database/seed.sql` and the `database/functions/*.sql` (after the schema is up).
+- Apply database schema and functions in the order shown in the "Database migrations" table below — `schema.sql`, then `rls-policies.sql`, then the 8 functions (and the 2 `migrations/` files if upgrading rather than starting fresh). `seed.sql` is optional, dev only.
 
 ## Environments
 
