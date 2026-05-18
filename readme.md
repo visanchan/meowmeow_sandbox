@@ -1,6 +1,6 @@
 # MeowMeow Event POS
 
-Browser-based event POS for the Meowseum booth. The main selling app is [meowmeow_pos_event.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_pos_event.html); the post-sale visual receipt helper is [meowmeow_receipt_admin.html](c:\Users\USER\Desktop\meowmeow_sandbox\meowmeow_receipt_admin.html).
+Browser-based event POS for the Meowseum booth. The main selling app is [meowmeow_pos_event.html](meowmeow_pos_event.html); the post-sale visual receipt helper is [meowmeow_receipt_admin.html](meowmeow_receipt_admin.html).
 
 ## Table of Contents
 
