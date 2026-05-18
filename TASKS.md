@@ -35,7 +35,7 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
 
 ## Batches
 
-Source plan: `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md`
+> The original batch source plan lives in a local Claude planning file (outside this repo). This board is the authoritative live status — refer to it, not the local plan, when claiming or releasing work.
 
 ### Batch A — Operator Gate Trio
 - **Items:** #1 sticky operator chip + gate `addToCart`; #2 stock validation at add-time + `aria-live`; #3 payment-confirm gate label on Save button.
