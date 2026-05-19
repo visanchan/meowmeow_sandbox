@@ -511,7 +511,7 @@ The smoke test now covers PIN-gated workflows (operator login, Dashboard, Invent
 
 ## Planned (Workflow Alignment & Inventory Consistency Round)
 
-Remaining items, designed and approved but not yet shipped. See `C:\Users\USER\.claude\plans\read-all-code-in-polymorphic-kahn.md` for the full plan and [TASKS.md](TASKS.md) for live status.
+Remaining items, designed and approved but not yet shipped. The original source plan lives in a local Claude planning file (outside this repo). See [TASKS.md](TASKS.md) for live status, which is the source of truth contributors should use.
 
 - (Round complete — see Recent Changes for shipped batches.)
 
