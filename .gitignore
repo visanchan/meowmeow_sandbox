@@ -5,3 +5,6 @@ node_modules/
 # Claude Code session-local scheduler state
 .claude/scheduled_tasks.lock
 .claude/scheduled_tasks.json
+
+# Claude Code local-only settings (the .local suffix marks it personal)
+.claude/settings.local.json
