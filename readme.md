@@ -20,7 +20,10 @@ Browser-based event POS for the Meowseum booth. The main selling app is [meowmeo
 - [Passcodes](#passcodes)
 - [Event-Day Verification Checklist](#event-day-verification-checklist)
 - [Pre-Event Data Hygiene](#pre-event-data-hygiene)
+- [Inventory Reconciliation](#inventory-reconciliation)
+- [Bulk Day-CSV Export](#bulk-day-csv-export)
 - [Recently Changed](#recently-changed)
+- [Planned (Workflow Alignment & Inventory Consistency Round)](#planned-workflow-alignment--inventory-consistency-round)
 - [How To Continue Next Time](#how-to-continue-next-time)
 
 ## Overview
