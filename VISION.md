@@ -263,7 +263,7 @@ Advanced AI recommendations, complex loyalty engine, multi-branch system, full a
 | **Wave 5 — Business Intelligence** | Help sellers manage profit + stock. | COGS, gross margin, sales by product, sales by event, low-stock alert, slow-moving stock, reorder point, basic demand forecast. |
 | **Wave 6 — General Business Expansion** | Move beyond pet sellers. | Vertical modules, optional pet module, general retail customer profile, pop-up seller mode, beauty / handmade modes, loyalty points, QR self-order menu. |
 
-Current progress: Waves 32–38 in pos-for-sell, plus Wave 39a (sample bucket data layer) and Wave 40 (customer portal) underway. The wave numbering is post-100-batch organic — see git log for the full history.
+Current progress (2026-05-07): Waves 32–38 shipped in pos-for-sell, plus Wave 39a (sample bucket data layer), Wave 39b (sample bucket UI in demo), Wave 40a (Customer Portal data layer + RLS + RPCs), Wave 40b (portal UI in demo), and Wave 40c (cashier returning-customer lookup) all merged. **Wave 40d** — real Supabase wiring for the Customer Portal (Server Actions calling `create_registration_token` / `claim_registration_token`) — is pending and blocks on Supabase project provisioning. The wave numbering is post-100-batch organic — see git log or `pos-for-sell/docs/STATUS.md` for the full history.
 
 ---
 
