@@ -7,6 +7,12 @@ This project is co-developed by **Claude** and **Codex**. The preferred team mod
 
 Claude's job is to implement clear, bounded batches with low merge risk, then hand the result back for user/Codex review when needed.
 
+## Scope of this protocol
+
+This file applies to the **MeowMeow Event POS** — the single-file app at [`meowmeow_pos_event.html`](meowmeow_pos_event.html) plus its admin helper [`meowmeow_receipt_admin.html`](meowmeow_receipt_admin.html). The branching/commit conventions, single-file constraints, and `batch/<letter>-<slug>` naming below all refer to this project only.
+
+The sibling **MochiPOS SaaS** lives at [`pos-for-sell/`](pos-for-sell/) and has its own protocol at [`pos-for-sell/CLAUDE.md`](pos-for-sell/CLAUDE.md) — which **overrides this file** inside that folder. The SaaS uses a different stack (Next.js + Supabase, not vanilla HTML), a different batch namespace (`DD-XX` and `Wave NN`, not `batch/<letter>`), and different file boundaries. Do not cross-edit between the two projects in the same batch.
+
 ## Working with this user
 
 The user is a **builder / founder-developer**, not a full-time professional programmer. Read this before adopting a tone:
