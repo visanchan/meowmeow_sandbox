@@ -629,7 +629,7 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
   1. Replace the current free scarf rule (`THB 2,000` earns `GIFT-SCARF`) with the new sticker rule:
      - qualifying cart total threshold: THB 1,200
      - qualifying paid items: Meowseum + Modern Friends products
-     - free gift: one Sticker Meowsuem item per threshold, selectable as SKU `021` or `022`
+     - free gift: one Sticker Meowseum item per threshold, selectable as SKU `021` or `022`
      - gift value display: THB 100
   2. Add a simple staff choice flow for the free sticker:
      - when entitlement is reached, show/enable a gift choice between SKU `021` and SKU `022`
@@ -655,7 +655,7 @@ Source of truth for work-in-progress. Both Claude and Codex must read this file 
   - Manual extra sticker gift requires confirmation and is marked as manual override in CSV.
   - Old saved scarf bills, if present in localStorage, still render without crashing.
   - `tests/smoke_event_pos.js` passes.
-- **Risks/assumptions:** "Meowsuem+Modern Friends" is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
+- **Risks/assumptions:** "Meowsuem+Modern Friends" in the source Thai marketing copy (line 624 above, preserved as the literal input) is interpreted as qualifying paid products in the `meowseum` and `modernfriend` tabs, excluding promo/free-gift lines. Because this replaces a dedicated gift SKU with selectable real SKUs, Codex review is strongly recommended before event use.
 - **Owner:**
 - **Status:** done
 - **Branch:** batch/z-sticker-promo

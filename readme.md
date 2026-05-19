@@ -111,7 +111,7 @@ Entry points for the SaaS:
 
 ## Free Gift Rules
 
-- The current promo is: every `THB 1,200` of qualifying paid Meowseum + Modern Friends cart value earns `1` free Sticker Meowsuem.
+- The current promo is: every `THB 1,200` of qualifying paid Meowseum + Modern Friends cart value earns `1` free Sticker Meowseum.
 - Staff can choose the free sticker SKU in the cart: `021`, `022`, or split multiple free stickers across both SKUs.
 - Free stickers use the real sticker SKU with `isFreeGift` metadata, so paid and free sticker movement deduct from the same stock bucket.
 - User-facing displays label free sticker rows as `(Free item)` so staff and customers can separate paid sticker purchases from promo gifts.
