@@ -13,15 +13,15 @@ Each loop fire takes the top unblocked item. Items marked 👁 want a visual eye
 
 1. ✅ **Brand identity** — Mochi wordmark ("Mochi" indigo + "POS" lavender) + mascot now in the app header (`app/layout.tsx`), the `/apply` topbar, and the landing `/` (topbar + hero brand card). Assets in `public/mochi-mascot.png` (from the handoff `project/assets/`).
 2. ✅ **Landing `/`** — redesigned to the Mochi system: brand topbar, two-column hero (pitch + mascot/wordmark brand card carrying the value-prop tagline), Mochi feature cards, closing CTA band. Existing EN/TH copy preserved; added one additive `landing.tagline` i18n key.
-3. **Dashboard `/app/dashboard`** 👁 — align to `screens/dashboard.html`: 3–5 KPI cards, hourly chart, Send Later queue, low-stock. Also compose in the built-but-unwired tiles (Profit/Reorder/ActivityFeed/SourceSplit/multi-period) flagged in PRD F15.
-4. **Event setup `/app/events*`** 👁 — `screens/event-setup.html`: stock allocator + sample bucket.
-5. **Customer portal `/register/[token]`** 👁 — `screens/pet-portal.html`: mobile-first, pet chips (emoji), warm voice.
-6. **Onboarding / apply / admin** — forms + tables to Mochi conventions (labels above fields, 4-state status chips, one primary CTA per view).
-7. **POS till + receipt** 👁 — confirm the indigo reads well at booth speed (large touch targets, PAY prominence).
+3. ✅ **Dashboard `/app/dashboard`** — redesigned to the Mochi mockup; multi-period `DashboardLive` composed in (PR #76, building on the #73 wiring).
+4. **Event setup `/app/events*`** 👁 — `screens/event-setup.html`: stock allocator + sample bucket. *(Likely net-new — no `/app/events*` route exists yet.)*
+5. ✅ **Customer portal `/register/[token]`** — redesigned to `screens/pet-portal.html` (PR #77).
+6. **Onboarding / apply / admin** — ✅ onboarding (PR #79) + apply (PR #78) done; ⏳ **admin** `/admin/*` tables/forms still owe the Mochi convention pass (labels above fields, 4-state status chips, one primary CTA per view).
+7. **POS till + receipt** 👁 — confirm the indigo reads well at booth speed (large touch targets, PAY prominence). *(Next up.)*
 
-## Pending founder decisions (loop will NOT auto-decide)
-- **CLAUDE.md rule #9** — still reads cream/brown; superseded by Mochi indigo. Update?
-- **ok-greens** — plus-qty / "paid" greens are still the original green, not Mochi success `#1f7a4d`. Align or keep as distinct "positive" cue?
+## Resolved founder decisions
+- **CLAUDE.md rule #9** — ✅ Resolved (no change needed). `pos-for-sell/CLAUDE.md` rule #9 already reads *"Visual language follows Mochi. Unified indigo/lavender brand across the whole app…"*.
+- **ok-greens** — ✅ Resolved: keep as-is. Every UI green already routes through the `--color-ok-soft-*` tokens (`#195e3b` on `#d8efe2`), which *are* the Mochi design skill's canonical ok-status color — no stray "original" greens remain in `src` (Pill `ok`, Toast, qty steppers, onboarding, register all use the tokens). The earlier `#1f7a4d` target was off-spec: lighter than `#195e3b`, it would lower contrast on the soft-bg and risk the WCAG-AA the palette already passes.
 
 ## Working rules
 - Per-surface work goes on its own branch + PR; never to `main` directly; no self-merge.
