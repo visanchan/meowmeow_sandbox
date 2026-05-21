@@ -15,9 +15,8 @@ import {
   rangePreset,
   type RangePresetId,
 } from "@/lib/demo/dashboard-range";
+import { formatTHB } from "@/lib/money/format";
 import { mockToday } from "./mock";
-import { PaceStrip } from "./PaceStrip";
-import { TodayMetricsTile } from "./TodayMetricsTile";
 import { PaymentSplitTile } from "./PaymentSplitTile";
 import { TopSellersTile } from "./TopSellersTile";
 import { InventoryTile } from "./InventoryTile";
@@ -28,7 +27,6 @@ import { ActivityFeedTile } from "./ActivityFeedTile";
 import { ProfitTile } from "./ProfitTile";
 import { ReorderTile } from "./ReorderTile";
 import { DateRangePicker } from "./DateRangePicker";
-import { DeltaChip } from "./DeltaChip";
 import { SourceSplitTile } from "./SourceSplitTile";
 import { splitBySource } from "@/lib/demo/source-split";
 
@@ -52,10 +50,9 @@ export function DashboardLive() {
 
   const hasLiveData = salesReady && ordersHere.length > 0;
   const live = hasLiveData ? computeMetricsFor(ordersHere) : null;
-  const prevMetrics = ordersPrev.length > 0 ? computeMetricsFor(ordersPrev) : null;
+  const prevMetrics =
+    ordersPrev.length > 0 ? computeMetricsFor(ordersPrev) : null;
   const margin = hasLiveData ? aggregateMargin(ordersHere) : null;
-  const prevMargin =
-    ordersPrev.length > 0 ? aggregateMargin(ordersPrev) : null;
   const sourceRows = hasLiveData ? splitBySource(ordersHere) : [];
 
   const inventoryRows =
@@ -93,76 +90,124 @@ export function DashboardLive() {
       : mockToday.hourly;
 
   const daily =
-    isMultiDay && hasLiveData
-      ? dailyRevenueSeries(orders, range)
-      : null;
+    isMultiDay && hasLiveData ? dailyRevenueSeries(orders, range) : null;
 
   const goal = mockToday.goal;
-  const achieved = live ? live.totalSatang : goal.achievedSatang;
-
-  // Period-over-period deltas
-  const dRev = deltaPct(
-    live?.totalSatang ?? 0,
-    prevMetrics?.totalSatang ?? 0,
-  );
-  const dBills = deltaPct(live?.bills ?? 0, prevMetrics?.bills ?? 0);
-  const dProfit = deltaPct(
-    margin?.profitSatang ?? 0,
-    prevMargin?.profitSatang ?? 0,
-  );
-
+  const dRev = deltaPct(live?.totalSatang ?? 0, prevMetrics?.totalSatang ?? 0);
   const compareLabel = `vs prev ${daysInRange(range) === 1 ? "day" : `${daysInRange(range)}d`}`;
+  const revDelta = !hasLiveData
+    ? "illustrative"
+    : dRev.pct === null
+      ? "first period — no comparison"
+      : `${dRev.pct >= 0 ? "▲" : "▼"} ${Math.abs(dRev.pct)}% ${compareLabel}`;
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+    <main className="mx-auto max-w-[1320px] px-6 py-8 pb-14 sm:px-10">
+      {/* Hero — mockup screens/dashboard.html */}
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="font-display text-3xl text-accent-strong">Dashboard</h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[var(--lavender-700)]">
+            Mochi POS · {hasLiveData ? "live demo" : "illustrative"}
+          </div>
+          <h1 className="mt-1.5 font-display text-3xl font-black tracking-tight text-text">
+            Today&apos;s takings
+          </h1>
+          <p className="mt-1 text-sm text-muted">
             {range.label}
-            {hasLiveData ? " · live demo" : " · illustrative"}
+            {hasLiveData && (
+              <>
+                {" · "}
+                <strong className="font-bold text-text">
+                  {ordersHere.length}
+                </strong>{" "}
+                orders · vs {ordersPrev.length} prev-period
+              </>
+            )}
           </p>
         </div>
-        <ExportCsvButton />
+        <div className="flex items-center gap-3">
+          <DateRangePicker value={rangeId} onChange={setRangeId} />
+          <ExportCsvButton />
+        </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <DateRangePicker value={rangeId} onChange={setRangeId} />
-        {hasLiveData && (
-          <p className="text-xs text-muted">
-            {ordersHere.length} order{ordersHere.length === 1 ? "" : "s"} ·
-            comparing to {ordersPrev.length} previous-period
-          </p>
-        )}
-      </div>
+
       {!hasLiveData && (
-        <p className="mt-2 text-sm text-muted">
-          No sales recorded in this range. Record a sale at /app/pos to see
-          your own data here.
+        <p className="mb-4 text-sm text-muted">
+          No sales in this range — record one at{" "}
+          <Link href="/app/pos" className="font-bold text-accent">
+            /app/pos
+          </Link>{" "}
+          to see live numbers. Figures below are illustrative.
         </p>
       )}
 
-      <div className="mt-6 grid gap-4">
-        {rangeId === "today" && (
-          <PaceStrip achievedSatang={achieved} targetSatang={goal.targetSatang} />
-        )}
-
-        <div className="grid gap-2">
-          <TodayMetricsTile
-            totalSatang={totals.totalSatang}
-            bills={totals.bills}
-            avgBillSatang={totals.avgBillSatang}
-          />
-          {hasLiveData && (
-            <div className="flex flex-wrap gap-2">
-              <DeltaChip pct={dRev.pct} label={`revenue ${compareLabel}`} />
-              <DeltaChip pct={dBills.pct} label={`bills ${compareLabel}`} />
-              {margin?.marginPct !== null && (
-                <DeltaChip pct={dProfit.pct} label={`profit ${compareLabel}`} />
-              )}
-            </div>
-          )}
+      {/* KPI strip — feature card (revenue) + 3 metric cards */}
+      <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div
+          className="rounded-[20px] p-[22px] text-white shadow-[var(--shadow-card)]"
+          style={{ background: "var(--grad-primary)" }}
+        >
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-white/75">
+            {rangeId === "today" ? "Today's revenue" : "Revenue"}
+          </div>
+          <div className="num mt-1.5 text-[36px] font-black leading-none tracking-[-0.025em]">
+            ฿{formatTHB(totals.totalSatang)}
+          </div>
+          <div className="mt-2 text-xs font-bold text-white/80">
+            {revDelta}
+            {goal.targetSatang > 0 &&
+              ` · target ฿${formatTHB(goal.targetSatang)}`}
+          </div>
         </div>
 
+        <div className="rounded-[20px] border border-line bg-panel p-[22px] shadow-[var(--shadow-card)]">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
+            Orders
+          </div>
+          <div className="num mt-1.5 text-[36px] font-black leading-none tracking-[-0.025em] text-text">
+            {totals.bills}
+          </div>
+          <div className="mt-2 text-xs text-muted">
+            Avg ฿{formatTHB(totals.avgBillSatang)} per order
+          </div>
+        </div>
+
+        <div className="rounded-[20px] border border-line bg-panel p-[22px] shadow-[var(--shadow-card)]">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
+            Gross margin
+          </div>
+          <div
+            className="num mt-1.5 text-[36px] font-black leading-none tracking-[-0.025em]"
+            style={{ color: "var(--color-ok-soft-fg)" }}
+          >
+            {margin && margin.marginPct !== null
+              ? `${Math.round(margin.marginPct)}%`
+              : "—"}
+          </div>
+          <div className="mt-2 text-xs text-muted">
+            {margin && margin.marginPct !== null
+              ? `After COGS · ฿${formatTHB(margin.profitSatang)} profit`
+              : "Add product cost to see margin"}
+          </div>
+        </div>
+
+        <div className="rounded-[20px] border border-line bg-panel p-[22px] shadow-[var(--shadow-card)]">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
+            Avg bill
+          </div>
+          <div className="num mt-1.5 text-[36px] font-black leading-none tracking-[-0.025em] text-text">
+            ฿{formatTHB(totals.avgBillSatang)}
+          </div>
+          <div className="mt-2 text-xs text-muted">
+            {totals.bills} order{totals.bills === 1 ? "" : "s"} in range
+          </div>
+        </div>
+      </section>
+
+      {/* Existing tiles — restructured into the mockup's left-card / right-rail
+          (lavender hour-chart + top products, Send-Later + low-stock) in a
+          follow-up commit on this PR. */}
+      <div className="grid gap-4">
         <PaymentSplitTile split={totals.paymentSplit} />
 
         {margin && (
