@@ -39,6 +39,7 @@ export type Dict = {
     kicker: string;
     title1: string;
     title2: string;
+    tagline: string;
     body: string;
     ctaApply: string;
     ctaStatus: string;
@@ -313,6 +314,7 @@ const en: Dict = {
     kicker: "Pilot · invitation only · Thailand",
     title1: "A POS built for",
     title2: "cat-product booths.",
+    tagline: "Sell fast at the booth. Save the data for later.",
     body: "Sell faster at events. Track stock per event. Take cash, PromptPay, transfer or card. Send-later orders included. Close each day in five minutes.",
     ctaApply: "Apply to join the pilot",
     ctaStatus: "Check application status",
@@ -593,6 +595,7 @@ const th: Dict = {
     kicker: "โครงการนำร่อง · เฉพาะผู้ได้รับเชิญ · ประเทศไทย",
     title1: "ระบบ POS",
     title2: "สำหรับร้านขายของแมวออกบูธ",
+    tagline: "ขายไวที่บูธ เก็บข้อมูลลูกค้าไว้ทีหลัง",
     body: "ขายเร็วขึ้นในงานอีเวนต์ ติดตามสต็อกแยกแต่ละงาน รับเงินสด พร้อมเพย์ โอน หรือบัตร พร้อมระบบจัดส่งทีหลัง ปิดยอดประจำวันได้ใน 5 นาที",
     ctaApply: "สมัครเข้าร่วมโครงการ",
     ctaStatus: "ตรวจสอบสถานะการสมัคร",
