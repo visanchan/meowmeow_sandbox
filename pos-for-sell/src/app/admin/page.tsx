@@ -26,6 +26,11 @@ export default function AdminHomePage() {
           title="Audit log"
           body="Approvals, voids, corrections."
         />
+        <Card
+          href="/admin/pilot-status"
+          title="Pilot status"
+          body="Per-workspace health overview."
+        />
       </ul>
     </div>
   );

@@ -1,9 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import { formatDateTimeTH } from "@/lib/date";
-import { Pill } from "@/components/ui/Pill";
+import { Pill, type PillTone } from "@/components/ui/Pill";
 
 type Row = Database["public"]["Tables"]["audit_logs"]["Row"];
+
+const actionTone = (action: string): PillTone =>
+  /void|delete|cancel|reject/i.test(action)
+    ? "danger"
+    : /approve|create|register|redeem/i.test(action)
+      ? "ok"
+      : /correct|refund|update|suspend/i.test(action)
+        ? "warn"
+        : "accent";
 
 const MOCK: Row[] = [
   {
@@ -86,7 +95,7 @@ export default async function AuditLogPage() {
             className="rounded-[var(--radius-lg)] border border-line bg-panel px-4 py-3"
           >
             <div className="flex flex-wrap items-baseline gap-2">
-              <Pill tone="accent">{r.action}</Pill>
+              <Pill tone={actionTone(r.action)}>{r.action}</Pill>
               <span className="text-xs text-muted">on {r.target_table}</span>
               <span className="ml-auto text-xs text-muted">
                 {formatDateTimeTH(r.created_at)}
