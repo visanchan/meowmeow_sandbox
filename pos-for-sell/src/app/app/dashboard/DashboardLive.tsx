@@ -12,6 +12,7 @@ import {
   ordersInRange,
   previousRange,
   rangePreset,
+  dailyRevenueSeries,
   type RangePresetId,
 } from "@/lib/demo/dashboard-range";
 import { formatTHB } from "@/lib/money/format";
@@ -75,11 +76,20 @@ export function DashboardLive() {
     hourly: mockToday.hourly.map((h) => ({ hour: h.hour, today: h.today })),
   };
 
-  const hourly =
-    rangeId === "today" && live
-      ? live.hourly.map((h) => ({ hour: h.hour, today: h.today }))
-      : mockToday.hourly.map((h) => ({ hour: h.hour, today: h.today }));
-  const maxHour = Math.max(1, ...hourly.map((h) => h.today));
+  const isMultiDay = daysInRange(range) > 1;
+  const daily =
+    isMultiDay && hasLiveData ? dailyRevenueSeries(orders, range) : null;
+  // Chart: real daily series for a multi-day live range, real hourly for today,
+  // and mock hourly ONLY when there is no live data (clearly illustrative) —
+  // never mock bars under a live multi-day label.
+  const chartBars = daily
+    ? daily.map((d) => ({ label: d.date.slice(5), value: d.totalSatang }))
+    : (hasLiveData && live ? live.hourly : mockToday.hourly).map((h) => ({
+        label: String(h.hour),
+        value: h.today,
+      }));
+  const maxBar = Math.max(1, ...chartBars.map((b) => b.value));
+  const chartTitle = daily ? "Sales by day" : "Sales by hour";
 
   const topProducts = totals.topSellers.slice(0, 5);
   const maxTopQty = Math.max(1, ...topProducts.map((s) => s.qty));
@@ -203,13 +213,16 @@ export function DashboardLive() {
       {/* Two-column body — left: sales chart + top products; right rail. */}
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="rounded-[20px] border border-line bg-panel p-6 shadow-[var(--shadow-card)]">
-          <h3 className="text-sm font-extrabold text-text">Sales by hour</h3>
-          <p className="mt-0.5 text-xs text-muted">{range.label}</p>
+          <h3 className="text-sm font-extrabold text-text">{chartTitle}</h3>
+          <p className="mt-0.5 text-xs text-muted">
+            {range.label}
+            {!hasLiveData && " · illustrative"}
+          </p>
 
           <div className="mt-4 flex h-[200px] items-end gap-1.5 border-b border-line pb-3">
-            {hourly.map((h, i) => {
-              const pct = Math.max(3, Math.round((h.today / maxHour) * 100));
-              const isPeak = h.today === maxHour;
+            {chartBars.map((b, i) => {
+              const pct = Math.max(3, Math.round((b.value / maxBar) * 100));
+              const isPeak = b.value === maxBar;
               return (
                 <div
                   key={i}
@@ -220,15 +233,15 @@ export function DashboardLive() {
                       ? "var(--lavender)"
                       : "var(--lavender-300)",
                   }}
-                  title={`${h.hour}`}
+                  title={`${b.label}: ฿${formatTHB(b.value)}`}
                 />
               );
             })}
           </div>
           <div className="mt-2 flex gap-1.5 text-[10px] font-bold text-muted">
-            {hourly.map((h, i) => (
-              <span key={i} className="flex-1 text-center">
-                {h.hour}
+            {chartBars.map((b, i) => (
+              <span key={i} className="flex-1 truncate text-center">
+                {b.label}
               </span>
             ))}
           </div>
