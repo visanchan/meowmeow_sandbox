@@ -92,11 +92,11 @@ export function CartLine({
                 qty: Math.max(0, line.qty - 1),
               })
             }
-            className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-danger-soft-bg)] text-[var(--color-danger-soft-fg)]"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--color-danger-soft-bg)] text-[var(--color-danger-soft-fg)] transition active:scale-95"
           >
-            <Minus size={14} />
+            <Minus size={18} />
           </button>
-          <span className="num min-w-[1.5rem] text-center text-sm font-black">
+          <span className="num min-w-[1.75rem] text-center text-base font-black">
             {line.qty}
           </span>
           <button
@@ -109,9 +109,9 @@ export function CartLine({
                 qty: line.qty + 1,
               })
             }
-            className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-ok-soft-bg)] text-[var(--color-ok-soft-fg)]"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--color-ok-soft-bg)] text-[var(--color-ok-soft-fg)] transition active:scale-95"
           >
-            <Plus size={14} />
+            <Plus size={18} />
           </button>
         </div>
         <p className="num text-sm font-extrabold text-accent-strong">
@@ -121,9 +121,9 @@ export function CartLine({
           type="button"
           aria-label="Remove from cart"
           onClick={() => dispatch({ type: "REMOVE", productId: product.id })}
-          className="grid h-6 w-6 place-items-center rounded-full bg-[#efeafd] text-muted hover:text-text"
+          className="grid h-8 w-8 place-items-center rounded-full bg-[#efeafd] text-muted hover:text-text"
         >
-          <X size={12} />
+          <X size={14} />
         </button>
       </div>
     </li>

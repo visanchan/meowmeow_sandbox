@@ -32,8 +32,8 @@ export function PaymentPicker({
             onClick={() => onSelect(m)}
             className={
               active
-                ? "btn-accent rounded-xl px-2 py-2.5 text-sm font-extrabold"
-                : "rounded-xl border border-line bg-panel px-2 py-2.5 text-sm font-extrabold text-accent-strong hover:bg-soft"
+                ? "btn-accent min-h-[48px] rounded-xl px-2 py-3 text-sm font-extrabold"
+                : "min-h-[48px] rounded-xl border border-line bg-panel px-2 py-3 text-sm font-extrabold text-accent-strong hover:bg-soft"
             }
           >
             {labels[m]}

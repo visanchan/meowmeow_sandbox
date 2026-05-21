@@ -183,7 +183,7 @@ export function SuccessClient({ orderId }: { orderId: string }) {
           </button>
           <Link
             href="/app/pos"
-            className="btn-accent rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-bold"
+            className="btn-accent rounded-[var(--radius-md)] px-6 py-3 text-base font-extrabold"
           >
             Next sale
           </Link>
