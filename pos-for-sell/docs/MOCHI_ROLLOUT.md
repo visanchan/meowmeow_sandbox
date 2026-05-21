@@ -11,8 +11,8 @@ Tracks the migration of `pos-for-sell` to the Mochi design system — one unifie
 ## Backlog (prioritized) — discretionary polish, best reviewed visually
 Each loop fire takes the top unblocked item. Items marked 👁 want a visual eyeball.
 
-1. **Brand identity** 👁 — add the Mochi wordmark (`.wm`: "Mochi" indigo + "POS" lavender) + mascot to the landing `/` hero and the app header (today it shows only the workspace name). Assets in the handoff `project/assets/`.
-2. **Landing `/`** 👁 — match the handoff tone: hero, value prop ("Sell fast at the booth. Save the data for later."), apply CTA.
+1. ✅ **Brand identity** — Mochi wordmark ("Mochi" indigo + "POS" lavender) + mascot now in the app header (`app/layout.tsx`), the `/apply` topbar, and the landing `/` (topbar + hero brand card). Assets in `public/mochi-mascot.png` (from the handoff `project/assets/`).
+2. ✅ **Landing `/`** — redesigned to the Mochi system: brand topbar, two-column hero (pitch + mascot/wordmark brand card carrying the value-prop tagline), Mochi feature cards, closing CTA band. Existing EN/TH copy preserved; added one additive `landing.tagline` i18n key.
 3. **Dashboard `/app/dashboard`** 👁 — align to `screens/dashboard.html`: 3–5 KPI cards, hourly chart, Send Later queue, low-stock. Also compose in the built-but-unwired tiles (Profit/Reorder/ActivityFeed/SourceSplit/multi-period) flagged in PRD F15.
 4. **Event setup `/app/events*`** 👁 — `screens/event-setup.html`: stock allocator + sample bucket.
 5. **Customer portal `/register/[token]`** 👁 — `screens/pet-portal.html`: mobile-first, pet chips (emoji), warm voice.
