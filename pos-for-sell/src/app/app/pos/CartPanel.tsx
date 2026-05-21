@@ -208,9 +208,12 @@ export function CartPanel({
           type="button"
           disabled={ctaDisabled}
           onClick={() => setReviewOpen(true)}
-          className="btn-accent rounded-2xl px-5 py-3 text-base font-extrabold"
+          className={`btn-accent flex w-full items-center gap-3 rounded-2xl px-5 py-4 text-lg font-black ${
+            ctaDisabled ? "justify-center" : "justify-between"
+          }`}
         >
-          {cta}
+          <span>{cta}</span>
+          {!ctaDisabled && <span className="num">{formatTHB(total)}</span>}
         </button>
       </div>
 
