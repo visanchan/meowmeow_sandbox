@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap");
 
 /* ============================================================
    pos-for-sell theme — Mochi POS design system.
@@ -65,8 +64,8 @@
   --panel-grad-to: #f7f4fd;
 
   /* fonts */
-  --font-sans: "Nunito", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Nunito", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-nunito), "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* expose tokens to Tailwind's utility classes (bg-bg, text-accent, etc.).
