@@ -4,6 +4,8 @@ import type {
   Database,
 } from "@/lib/database.types";
 import { ApproveRejectButtons } from "./Actions";
+import { Pill, type PillTone } from "@/components/ui/Pill";
+import { formatDateTimeTH } from "@/lib/date";
 
 type App = Database["public"]["Tables"]["applications"]["Row"];
 
@@ -14,6 +16,15 @@ const STATUSES: ApplicationStatus[] = [
   "invited",
   "registered",
 ];
+
+const toneFor = (s: ApplicationStatus): PillTone =>
+  s === "approved" || s === "registered"
+    ? "ok"
+    : s === "rejected"
+      ? "danger"
+      : s === "invited"
+        ? "accent"
+        : "warn";
 
 export default async function ApplicationsPage({
   searchParams,
@@ -84,10 +95,15 @@ export default async function ApplicationsPage({
             key={row.id}
             className="rounded-[var(--radius-lg)] border border-line bg-panel px-5 py-4"
           >
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-bold text-accent-strong">{row.brand_name}</p>
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <p className="font-display text-lg text-accent-strong">
+                  {row.brand_name}
+                </p>
+                <Pill tone={toneFor(row.status)}>{row.status}</Pill>
+              </div>
               <p className="text-xs text-muted">
-                {new Date(row.created_at).toLocaleString()}
+                {formatDateTimeTH(row.created_at)}
               </p>
             </div>
             <p className="mt-1 text-sm text-text/85">
