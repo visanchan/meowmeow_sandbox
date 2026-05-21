@@ -7,7 +7,6 @@ import { useDemoCatalog } from "@/lib/demo/useDemoCatalog";
 import { computeMetricsFor } from "@/lib/demo/dashboardMetrics";
 import { aggregateMargin } from "@/lib/demo/margin";
 import {
-  dailyRevenueSeries,
   daysInRange,
   deltaPct,
   ordersInRange,
@@ -18,10 +17,7 @@ import {
 import { formatTHB } from "@/lib/money/format";
 import { mockToday } from "./mock";
 import { PaymentSplitTile } from "./PaymentSplitTile";
-import { TopSellersTile } from "./TopSellersTile";
 import { InventoryTile } from "./InventoryTile";
-import { HourBars } from "./HourBars";
-import { DailyBars } from "./DailyBars";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { ActivityFeedTile } from "./ActivityFeedTile";
 import { ProfitTile } from "./ProfitTile";
@@ -37,7 +33,6 @@ export function DashboardLive() {
 
   const range = useMemo(() => rangePreset(rangeId), [rangeId]);
   const prev = useMemo(() => previousRange(range), [range]);
-  const isMultiDay = daysInRange(range) > 1;
 
   const ordersHere = useMemo(
     () => (salesReady ? ordersInRange(orders, range) : []),
@@ -82,15 +77,16 @@ export function DashboardLive() {
 
   const hourly =
     rangeId === "today" && live
-      ? live.hourly.map((h) => ({
-          hour: h.hour,
-          today: h.today,
-          prev: mockToday.hourly.find((m) => m.hour === h.hour)?.prev ?? 0,
-        }))
-      : mockToday.hourly;
+      ? live.hourly.map((h) => ({ hour: h.hour, today: h.today }))
+      : mockToday.hourly.map((h) => ({ hour: h.hour, today: h.today }));
+  const maxHour = Math.max(1, ...hourly.map((h) => h.today));
 
-  const daily =
-    isMultiDay && hasLiveData ? dailyRevenueSeries(orders, range) : null;
+  const topProducts = totals.topSellers.slice(0, 5);
+  const maxTopQty = Math.max(1, ...topProducts.map((s) => s.qty));
+
+  const sendLaterCount = ordersHere.filter((o) =>
+    o.items.some((it) => it.fulfillmentType === "send_later"),
+  ).length;
 
   const goal = mockToday.goal;
   const dRev = deltaPct(live?.totalSatang ?? 0, prevMetrics?.totalSatang ?? 0);
@@ -204,10 +200,114 @@ export function DashboardLive() {
         </div>
       </section>
 
-      {/* Existing tiles — restructured into the mockup's left-card / right-rail
-          (lavender hour-chart + top products, Send-Later + low-stock) in a
-          follow-up commit on this PR. */}
-      <div className="grid gap-4">
+      {/* Two-column body — left: sales chart + top products; right rail. */}
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-[20px] border border-line bg-panel p-6 shadow-[var(--shadow-card)]">
+          <h3 className="text-sm font-extrabold text-text">Sales by hour</h3>
+          <p className="mt-0.5 text-xs text-muted">{range.label}</p>
+
+          <div className="mt-4 flex h-[200px] items-end gap-1.5 border-b border-line pb-3">
+            {hourly.map((h, i) => {
+              const pct = Math.max(3, Math.round((h.today / maxHour) * 100));
+              const isPeak = h.today === maxHour;
+              return (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t-lg transition-colors"
+                  style={{
+                    height: `${pct}%`,
+                    background: isPeak
+                      ? "var(--lavender)"
+                      : "var(--lavender-300)",
+                  }}
+                  title={`${h.hour}`}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-2 flex gap-1.5 text-[10px] font-bold text-muted">
+            {hourly.map((h, i) => (
+              <span key={i} className="flex-1 text-center">
+                {h.hour}
+              </span>
+            ))}
+          </div>
+
+          <h3 className="mt-8 text-sm font-extrabold text-text">
+            Top products
+          </h3>
+          <div className="mt-3 grid gap-2.5">
+            {topProducts.map((s, i) => (
+              <div
+                key={s.sku}
+                className="grid grid-cols-[28px_1fr_auto_90px] items-center gap-3"
+              >
+                <div
+                  className="grid h-7 w-7 place-items-center rounded-lg text-xs font-extrabold"
+                  style={{
+                    background: "var(--lavender-100)",
+                    color: "var(--color-accent)",
+                  }}
+                >
+                  {i + 1}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-bold text-text">
+                    {s.name}
+                  </div>
+                  <div className="num text-[11px] text-muted">
+                    {s.sku} · ฿{formatTHB(s.revenueSatang)}
+                  </div>
+                </div>
+                <div className="text-xs font-bold text-muted">{s.qty} sold</div>
+                <div
+                  className="h-1.5 overflow-hidden rounded-full"
+                  style={{ background: "var(--color-soft)" }}
+                >
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.round((s.qty / maxTopQty) * 100)}%`,
+                      background: "var(--grad-accent)",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right rail */}
+        <div className="flex flex-col gap-4">
+          <div className="rounded-[20px] border border-line bg-panel p-5 shadow-[var(--shadow-card)]">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-sm font-extrabold text-text">
+                Send Later queue
+              </h3>
+              <Link
+                href="/app/send-later"
+                className="text-xs font-bold text-[var(--indigo-600)] hover:underline"
+              >
+                All →
+              </Link>
+            </div>
+            <p className="num mt-2 text-2xl font-black text-text">
+              {sendLaterCount}
+            </p>
+            <p className="text-xs text-muted">
+              order{sendLaterCount === 1 ? "" : "s"} to fulfill after the event
+            </p>
+          </div>
+
+          <InventoryTile rows={inventoryRows} />
+        </div>
+      </div>
+
+      {/* More insights — analytics not in the mockup, kept available. */}
+      <div className="mt-8 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
+        More insights
+      </div>
+      <div className="mt-3 grid gap-4">
         <PaymentSplitTile split={totals.paymentSplit} />
 
         {margin && (
@@ -232,25 +332,7 @@ export function DashboardLive() {
           <ReorderTile catalog={catalog} />
         )}
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <TopSellersTile
-            sellers={totals.topSellers.map((s) => ({
-              sku: s.sku,
-              name: s.name,
-              qty: s.qty,
-              revenueSatang: s.revenueSatang,
-            }))}
-          />
-          <InventoryTile rows={inventoryRows} />
-        </div>
-
         <ActivityFeedTile />
-
-        {isMultiDay && daily ? (
-          <DailyBars series={daily} />
-        ) : (
-          <HourBars hourly={hourly} />
-        )}
       </div>
 
       <Link
