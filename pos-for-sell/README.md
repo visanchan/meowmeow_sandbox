@@ -52,11 +52,17 @@ cp .env.example .env.local
 
 ### 4. Apply database
 
-In the Supabase SQL editor, run in this order:
+In the Supabase SQL editor, run the SQL in **two phases**.
+
+**Provision + admin visibility (do now):**
 
 1. `database/schema.sql`
 2. `database/rls-policies.sql`
 3. `database/seed.sql` (optional — only after you've created at least one Auth user)
+
+**Before POS checkout works (the Supabase wiring step):**
+
+4. The 8 `SECURITY DEFINER` RPCs in `database/functions/*.sql` (`create_order`, `void_order`, etc.). Checkout / void / correct / invite call these and 404 until they exist. Idempotent `create or replace`, so safe to run earlier too. Full order incl. `migrations/`: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ### 5. Run
 
