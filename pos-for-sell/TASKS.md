@@ -227,10 +227,9 @@ The user must:
    - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
    - **anon public** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - **service_role** → `SUPABASE_SERVICE_ROLE_KEY`
-4. Open the SQL editor, run in this order:
-   - `pos-for-sell/database/schema.sql`
-   - `pos-for-sell/database/rls-policies.sql`
-   - (optional) `pos-for-sell/database/seed.sql` — only after creating one Auth user via the app.
+4. Open the SQL editor and run the SQL in **two phases**:
+   - **Provision + admin visibility (do now):** `pos-for-sell/database/schema.sql` → `pos-for-sell/database/rls-policies.sql` → (optional) `pos-for-sell/database/seed.sql`, the seed only after creating one Auth user via the app.
+   - **POS wiring / operational checkout (do during the Supabase wiring session):** also run the 8 `SECURITY DEFINER` RPCs in `pos-for-sell/database/functions/*.sql` (`create_order`, `void_order`, `correct_order`, the invite/registration-token RPCs, etc.). Checkout / void / correct / invite features 404 until these exist. They are idempotent `create or replace`, so they're safe to run earlier too. Full order incl. `migrations/`: `docs/DEPLOYMENT.md`.
 5. In `Authentication → Providers`, ensure **Email** is enabled with password sign-in.
 6. In `Storage`, create two buckets:
    - `product-images` — public read.
