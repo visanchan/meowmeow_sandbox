@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { ListSkeleton } from "@/components/ui/States";
+import { PawPrint } from "lucide-react";
 import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { useDemoCustomers } from "@/lib/demo/useDemoCustomers";
 import { useDemoCustomerNotes } from "@/lib/demo/useDemoCustomerNotes";
@@ -75,15 +77,16 @@ export function CustomersList() {
 
   if (!customers.ready || !ready) {
     return (
-      <p className="mt-8 rounded-2xl border border-line bg-panel px-4 py-6 text-center text-sm text-muted">
-        Loading…
-      </p>
+      <ListSkeleton className="mt-8" rows={5} />
     );
   }
 
   if (all.length === 0) {
     return (
       <div className="panel mt-8 p-8 text-center">
+        <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--lavender-100)]" aria-hidden>
+          <PawPrint className="h-6 w-6 text-[var(--lavender-700)]" />
+        </span>
         <p className="font-display text-xl text-accent-strong">No customers yet</p>
         <p className="mt-2 text-sm text-muted">
           Customers appear here when a sale captures a phone number. Try

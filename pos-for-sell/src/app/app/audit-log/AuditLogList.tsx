@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useDemoAudit } from "@/lib/demo/useDemoAudit";
 import type { DemoAuditAction } from "@/lib/demo/audit";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { ListSkeleton } from "@/components/ui/States";
+import { ClipboardList } from "lucide-react";
 import { formatDateTimeTH } from "@/lib/date";
 
 const ACTION_TONE: Record<DemoAuditAction, PillTone> = {
@@ -46,9 +48,7 @@ export function AuditLogList() {
 
   if (!ready) {
     return (
-      <p className="rounded-2xl border border-line bg-panel px-4 py-6 text-center text-sm text-muted">
-        Loading…
-      </p>
+      <ListSkeleton className="mt-5" />
     );
   }
 
@@ -57,6 +57,9 @@ export function AuditLogList() {
   if (entries.length === 0) {
     return (
       <div className="panel mt-8 p-8 text-center">
+        <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--lavender-100)]" aria-hidden>
+          <ClipboardList className="h-6 w-6 text-[var(--lavender-700)]" />
+        </span>
         <p className="font-display text-xl text-accent-strong">
           No audit entries yet.
         </p>

@@ -6,6 +6,8 @@ import { useDemoSales } from "@/lib/demo/useDemoSales";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { ListSkeleton } from "@/components/ui/States";
+import { Package } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { formatTHB } from "@/lib/money/format";
 import { formatDateTimeTH } from "@/lib/date";
@@ -44,9 +46,7 @@ export function SendLaterList() {
 
   if (!ready) {
     return (
-      <p className="rounded-2xl border border-line bg-panel px-4 py-6 text-center text-sm text-muted">
-        Loading…
-      </p>
+      <ListSkeleton className="mt-5" />
     );
   }
 
@@ -92,6 +92,9 @@ export function SendLaterList() {
   if (sendLaterOrders.length === 0) {
     return (
       <div className="panel mt-8 p-8 text-center">
+        <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--lavender-100)]" aria-hidden>
+          <Package className="h-6 w-6 text-[var(--lavender-700)]" />
+        </span>
         <p className="font-display text-xl text-accent-strong">
           No send-later orders yet.
         </p>
@@ -212,7 +215,7 @@ export function SendLaterList() {
                           [o.id]: e.currentTarget.value,
                         }))
                       }
-                      className="rounded-[var(--radius-md)] border border-line bg-white px-3 py-1.5 text-sm"
+                      className="rounded-[var(--radius-md)] border border-line bg-white px-3 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                     />
                   )}
                   {next && (

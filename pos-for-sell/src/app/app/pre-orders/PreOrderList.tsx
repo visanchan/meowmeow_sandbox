@@ -6,6 +6,8 @@ import { useDemoPreOrders } from "@/lib/demo/useDemoPreOrders";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pill, type PillTone } from "@/components/ui/Pill";
+import { ListSkeleton } from "@/components/ui/States";
+import { Clock } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n/provider";
 import { formatDateTimeTH } from "@/lib/date";
@@ -39,9 +41,7 @@ export function PreOrderList() {
 
   if (!ready) {
     return (
-      <p className="rounded-2xl border border-line bg-panel px-4 py-6 text-center text-sm text-muted">
-        {t.common.loading}
-      </p>
+      <ListSkeleton className="mt-5" />
     );
   }
 
@@ -51,6 +51,9 @@ export function PreOrderList() {
   if (items.length === 0) {
     return (
       <div className="panel mt-8 p-8 text-center">
+        <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--lavender-100)]" aria-hidden>
+          <Clock className="h-6 w-6 text-[var(--lavender-700)]" />
+        </span>
         <p className="font-display text-xl text-accent-strong">
           No pre-orders yet.
         </p>

@@ -16,17 +16,50 @@ export function Skeleton({
   );
 }
 
+/** Branded list-loading placeholder — a few shimmer bars in place of bare
+ *  "Loading…" text. Keeps a screen-reader status for a11y. */
+export function ListSkeleton({
+  rows = 4,
+  className,
+}: {
+  rows?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("grid gap-2.5", className)}
+      role="status"
+      aria-label="Loading"
+    >
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-16" />
+      ))}
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
+
 export function EmptyState({
+  icon,
   title,
   body,
   action,
 }: {
+  icon?: React.ReactNode;
   title: string;
   body?: string;
   action?: React.ReactNode;
 }) {
   return (
     <div className="panel flex flex-col items-center gap-3 px-6 py-10 text-center">
+      {icon && (
+        <span
+          className="grid h-14 w-14 place-items-center rounded-full bg-[var(--lavender-100)]"
+          aria-hidden
+        >
+          {icon}
+        </span>
+      )}
       <p className="font-display text-xl text-accent-strong">{title}</p>
       {body && <p className="max-w-sm text-sm text-muted">{body}</p>}
       {action}
