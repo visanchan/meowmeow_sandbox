@@ -39,11 +39,7 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
 
 - **41a — Cap discount at subtotal+shipping; inline "capped to total" hint** *(finding L1)* — **done · see Done section.**
 
-- **41b — Mark mock admin Approve/Reject as "(awaiting DD-26)"** *(finding L3)*
-  - Why: `src/app/admin/applications/Actions.tsx` toasts "Approved (mock)" but does nothing to the DB. A real admin would believe they acted. DD-26 is blocked on Supabase; until then the button must not lie.
-  - Touched: `src/app/admin/applications/Actions.tsx`.
-  - Done when: button is visually disabled (or labeled "Pending Supabase wire-up — DD-26") and click toast says "not yet wired — DD-26".
-  - **Owner:** claude · **Status:** in-progress · **Branch:** pos/wave-41b-mock-admin-honesty · **Claimed:** 2026-05-24
+- **41b — Mark mock admin Approve/Reject as "(awaiting DD-26)"** *(finding L3)* — **done · see Done section.**
 
 - **41c — `validateSplits` rejects negative line amounts** *(finding L6)* — **done · see Done section.**
 
@@ -360,6 +356,10 @@ Pick one provider for analytics + error tracking; defer until Phase 8.
 ## Done
 
 (Move completed batches here with the merging commit SHA.)
+
+### Wave 41b — Mock admin Approve/Reject honesty (finding L3)
+- **Merged:** 2026-05-24 · `<pending>` (PR #<pending>)
+- **Result:** the Approve/Reject buttons no longer fire "Approved (mock)" / "Rejected (mock)" success toasts. Toast content moved to a new pure module `src/lib/admin/applications-pending.ts` (kind="info", title "Not yet wired — DD-26", message explains nothing changed and points to TASKS.md / DD-26). A small warn-toned "Awaiting DD-26 wire-up" caption now sits beside the buttons so admins see the state before clicking. 6 unit tests pin the toast content. When DD-26 lands, the pending module gets deleted and `Actions.tsx` re-points its toast helper at the real server-action result.
 
 ### Wave 41c — `validateSplits` rejects negative line amounts (finding L6)
 - **Merged:** 2026-05-24 · `e57ae94` (PR #95)
