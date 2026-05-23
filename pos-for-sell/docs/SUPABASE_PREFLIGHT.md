@@ -24,4 +24,18 @@ Findings:
 - 🔵 **`payment_status` is hardcoded `'paid'`** for every order (`case when … 'paid' else 'paid' end` is a no-op). Even `send_later` / `transfer` orders are marked paid at creation — confirm that matches when money is actually collected, or thread the real status through.
 - 🔵 **Order-number allocation assumes the `event_NNN` shape.** `cast(split_part(order_number,'_',2) as int)` would raise if a non-conforming `order_number` ever existed for the event. Only this RPC creates them, so edge-only today.
 
-_(next: `void_order`, `correct_order`, then the remaining 5 RPCs)_
+### `void_order.sql` — restore inventory + mark voided — ✅ solid
+Locks the order row `FOR UPDATE`; rejects double-void (`status='voided'` guard) and empty reason; **owner/manager only** (cashiers can't void). Restores `event_inventory` (`current_qty +`, `sold_qty -` clamped at 0) from `order_items` — including sample lines (they decremented stock, so they restore). Marks order + payment `voided`, cancels open send-later fulfilment, writes audit with the full prior order as `old_value`.
+
+Findings:
+- 🟡 **Voiding an order whose send-later line was already `completed` (shipped) still restores its inventory.** The send-later cancel skips `completed`/`cancelled` rows, but the inventory restore runs for *all* `order_items` unconditionally — so stock that's physically gone (shipped) gets added back → **inventory drift**. Consider blocking the void (or skipping the restore) for already-fulfilled send-later lines.
+- 🔵 No status guard beyond `'voided'` (a `'corrected'` order can be voided) — likely intended; noted.
+
+### `correct_order.sql` — patch customer info / note — ✅ solid
+Owner/manager only; auth-gated. Partial update via `coalesce(nullif(…,''), col)` so blank fields preserve existing values; flips `completed → corrected`; audit row with old + payload. Correctly scoped — the header comment directs qty corrections to void+recreate, so it never touches line items or totals (money/stock integrity stays in `create_order`).
+
+Findings:
+- 🔵 **No `FOR UPDATE` lock** on the order row (plain select → update). Concurrent corrections are last-write-wins; low risk since it only touches customer metadata.
+- 🔵 Customer fields can still be patched on a `voided` order (status stays `voided`, but the metadata updates). Harmless; noted.
+
+_(next: `redeem_invite_code`, `create_registration_token`, `claim_registration_token`, `convert_event_to_sample`, `convert_sample_to_event`)_
