@@ -38,4 +38,24 @@ Findings:
 - 🔵 **No `FOR UPDATE` lock** on the order row (plain select → update). Concurrent corrections are last-write-wins; low risk since it only touches customer metadata.
 - 🔵 Customer fields can still be patched on a `voided` order (status stays `voided`, but the metadata updates). Harmless; noted.
 
-_(next: `redeem_invite_code`, `create_registration_token`, `claim_registration_token`, `convert_event_to_sample`, `convert_sample_to_event`)_
+### `redeem_invite_code.sql` — signup → workspace — ✅ solid
+Post-signup (`auth.uid()` required). Validates brand + slug (the slug regex uses Postgres ARE, which *does* support `(?:…)` — fine); locks the invite `FOR UPDATE`; rejects used/cancelled/expired (marks expired on the fly); one-workspace-per-owner pilot guard; creates workspace + owner membership, marks the code used, flips the application → `registered`, audits.
+- 🟡 **Slug collision surfaces as a raw unique-violation**, not a friendly message — it validates slug *format* but not *availability*. Catch the constraint error during wiring for a clean "name taken" response.
+
+### `create_registration_token.sql` — issue post-purchase token — ✅ solid
+Auth + owner/manager/cashier; resolves workspace from the order; generates a collision-checked URL-safe token (`gen_random_bytes` → strip `/ + =` → 16 chars); inserts the token row + audit.
+- 🔵 In rare cases stripping `/ + =` leaves a token < 16 chars — still random and accepted (claim only requires len ≥ 8); cosmetic.
+
+### `claim_registration_token.sql` — anon portal claim — ✅ solid (2 items to verify)
+The only anon write surface. `set search_path = public` present ✓ (essential for an anon `SECURITY DEFINER`). Locks the token `FOR UPDATE`; rejects missing/claimed/expired; inserts customer + contacts (skip-empty, `on conflict` dedupe) + optional pets + order link; marks claimed; audits with `user_id = null`.
+- 🟡 **Audit insert sets `user_id = null` → requires `audit_logs.user_id` to be NULLABLE.** If the schema column is `NOT NULL`, every anon claim fails. **Verify in the schema/RLS pass (potential 🔴).**
+- 🟡 **Malformed anon pet input crashes the whole claim** — `…->>'weight_kg'::numeric`, `::date` casts abort the transaction on bad input. Validate in the portal Server Action (and/or guard the casts).
+- 🔵 No in-RPC rate-limit (expected) — ensure the portal Server Action rate-limits this anon endpoint (CLAUDE.md public-form rule).
+
+### `convert_event_to_sample.sql` + `convert_sample_to_event.sql` — sample-bucket moves — ✅ solid (mirror pair)
+Both: auth + owner/manager/cashier/stock_staff; `qty > 0`; resolve workspace from event; lock the `event_inventory` row `FOR UPDATE`; underflow guard (event→sample checks `current_qty`, sample→event checks `sample_qty`); move qty between `current_qty` ↔ `sample_qty`; audit old + new; return the row.
+- 🔵 **Both depend on `event_inventory.sample_qty`** (added by the Wave 39a migration). **Verify `schema.sql` includes `sample_qty`** so a fresh install (schema-only) has it; otherwise these 404 until the migration runs.
+
+> **RPCs done (8/8) — no 🔴 blockers.** All are well-structured, atomic, with RBAC + `search_path` hardening + audit throughout. **Cross-cutting items to verify in the schema/RLS pass:** `audit_logs.user_id` nullable · `event_inventory.sample_qty` present in `schema.sql` · `is_workspace_member` helper correctness · `workspaces.slug` unique constraint.
+
+_(next: `rls-policies.sql`)_
