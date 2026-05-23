@@ -58,4 +58,20 @@ Both: auth + owner/manager/cashier/stock_staff; `qty > 0`; resolve workspace fro
 
 > **RPCs done (8/8) — no 🔴 blockers.** All are well-structured, atomic, with RBAC + `search_path` hardening + audit throughout. **Cross-cutting items to verify in the schema/RLS pass:** `audit_logs.user_id` nullable · `event_inventory.sample_qty` present in `schema.sql` · `is_workspace_member` helper correctness · `workspaces.slug` unique constraint.
 
-_(next: `rls-policies.sql`)_
+---
+
+## RLS — `database/rls-policies.sql` — ✅ strong design, ⚠️ one HIGH-priority thing to test first
+
+**Deny-by-default verified.** RLS is enabled on all 18 tables. Reads are workspace-scoped via `is_workspace_member(workspace_id)` (or `is_admin()`). Writes to `orders` / `order_items` / `payment_records` / `customers` / `customer_contacts` / `pets` / `customer_order_links` / `audit_logs` have **no direct INSERT/UPDATE policy at all** — denied for clients, performed only through the `SECURITY DEFINER` RPCs (which bypass RLS). `applications` allows anon INSERT only (public apply form) with admin-only SELECT/UPDATE; registration tokens are never exposed to anon SELECT. Role gating is consistent (owner/manager for events + voids, +stock_staff for products/inventory, +cashier for sales). Matches `CLAUDE.md` rules 2 / 3 / 6.
+
+**Verify-list from the RPC pass — all resolved against `schema.sql`:**
+- ✅ `audit_logs.user_id` is **nullable** (`schema.sql:285`) → the anon `claim_registration_token` audit succeeds. (Cleared the potential blocker.)
+- ✅ `event_inventory.sample_qty` is present (`schema.sql:175`, `not null default 0`) → `convert_*` work on a fresh, schema-only install.
+- ✅ `workspaces.slug` is `unique` (`schema.sql:67`) → confirms the `redeem_invite_code` slug-collision finding.
+
+Findings:
+- 🟡 **HIGH-priority — test on the very first query.** `is_workspace_member` and `is_admin` are **`SECURITY INVOKER`** (`schema.sql:93,112`) and read `workspace_members` / `admin_users` — but those tables' own SELECT policies *call those same helpers*. This is the classic Postgres "infinite recursion detected in policy for relation workspace_members" trap, and if it triggers it breaks **every** workspace-scoped query (products, events, orders, …), not just member reads. It's *likely* OK here because each helper filters `user_id = auth.uid()`, and those policies put `user_id = auth.uid()` as the **first** OR term, so a short-circuit avoids the recursive call — but that isn't guaranteed by the planner. **Action:** right after applying the SQL, sign in as a member and run `select * from products` (or load `/app`). If it errors with infinite recursion, the idiomatic fix is to mark both helpers `SECURITY DEFINER` (their internal reads then bypass RLS). This is the single most likely first-run break.
+- 🔵 **No DELETE policies anywhere** — products soft-delete via `is_active`; everything else is immutable or RPC-only. Intentional; deny-by-default holds.
+- 🔵 Stale in-SQL comment (`rls-policies.sql:217-218`: order RPCs "added in later batches") — they exist now; cosmetic.
+
+_(next: the 2 `database/migrations/*.sql`, then the wiring points)_
