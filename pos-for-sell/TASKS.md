@@ -49,7 +49,7 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
   - Why: `splitsTotal` clamps negatives to 0 in the sum but UI shows them; defense-in-depth so a corrupted state can't pass validation.
   - Touched: `src/lib/pos/splits.ts` (add `reason: "negative"` case), `tests/lib/splits.test.ts`.
   - Done when: a split array containing any line < 0 fails `validateSplits` with `reason: "negative"`; test covers it.
-  - Status: `planning`.
+  - **Owner:** claude · **Status:** in-progress · **Branch:** pos/wave-41c-splits-negative · **Claimed:** 2026-05-24
 
 - **41d — Verify `src/proxy.ts` actually runs on every request** *(finding L4)* — **done · see Done section.**
 
@@ -366,7 +366,7 @@ Pick one provider for analytics + error tracking; defer until Phase 8.
 (Move completed batches here with the merging commit SHA.)
 
 ### Wave 41a — Cap discount at subtotal+shipping; inline "capped" hint (finding L1)
-- **Merged:** 2026-05-24 · `<pending>` (PR #<pending>)
+- **Merged:** 2026-05-24 · `4cd4165` (PR #94)
 - **Result:** new pure `capDiscount(typedSatang, maxSatang) → {satang, capped}` in `lib/pos/calc.ts`; `DiscountInput` in CartPanel now passes `subtotal+shipping` as max, dispatches the capped value, and shows an inline warn-toned "Capped at X THB (cart total)" hint when the user typed more than the ceiling. Presets also go through the cap (safe — they're small). 7 new unit tests covering the boundary (zero, exact, over-by-one, wildly-over, negative, zero-max). Receipt now records the capped value, not the absurd one.
 
 ### Wave 41d — Verify `src/proxy.ts` runs on every request (finding L4)
