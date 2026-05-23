@@ -43,7 +43,7 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
   - Why: `src/app/admin/applications/Actions.tsx` toasts "Approved (mock)" but does nothing to the DB. A real admin would believe they acted. DD-26 is blocked on Supabase; until then the button must not lie.
   - Touched: `src/app/admin/applications/Actions.tsx`.
   - Done when: button is visually disabled (or labeled "Pending Supabase wire-up — DD-26") and click toast says "not yet wired — DD-26".
-  - Status: `planning`.
+  - **Owner:** claude · **Status:** in-progress · **Branch:** pos/wave-41b-mock-admin-honesty · **Claimed:** 2026-05-24
 
 - **41c — `validateSplits` rejects negative line amounts** *(finding L6)* — **done · see Done section.**
 
@@ -362,7 +362,7 @@ Pick one provider for analytics + error tracking; defer until Phase 8.
 (Move completed batches here with the merging commit SHA.)
 
 ### Wave 41c — `validateSplits` rejects negative line amounts (finding L6)
-- **Merged:** 2026-05-24 · `<pending>` (PR #<pending>)
+- **Merged:** 2026-05-24 · `e57ae94` (PR #95)
 - **Result:** added a `negative` reason to `validateSplits` that runs before the empty/short/over checks (since `splitsTotal` clamps negatives to 0, a negative line beside a balancing positive would otherwise validate clean). `offBy` reports the absolute value of the most-negative line so the cashier can locate the bad row. UI: `SplitPaymentBlock` now renders the danger tone + a localised "Negative amount: −X" chip (en + th). 4 new test cases pin the boundary.
 
 ### Wave 41a — Cap discount at subtotal+shipping; inline "capped" hint (finding L1)
