@@ -41,7 +41,7 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
   - Why: today the discount input has no upper bound; entering 99999 silently saturates total to 0 with no warning, producing absurd discount values on the receipt.
   - Touched: `src/app/app/pos/CartPanel.tsx` (`DiscountInput`), new test in `tests/lib/pos-discount.test.ts`.
   - Done when: typing > (subtotal+shipping) caps the *stored* discount to that ceiling, the input shows an inline "capped" hint, and the receipt records the capped value. Vitest covers the cap.
-  - Status: `planning`.
+  - **Owner:** claude · **Status:** in-progress · **Branch:** pos/wave-41a-discount-cap · **Claimed:** 2026-05-24
 
 - **41b — Mark mock admin Approve/Reject as "(awaiting DD-26)"** *(finding L3)*
   - Why: `src/app/admin/applications/Actions.tsx` toasts "Approved (mock)" but does nothing to the DB. A real admin would believe they acted. DD-26 is blocked on Supabase; until then the button must not lie.
