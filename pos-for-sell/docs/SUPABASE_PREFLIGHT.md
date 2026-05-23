@@ -7,7 +7,7 @@
 **Severity legend:** 🔴 blocking (would error or corrupt data) · 🟡 contract/validation gap (correct only if the client behaves) · 🔵 note / edge case.
 
 ## Verdict
-✅ **Complete — no unconditional blockers.** The SQL + wiring are sound (atomic RPCs, deny-by-default RLS, idempotent migrations, graceful degradation without keys). **One HIGH-priority thing to test on the first member query: RLS recursion** (`is_workspace_member` / `is_admin` are `SECURITY INVOKER`) — detail in the RLS section and the **Overall verdict** at the bottom. All 11 queue items reviewed.
+✅ **Complete — no blockers. The one high-risk item was found *and fixed* in this pass.** The SQL + wiring are sound (atomic RPCs, deny-by-default RLS, idempotent migrations, graceful degradation without keys). The RLS infinite-recursion risk on `is_workspace_member` / `is_admin` is **patched in `schema.sql`** — both are now `SECURITY DEFINER` with a pinned `search_path` (logic unchanged, still `auth.uid()`-constrained). All 11 queue items reviewed.
 
 ---
 
@@ -58,7 +58,7 @@ Both: auth + owner/manager/cashier/stock_staff; `qty > 0`; resolve workspace fro
 
 ---
 
-## RLS — `database/rls-policies.sql` — ✅ strong design, ⚠️ one HIGH-priority thing to test first
+## RLS — `database/rls-policies.sql` — ✅ strong design (+ recursion risk fixed in `schema.sql`)
 
 **Deny-by-default verified.** RLS is enabled on all 18 tables. Reads are workspace-scoped via `is_workspace_member(workspace_id)` (or `is_admin()`). Writes to `orders` / `order_items` / `payment_records` / `customers` / `customer_contacts` / `pets` / `customer_order_links` / `audit_logs` have **no direct INSERT/UPDATE policy at all** — denied for clients, performed only through the `SECURITY DEFINER` RPCs (which bypass RLS). `applications` allows anon INSERT only (public apply form) with admin-only SELECT/UPDATE; registration tokens are never exposed to anon SELECT. Role gating is consistent (owner/manager for events + voids, +stock_staff for products/inventory, +cashier for sales). Matches `CLAUDE.md` rules 2 / 3 / 6.
 
@@ -68,7 +68,7 @@ Both: auth + owner/manager/cashier/stock_staff; `qty > 0`; resolve workspace fro
 - ✅ `workspaces.slug` is `unique` (`schema.sql:67`) → confirms the `redeem_invite_code` slug-collision finding.
 
 Findings:
-- 🟡 **HIGH-priority — test on the very first query.** `is_workspace_member` and `is_admin` are **`SECURITY INVOKER`** (`schema.sql:93,112`) and read `workspace_members` / `admin_users` — but those tables' own SELECT policies *call those same helpers*. This is the classic Postgres "infinite recursion detected in policy for relation workspace_members" trap, and if it triggers it breaks **every** workspace-scoped query (products, events, orders, …), not just member reads. It's *likely* OK here because each helper filters `user_id = auth.uid()`, and those policies put `user_id = auth.uid()` as the **first** OR term, so a short-circuit avoids the recursive call — but that isn't guaranteed by the planner. **Action:** right after applying the SQL, sign in as a member and run `select * from products` (or load `/app`). If it errors with infinite recursion, the idiomatic fix is to mark both helpers `SECURITY DEFINER` (their internal reads then bypass RLS). This is the single most likely first-run break.
+- ✅ **FIXED in this pass (was the top first-run risk) — RLS recursion.** `is_workspace_member` and `is_admin` were `SECURITY INVOKER` and read `workspace_members` / `admin_users`, whose own SELECT policies call those same helpers — the classic Postgres "infinite recursion detected in policy" trap that would have broken **every** workspace-scoped query (products, events, orders, admin, …). **Patched in `schema.sql`:** both helpers are now **`SECURITY DEFINER`** with `set search_path = public, pg_temp` and fully-qualified table reads, so their internal reads bypass RLS — no recursion. Safe: logic unchanged and still constrained to `auth.uid()`, so a caller can only check their *own* membership/admin status (no permission broadening, no workspace-check bypass). A regression-guard comment in `schema.sql` records why they must stay `DEFINER`. **Verified:** every RLS policy that calls these helpers (workspaces, workspace_members, products, events, event_inventory, orders/items/payments, send_later, audit_logs, all 5 customer-portal tables) is now non-recursive, and the helpers no longer trigger the `workspace_members` / `admin_users` policies.
 - 🔵 **No DELETE policies anywhere** — products soft-delete via `is_active`; everything else is immutable or RPC-only. Intentional; deny-by-default holds.
 - 🔵 Stale in-SQL comment (`rls-policies.sql:217-218`: order RPCs "added in later batches") — they exist now; cosmetic.
 
@@ -90,7 +90,7 @@ Server Action: Zod validation → field errors; honeypot (`website`) → silent 
 
 ### `src/lib/auth/admin-check.ts` (admin gate) — ✅ solid
 Typed guard with all three failure modes — `not-configured` / `not-authed` / `not-admin` — each with a helpful message; `server-only`. Reads `admin_users` with the **user session** (not service role) via the `user_id = auth.uid()` self-select policy, so `/admin/*` pages render a graceful state in demo mode instead of crashing.
-- 🔵 **Shares the `is_admin` recursion** flagged in the RLS section (reading `admin_users` triggers a policy that calls `is_admin`). When you test for recursion, exercise admin login too.
+- ✅ Reads `admin_users` via `is_admin`, which is now `SECURITY DEFINER` (recursion fixed) — admin login is safe; no first-run action needed.
 
 ---
 
@@ -99,7 +99,7 @@ Typed guard with all three failure modes — `not-configured` / `not-authed` / `
 **The Supabase SQL + wiring are in good shape — no *unconditional* blockers found.** The 8 RPCs are atomic, row-locked, RBAC-gated, `search_path`-hardened, and audited; RLS is deny-by-default across all 18 tables with every sensitive write funnelled through `SECURITY DEFINER` RPCs; the migrations are idempotent and correct for a fresh install; the wired Server Actions degrade gracefully without keys.
 
 **When you provision, in this order:**
-1. 🟡 **HIGH — test RLS recursion immediately.** After `schema.sql` + `rls-policies.sql`, sign in as a member and load `/app` (or run `select * from products`) and an `/admin` page. If you hit *"infinite recursion detected in policy"*, mark `is_workspace_member` + `is_admin` as `SECURITY DEFINER`. This is the one thing that could break everything on day one.
+1. ✅ **FIXED — RLS recursion.** `is_workspace_member` + `is_admin` are now `SECURITY DEFINER` with `search_path = public, pg_temp` (logic unchanged, still `auth.uid()`-constrained), so the day-one break risk is removed — no first-run action needed. *(Optional smoke-check after provisioning: load `/app` as a member; it should just work.)*
 2. 🟡 **Close the wire-time validation gaps in the Server Actions** (none block provisioning): `create_order` `mixed` payment needs a `payments[]` array; send-later needs phone + address; the anon `claim_registration_token` must validate pet weight/date and be rate-limited.
 3. 🟡 **Decide `void_order` behavior** for already-shipped send-later lines (today it restores stock that's physically gone → inventory drift).
 4. 🟡 **Upgrade path only:** if you run `customer_portal.sql` against an existing DB, re-run `rls-policies.sql` afterward.

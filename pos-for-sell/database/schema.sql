@@ -88,7 +88,13 @@ create table if not exists public.workspace_members (
 create index if not exists workspace_members_user_idx on public.workspace_members (user_id);
 
 -- =================================================================
--- Helper functions used by RLS policies and RPCs
+-- Helper functions used by RLS policies and RPCs.
+-- SECURITY DEFINER (not INVOKER) is REQUIRED here: these read workspace_members
+-- / admin_users, whose own RLS policies call these same helpers — invoker rights
+-- would recurse ("infinite recursion detected in policy"). DEFINER makes the
+-- internal reads bypass RLS. Safe because each helper is constrained to
+-- auth.uid() (a caller can only check their OWN membership/admin status) and
+-- pins search_path. Do NOT revert these to SECURITY INVOKER.
 -- =================================================================
 create or replace function public.is_workspace_member(
   ws    uuid,
@@ -97,8 +103,8 @@ create or replace function public.is_workspace_member(
 returns boolean
 language sql
 stable
-security invoker
-set search_path = public
+security definer
+set search_path = public, pg_temp
 as $$
   select exists (
     select 1
@@ -113,8 +119,8 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 stable
-security invoker
-set search_path = public
+security definer
+set search_path = public, pg_temp
 as $$
   select exists (
     select 1 from public.admin_users au where au.user_id = auth.uid()
