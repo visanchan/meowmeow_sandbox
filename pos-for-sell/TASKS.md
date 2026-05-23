@@ -60,7 +60,8 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
   - Repro: `npm run build` and read the build log for "Middleware not found" / "no proxy export"; then write a Playwright test that logs in, observes the `sb-…-auth-token` cookie, fast-forwards an hour, navigates to `/app`, and asserts the cookie was refreshed (or the request still completes without a login redirect).
   - Touched: `src/proxy.ts` (only if the export shape is wrong); new `tests/e2e/session-refresh.spec.ts` if Playwright is set up — otherwise document the manual verification in the PR description.
   - Done when: an empirical answer exists ("works" or "broken, fixed by N-char change") and is in the PR.
-  - Status: `planning`. **High priority** — every later auth-touching batch sits on top of this.
+  - **Owner:** claude · **Status:** in-progress · **Branch:** pos/wave-41d-proxy-verify · **Claimed:** 2026-05-24
+  - **Priority:** high — every later auth-touching batch sits on top of this.
 
 - **41e — ADR: orphan-user → demo-mode behavior in `/app` layout** *(finding L5)*
   - Why: today an authenticated user with no `workspace_members` row falls into demo mode showing localStorage data. Post-Supabase that's surprising: a removed seller would still see (their own) demo data. Decision needed: keep as feature, or redirect to `/onboarding`.
