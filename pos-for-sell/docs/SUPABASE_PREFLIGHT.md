@@ -7,9 +7,7 @@
 **Severity legend:** 🔴 blocking (would error or corrupt data) · 🟡 contract/validation gap (correct only if the client behaves) · 🔵 note / edge case.
 
 ## Verdict
-_In progress (pre-flight loop). Updated as each queue item is reviewed._
-
-Queue: 8 RPCs → `rls-policies.sql` → 2 migrations → wiring points (`apply/actions.ts`, admin pages).
+✅ **Complete — no unconditional blockers.** The SQL + wiring are sound (atomic RPCs, deny-by-default RLS, idempotent migrations, graceful degradation without keys). **One HIGH-priority thing to test on the first member query: RLS recursion** (`is_workspace_member` / `is_admin` are `SECURITY INVOKER`) — detail in the RLS section and the **Overall verdict** at the bottom. All 11 queue items reviewed.
 
 ---
 
@@ -74,4 +72,36 @@ Findings:
 - 🔵 **No DELETE policies anywhere** — products soft-delete via `is_active`; everything else is immutable or RPC-only. Intentional; deny-by-default holds.
 - 🔵 Stale in-SQL comment (`rls-policies.sql:217-218`: order RPCs "added in later batches") — they exist now; cosmetic.
 
-_(next: the 2 `database/migrations/*.sql`, then the wiring points)_
+---
+
+## Migrations (`database/migrations/*.sql`)
+
+### `2026-05-07_add_sample_qty.sql` (Wave 39a) — ✅ clean
+Adds `event_inventory.sample_qty` + a `>= 0` check, both idempotent (`add column if not exists`; constraint guarded by a `pg_constraint` name check). **Fresh install:** effectively a no-op — `schema.sql` already has the column (line 175), and Postgres auto-names the inline column check `event_inventory_sample_qty_check`, which is exactly the name the DO-block looks for, so it skips cleanly (no duplicate constraint). Upgrade-only file.
+
+### `2026-05-07_customer_portal.sql` (Wave 40a) — ✅ clean (one upgrade-path note)
+Creates the 5 customer-portal tables (customers, contacts, pets, order_links, registration_tokens) + indexes + `touch_updated_at` triggers, all idempotent. **Fresh install:** no-op — `schema.sql` already has these tables. Upgrade-only file.
+- 🟡 **Upgrade path only:** this migration creates the tables but **not** their RLS. `rls-policies.sql` enables their RLS via `alter table if exists` — so if `rls-policies.sql` was applied *before* this migration (the upgrade ordering), those lines were no-ops and the 5 tables are left **RLS-disabled** (customer/pet data unprotected). **After running this migration on an existing DB, re-run `rls-policies.sql`.** Not a concern on a fresh install (schema.sql creates the tables before rls-policies runs).
+
+## Wiring points
+
+### `src/app/apply/actions.ts` — ✅ solid
+Server Action: Zod validation → field errors; honeypot (`website`) → silent success; **degrades gracefully** when Supabase env is missing (friendly "not yet wired" message, no crash); inserts into `applications` via the anon/user session (matches the `applications_anon_insert` policy); maps unique-violation `23505` → friendly "already applied"; best-effort admin email in try/catch gated on Resend env. Correct and defensive.
+
+### `src/lib/auth/admin-check.ts` (admin gate) — ✅ solid
+Typed guard with all three failure modes — `not-configured` / `not-authed` / `not-admin` — each with a helpful message; `server-only`. Reads `admin_users` with the **user session** (not service role) via the `user_id = auth.uid()` self-select policy, so `/admin/*` pages render a graceful state in demo mode instead of crashing.
+- 🔵 **Shares the `is_admin` recursion** flagged in the RLS section (reading `admin_users` triggers a policy that calls `is_admin`). When you test for recursion, exercise admin login too.
+
+---
+
+## ✅ Overall verdict
+
+**The Supabase SQL + wiring are in good shape — no *unconditional* blockers found.** The 8 RPCs are atomic, row-locked, RBAC-gated, `search_path`-hardened, and audited; RLS is deny-by-default across all 18 tables with every sensitive write funnelled through `SECURITY DEFINER` RPCs; the migrations are idempotent and correct for a fresh install; the wired Server Actions degrade gracefully without keys.
+
+**When you provision, in this order:**
+1. 🟡 **HIGH — test RLS recursion immediately.** After `schema.sql` + `rls-policies.sql`, sign in as a member and load `/app` (or run `select * from products`) and an `/admin` page. If you hit *"infinite recursion detected in policy"*, mark `is_workspace_member` + `is_admin` as `SECURITY DEFINER`. This is the one thing that could break everything on day one.
+2. 🟡 **Close the wire-time validation gaps in the Server Actions** (none block provisioning): `create_order` `mixed` payment needs a `payments[]` array; send-later needs phone + address; the anon `claim_registration_token` must validate pet weight/date and be rate-limited.
+3. 🟡 **Decide `void_order` behavior** for already-shipped send-later lines (today it restores stock that's physically gone → inventory drift).
+4. 🟡 **Upgrade path only:** if you run `customer_portal.sql` against an existing DB, re-run `rls-policies.sql` afterward.
+
+Everything else is 🔵 notes. **Pre-flight complete — all queue items reviewed; loop stopping.**
