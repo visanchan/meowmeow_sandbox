@@ -11,7 +11,7 @@ Claude's job is to implement clear, bounded batches with low merge risk, then ha
 
 This file applies to the **MeowMeow Event POS** — the single-file app at [`meowmeow_pos_event.html`](meowmeow_pos_event.html) plus its admin helper [`meowmeow_receipt_admin.html`](meowmeow_receipt_admin.html). The branching/commit conventions, single-file constraints, and `batch/<letter>-<slug>` naming below all refer to this project only.
 
-The sibling **MochiPOS SaaS** lives at [`pos-for-sell/`](pos-for-sell/) and has its own protocol at [`pos-for-sell/CLAUDE.md`](pos-for-sell/CLAUDE.md) — which **overrides this file** inside that folder. The SaaS uses a different stack (Next.js + Supabase, not vanilla HTML), a different batch namespace (`DD-XX` and `Wave NN`, not `batch/<letter>`), and different file boundaries. Do not cross-edit between the two projects in the same batch.
+> **Migration note (2026-05-25):** the sibling **MochiPOS SaaS** was extracted into its own repo — **`visanchan/mochipos`** — and the `pos-for-sell/` folder has been **removed from this repo**. Do not look for, edit, or recreate `pos-for-sell/` here; all SaaS work happens in the `mochipos` repo (which carries its own `CLAUDE.md` / `TASKS.md`). This repo (`meowmeow_sandbox`) is now **only** the MeowMeow Event POS booth app (`meowmeow_pos_event.html` + `meowmeow_receipt_admin.html`). The full SaaS history is preserved in `mochipos` and recoverable from this repo's git history if ever needed.
 
 ## Working with this user
 

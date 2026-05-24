@@ -9,6 +9,6 @@ This project uses a split-agent workflow:
 
 Use [TASKS.md](TASKS.md) as the live source of truth before editing any project file.
 
-## Sister project
+## Sister project — moved to its own repo (2026-05-25)
 
-This repo also hosts an active SaaS sibling at [`pos-for-sell/`](pos-for-sell/) — a multi-tenant Next.js + Supabase POS with its own protocol files ([`pos-for-sell/CLAUDE.md`](pos-for-sell/CLAUDE.md), [`pos-for-sell/CONTRIBUTING.md`](pos-for-sell/CONTRIBUTING.md), [`pos-for-sell/TASKS.md`](pos-for-sell/TASKS.md)). Read those instead of this file when working inside `pos-for-sell/`.
+The MochiPOS SaaS that used to live here at `pos-for-sell/` has been **extracted into its own repo: `visanchan/mochipos`**, and the `pos-for-sell/` folder has been **removed from this repo**. Do not edit or recreate it here — all SaaS work is in the `mochipos` repo (with its own `CLAUDE.md` / `CONTRIBUTING.md` / `TASKS.md`). This repo is now **only** the MeowMeow Event POS booth app (`meowmeow_pos_event.html` + `meowmeow_receipt_admin.html`).
