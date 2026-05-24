@@ -17,7 +17,7 @@ Anything inside `pos-for-sell/`. Do not edit files in the root or in `meowmeow_p
 
 ## Currently active
 
-- **Wave 42 — Auth-error guard** · `Owner: claude` · `Status: in-progress` · `Branch: pos/wave-42-auth-error-guard` · `Claimed: 2026-05-24 11:13`. See the **Wave 42** section below.
+- **Wave 42 — Auth-error guard** · `Owner: claude` · `Status: ready-for-review (PR #105)` · `Branch: pos/wave-42-auth-error-guard` · `Claimed: 2026-05-24 11:13`. See the **Wave 42** section below.
 
 _DD-XX board: none claimed — every remaining DD batch is `done` or `blocked` on B-1 (Supabase). The project is in **Wave mode** (post-DD-100 organic work). Waves 39a/39b/40a/40b/40c merged 2026-05-07; Wave 41 hardening sweep complete (see **Done**)._
 
@@ -84,9 +84,10 @@ Twelve-batch arc landing **before** the DD-65 Supabase wire-up. Anchored to a `/
 ## Wave 42 — Auth-error guard: a Supabase query error must not masquerade as onboarding-incomplete (in-progress · 2026-05-24)
 
 - **Owner:** claude
-- **Status:** in-progress
+- **Status:** ready-for-review · PR #105 (high-risk auth — review requested before merge)
 - **Branch:** pos/wave-42-auth-error-guard
 - **Claimed:** 2026-05-24 11:13
+- **Verified:** `npm run typecheck` clean · `npm test` 407 pass / 45 files · `npm run test:db` 23 pass · `next build` clean.
 - **Origin:** Codex post-hoc review of Wave 41 (Medium finding). The `/app` layout discards the Supabase `error` from the `workspace_members` / `workspaces` lookups (it destructures only `{ data }`), so a transient query failure (network / RLS / schema blip) reads as `hasMember=false` and a fully-provisioned seller is redirected to `/onboarding` as if they were an orphan. **Latent today** — demo mode returns before the queries run; it bites once Supabase is wired (DD-65 / Wave 40d). This is the one open item from the otherwise-approved Wave 41 review (pglite + 41e both approved).
 - **Scope:**
   1. `resolveAppGuard` gains a `queryError` input and an `{ kind: "error" }` decision that takes precedence over the membership check (placed after the auth check — no queries run pre-auth).
