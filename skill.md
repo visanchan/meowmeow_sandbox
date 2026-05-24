@@ -46,7 +46,7 @@ When you learn a repeatable approach (good or bad), append a new section here. D
 5. Commit the claim before touching any implementation file. Commit message: `[batch <letter>] claim <slug>`.
 6. Implement. Match the existing single-file vanilla HTML/JS style — compressed one-line-per-function. No build step, no new dependencies.
 7. Parse-check after edits: `node -e "const fs=require('fs');const html=fs.readFileSync('meowmeow_pos_event.html','utf8');const m=html.match(/<script>([\s\S]*?)<\/script>/g);const last=m[m.length-1].replace(/^<script>|<\/script>$/g,'');try{new Function(last);console.log('OK');}catch(e){console.log('ERR:',e.message);process.exit(1);}"`
-8. Update / extend [tests/smoke_event_pos.js](tests/smoke_event_pos.js) for any new behavior. Run with `NODE_PATH="C:/Users/USER/Desktop/meowmeow_sandbox/pos-for-sell/node_modules" node tests/smoke_event_pos.js`.
+8. Update / extend [tests/smoke_event_pos.js](tests/smoke_event_pos.js) for any new behavior. See §5 for how to run it — note the smoke test needs Playwright, and the old borrowed `pos-for-sell/node_modules` is gone now that the SaaS moved to its own repo.
 9. Update [readme.md](readme.md) with any behavior change (Inventory, Correction Center, Send Later, etc.).
 10. Move the Batch entry's status to `ready-for-review` in [TASKS.md](TASKS.md).
 11. Commit, push, open PR with the handoff template (see section 7).
@@ -115,11 +115,14 @@ When you learn a repeatable approach (good or bad), append a new section here. D
 
 ## 5. Smoke test patterns and gotchas
 
-**The smoke test is in [tests/smoke_event_pos.js](tests/smoke_event_pos.js)**. Run with:
+**The smoke test is in [tests/smoke_event_pos.js](tests/smoke_event_pos.js)** and needs Playwright. ⚠ It used to borrow Playwright from `pos-for-sell/node_modules`, but the SaaS was extracted to its own repo (`visanchan/mochipos`, 2026-05-25) and that folder is gone — so the old `NODE_PATH=...` command is **broken** until this repo gets its own dependency:
 ```
-NODE_PATH="C:/Users/USER/Desktop/meowmeow_sandbox/pos-for-sell/node_modules" node tests/smoke_event_pos.js
+# one-time: give the booth repo its own Playwright
+npm init -y && npm i -D playwright
+# then:
+node tests/smoke_event_pos.js
 ```
-(Playwright lives in the SaaS project's node_modules.)
+(Until a `package.json` is added here, the smoke test can't run — see the migration note in CLAUDE.md.)
 
 **Patterns that work**:
 - Group scenarios into `await page.evaluate(...)` blocks and assert on returned values outside.

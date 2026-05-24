@@ -2,6 +2,8 @@
 
 Two projects, one bet: build the POS that **booth sellers and pet retailers** actually need, starting from a real event-tested prototype, then productizing it for the rest of the market.
 
+> **Migration note (2026-05-25):** Project 2 (**MochiPOS**) was extracted into its own repo — **`visanchan/mochipos`** — and the `pos-for-sell/` folder was removed from this repo. The `pos-for-sell/…` paths referenced throughout this umbrella doc are **historical**; the live SaaS protocol, tasks, roadmap, and status now live in that repo. This repo is the MeowMeow Event POS booth app.
+
 ---
 
 ## 1. Executive summary

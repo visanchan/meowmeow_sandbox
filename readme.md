@@ -48,17 +48,9 @@ Target users are booth staff (fast checkout), booth managers (inventory and corr
 - [codex.md](codex.md): protocol for Codex sessions
 - [AGENTS.md](AGENTS.md): auto-load pointer for Codex sessions
 
-## Sister project — MochiPOS SaaS
+## Sister project — MochiPOS SaaS (moved to its own repo)
 
-This repo also hosts an active SaaS sibling at [`pos-for-sell/`](pos-for-sell/) — a multi-tenant Next.js + Supabase POS for cat-product booth sellers, distilled from the `meowmeow_pos_event.html` field experience. It is a **distinct project** with its own protocol, batch namespace (`DD-XX` / `Wave NN`), and architecture. Do not edit it from a meowmeow event POS batch (and vice versa).
-
-Entry points for the SaaS:
-
-- [`pos-for-sell/README.md`](pos-for-sell/README.md) — setup + quick links.
-- [`pos-for-sell/CLAUDE.md`](pos-for-sell/CLAUDE.md) — execution protocol for the SaaS (overrides root CLAUDE.md inside `pos-for-sell/`).
-- [`pos-for-sell/docs/LEARNING.md`](pos-for-sell/docs/LEARNING.md) — founder learning curriculum (5 levels).
-- [`pos-for-sell/docs/ROADMAP.md`](pos-for-sell/docs/ROADMAP.md) — strategic direction (beachhead, modules, pricing).
-- [`pos-for-sell/docs/STATUS.md`](pos-for-sell/docs/STATUS.md) — current-state snapshot (routes, tests, waves).
+The MochiPOS SaaS — a multi-tenant Next.js + Supabase POS for cat-product booth sellers, distilled from the `meowmeow_pos_event.html` field experience — used to live here at `pos-for-sell/`. As of **2026-05-25 it was extracted into its own repo, `visanchan/mochipos`**, and the `pos-for-sell/` folder was removed from this repo. Its protocol, tasks, roadmap, and status docs all live in that repo now. This repo is **only** the MeowMeow Event POS booth app.
 
 ## Working Rules for Future Sessions
 

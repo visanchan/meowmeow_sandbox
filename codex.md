@@ -13,7 +13,7 @@ The goal is faster progress without losing control of the single-file POS app. C
 
 This file applies to the **MeowMeow Event POS** — the single-file app at [`meowmeow_pos_event.html`](meowmeow_pos_event.html) plus its admin helper [`meowmeow_receipt_admin.html`](meowmeow_receipt_admin.html). The planner batch format, single-file constraints, and `batch/<letter>-<slug>` naming below all refer to this project only.
 
-The sibling **MochiPOS SaaS** lives at [`pos-for-sell/`](pos-for-sell/) and has its own protocol — Codex planning/review work for the SaaS should follow [`pos-for-sell/CLAUDE.md`](pos-for-sell/CLAUDE.md) (which applies to both agents in that folder) and [`pos-for-sell/CONTRIBUTING.md`](pos-for-sell/CONTRIBUTING.md), with batch naming `DD-XX` / `Wave NN` and branch prefix `pos/`. Do not cross-edit between the two projects in the same batch.
+> **Migration note (2026-05-25):** the sibling **MochiPOS SaaS** was extracted into its own repo — **`visanchan/mochipos`** — and `pos-for-sell/` was removed from this repo. Codex planning/review for the SaaS happens in that repo (its own `CLAUDE.md` / `CONTRIBUTING.md` / `TASKS.md`, batch naming `DD-XX` / `Wave NN`, branch prefix `pos/`). This repo is now only the MeowMeow Event POS booth app.
 
 ## Read first, every session
 
